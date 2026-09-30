@@ -1,0 +1,204 @@
+"""Admin views for managing students, enrollments, progress, scores, and rankings."""
+
+import django_filters
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
+from rest_framework import filters, generics, status
+from rest_framework.views import APIView
+
+from apps.accounts.serializers import StudentProvisionSerializer
+from apps.accounts.services import StudentProvisioningService
+from apps.common.permissions import IsAdmin
+from apps.common.responses import api_success
+from apps.common.utils import get_client_ip
+from apps.students.admin_serializers import (
+    AssignCoursesSerializer,
+    StudentAdminDetailSerializer,
+    StudentAdminListSerializer,
+    StudentAdminUpdateSerializer,
+    StudentEnrollmentBriefSerializer,
+)
+from apps.students.models import StudentProfile
+from apps.students.services import StudentAdminService
+
+
+class StudentFilter(django_filters.FilterSet):
+    batch_code = django_filters.CharFilter(lookup_expr="iexact")
+    is_active = django_filters.BooleanFilter(field_name="user__is_active")
+    onboarding_status = django_filters.CharFilter(field_name="user__onboarding_status")
+
+    class Meta:
+        model = StudentProfile
+        fields = ["batch_code", "is_active", "onboarding_status"]
+
+
+class StudentAdminListCreateView(generics.ListCreateAPIView):
+    """Admin endpoint to list students or provision a new student."""
+
+    permission_classes = [IsAdmin]
+    serializer_class = StudentAdminListSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = StudentFilter
+    search_fields = ["full_name", "student_id_number", "user__email", "batch_code", "college_name"]
+    ordering_fields = [
+        "created_at",
+        "total_points",
+        "full_name",
+        "student_id_number",
+        "current_streak_days",
+    ]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return StudentProfile.objects.select_related("user").prefetch_related("enrollments").all()
+
+    @extend_schema(
+        request=StudentProvisionSerializer,
+        responses={201: StudentAdminDetailSerializer},
+        summary="Admin Provision Student",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = StudentProvisionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        ip_address = get_client_ip(request)
+
+        user, profile = StudentProvisioningService.provision_student(
+            admin_user=request.user,
+            full_name=data["full_name"],
+            student_id_number=data["student_id_number"],
+            batch_code=data["batch_code"],
+            email=data.get("email"),
+            mobile_number=data.get("mobile_number"),
+            password=data.get("password"),
+            college_name=data.get("college_name", ""),
+            graduation_year=data.get("graduation_year"),
+            onboarding_status=data.get("onboarding_status", "ACTIVE"),
+            ip_address=ip_address,
+        )
+
+        return api_success(
+            data=StudentAdminDetailSerializer(profile).data,
+            message="Student provisioned successfully.",
+            status_code=status.HTTP_201_CREATED,
+        )
+
+
+class StudentAdminDetailUpdateView(APIView):
+    """Admin endpoint to retrieve or update an existing student profile and account settings."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        responses={200: StudentAdminDetailSerializer},
+        summary="Admin Retrieve Student Detail",
+        tags=["Admin Student Management"],
+    )
+    def get(self, request, pk):
+        student = StudentAdminService.get_student_detail(str(pk))
+        return api_success(
+            data=StudentAdminDetailSerializer(student).data,
+            message="Student detail retrieved successfully.",
+        )
+
+    @extend_schema(
+        request=StudentAdminUpdateSerializer,
+        responses={200: StudentAdminDetailSerializer},
+        summary="Admin Edit Student Profile",
+        tags=["Admin Student Management"],
+    )
+    def patch(self, request, pk):
+        serializer = StudentAdminUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip_address = get_client_ip(request)
+
+        updated_student = StudentAdminService.update_student(
+            student_id=str(pk),
+            admin_user=request.user,
+            ip_address=ip_address,
+            **serializer.validated_data,
+        )
+        return api_success(
+            data=StudentAdminDetailSerializer(updated_student).data,
+            message="Student profile updated successfully.",
+        )
+
+
+class StudentAdminCoursesView(APIView):
+    """Admin endpoint to enroll/assign courses to a student."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        request=AssignCoursesSerializer,
+        responses={200: StudentEnrollmentBriefSerializer(many=True)},
+        summary="Admin Assign Courses to Student",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request, pk):
+        serializer = AssignCoursesSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip_address = get_client_ip(request)
+
+        enrollments = StudentAdminService.assign_courses(
+            student_id=str(pk),
+            course_ids=serializer.validated_data["course_ids"],
+            admin_user=request.user,
+            ip_address=ip_address,
+        )
+        return api_success(
+            data=StudentEnrollmentBriefSerializer(enrollments, many=True).data,
+            message="Courses assigned successfully.",
+        )
+
+
+class StudentAdminProgressView(APIView):
+    """Admin endpoint to inspect student curriculum, module, and question progress."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        summary="Admin View Student Progress",
+        tags=["Admin Student Management"],
+    )
+    def get(self, request, pk):
+        progress_data = StudentAdminService.get_student_progress(str(pk))
+        return api_success(
+            data=progress_data,
+            message="Student progress retrieved successfully.",
+        )
+
+
+class StudentAdminScoresView(APIView):
+    """Admin endpoint to view student scoring history and breakdown."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        summary="Admin View Student Scores",
+        tags=["Admin Student Management"],
+    )
+    def get(self, request, pk):
+        scores_data = StudentAdminService.get_student_scores(str(pk))
+        return api_success(
+            data=scores_data,
+            message="Student scores retrieved successfully.",
+        )
+
+
+class StudentAdminRankView(APIView):
+    """Admin endpoint to view student global and batch ranking metrics."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        summary="Admin View Student Rank",
+        tags=["Admin Student Management"],
+    )
+    def get(self, request, pk):
+        rank_data = StudentAdminService.get_student_rank(str(pk))
+        return api_success(
+            data=rank_data,
+            message="Student rank metrics retrieved successfully.",
+        )

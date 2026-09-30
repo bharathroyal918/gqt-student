@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="gqtBlueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0084FF" />
+      <stop offset="50%" stop-color="#0066FF" />
+      <stop offset="100%" stop-color="#0047BA" />
+    </linearGradient>
+    <linearGradient id="gqtGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00B4D8" />
+      <stop offset="100%" stop-color="#0066FF" />
+    </linearGradient>
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <!-- G Letter (Deep Navy / Royal) -->
+  <path d="M 68 32 C 45 32 30 46 30 70 C 30 94 45 108 68 108 C 86 108 97 98 100 84 L 72 84 L 72 71 L 115 71 C 116 75 116 80 116 85 C 116 105 98 122 68 122 C 34 122 14 99 14 70 C 14 41 34 18 68 18 C 89 18 103 26 112 36 L 98 48 C 91 40 82 32 68 32 Z" fill="#002868" class="dark:fill-[#38BDF8]" />
+
+  <!-- Q Letter (Electric Blue Gradient Circle & Tail) -->
+  <g filter="url(#subtleShadow)">
+    <!-- Outer Q Ring -->
+    <path d="M 185 20 C 153 20 128 42 128 70 C 128 98 153 120 185 120 C 196 120 206 117 215 112 L 230 125 L 246 125 L 225 105 C 236 96 242 84 242 70 C 242 42 217 20 185 20 Z M 185 36 C 208 36 226 51 226 70 C 226 89 208 104 185 104 C 162 104 144 89 144 70 C 144 51 162 36 185 36 Z" fill="url(#gqtBlueGradient)" />
+    <!-- Inner Q Slash / Tail Accent -->
+    <path d="M 186 78 L 224 116 L 240 116 L 199 78 Z" fill="url(#gqtBlueGradient)" />
+  </g>
+
+  <!-- T Letter (Charcoal / Steel Gray) -->
+  <path d="M 252 20 L 332 20 L 332 36 L 299 36 L 299 120 L 285 120 L 285 36 L 252 36 Z" fill="#334155" class="dark:fill-[#94A3B8]" />
+
+  <!-- Sub-brand: GLOBAL QUEST -->
+  <text x="180" y="138" text-anchor="middle" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="900" font-size="16" letter-spacing="4" fill="#002868" class="dark:fill-white">GLOBAL QUEST</text>
+
+  <!-- Divider Lines & TECHNOLOGIES -->
+  <line x1="28" y1="149" x2="105" y2="149" stroke="url(#gqtGlow)" stroke-width="2" stroke-linecap="round" />
+  <text x="180" y="152" text-anchor="middle" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="9" letter-spacing="3.5" fill="#475569" class="dark:fill-[#CBD5E1]">TECHNOLOGIES</text>
+  <line x1="255" y1="149" x2="332" y2="149" stroke="url(#gqtGlow)" stroke-width="2" stroke-linecap="round" />
+</svg>

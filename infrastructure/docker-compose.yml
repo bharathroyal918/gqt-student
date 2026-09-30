@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gqt_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gqt_portal_db}
+      POSTGRES_USER: ${POSTGRES_USER:-gqt_portal_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gqt_portal_dev_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gqt_portal_user} -d ${POSTGRES_DB:-gqt_portal_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: gqt_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../infrastructure/docker/backend/Dockerfile
+    container_name: gqt_backend
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend:/app
+      - backend_media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+  celery_worker:
+    build:
+      context: ../backend
+      dockerfile: ../infrastructure/docker/backend/Dockerfile
+    container_name: gqt_celery_worker
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - ../backend:/app
+      - backend_media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "config", "worker", "-l", "info", "-Q", "code_execution,ai,notifications,reports,default"]
+
+  celery_beat:
+    build:
+      context: ../backend
+      dockerfile: ../infrastructure/docker/backend/Dockerfile
+    container_name: gqt_celery_beat
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "config", "beat", "-l", "info"]
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../infrastructure/docker/frontend/Dockerfile
+    container_name: gqt_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_media:
