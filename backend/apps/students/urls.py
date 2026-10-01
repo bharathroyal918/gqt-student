@@ -3,6 +3,7 @@
 from django.urls import path
 
 from apps.students.views import (
+    StudentAttendanceSelfView,
     StudentCourseDetailView,
     StudentCourseListView,
     StudentDashboardView,
@@ -10,6 +11,7 @@ from apps.students.views import (
     StudentModuleCompleteView,
     StudentModuleDetailView,
     StudentProfileDetailView,
+    StudentProfileSelfUpdateView,
 )
 
 app_name = "students"
@@ -17,6 +19,8 @@ app_name = "students"
 urlpatterns = [
     path("dashboard/", StudentDashboardView.as_view(), name="student_dashboard"),
     path("leaderboard/", StudentLeaderboardView.as_view(), name="student_leaderboard"),
+    path("me/profile/", StudentProfileSelfUpdateView.as_view(), name="student_profile_me"),
+    path("me/attendance/", StudentAttendanceSelfView.as_view(), name="student_attendance_me"),
     path("courses/", StudentCourseListView.as_view(), name="student_courses"),
     path("courses/<uuid:course_id>/", StudentCourseDetailView.as_view(), name="student_course_detail"),
     path("modules/<uuid:module_id>/", StudentModuleDetailView.as_view(), name="student_module_detail"),

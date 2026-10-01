@@ -123,14 +123,14 @@ export const AssignmentsPage: React.FC = () => {
           <div>
             <button
               onClick={() => navigate(`/admin/assignments/${row.id}`)}
-              className="text-left font-semibold text-white hover:text-brand-400 transition-colors"
+              className="text-left font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               {row.title}
             </button>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               <span>{row.module_title}</span>
               <span>•</span>
-              <span className="font-mono text-slate-400">{row.slug}</span>
+              <span className="font-mono text-slate-500 dark:text-slate-400">{row.slug}</span>
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@ export const AssignmentsPage: React.FC = () => {
             <Badge variant={variant} size="sm">
               {row.difficulty}
             </Badge>
-            <div className="text-xs font-semibold text-amber-400">{row.points} pts</div>
+            <div className="text-xs font-semibold text-amber-500">{row.points} pts</div>
           </div>
         );
       },
@@ -156,8 +156,8 @@ export const AssignmentsPage: React.FC = () => {
       key: "testcases",
       header: "Test Cases",
       cell: (row) => (
-        <div className="text-xs text-slate-300">
-          <span className="font-semibold text-white">{row.test_cases_count}</span> test cases
+        <div className="text-xs text-slate-700 dark:text-slate-300">
+          <span className="font-semibold text-slate-900 dark:text-white">{row.test_cases_count}</span> test cases
         </div>
       ),
     },
@@ -167,7 +167,7 @@ export const AssignmentsPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center gap-1.5">
           <StatusDot status={row.is_active ? "online" : "offline"} pulse={row.is_active} />
-          <span className="text-xs text-slate-300">{row.is_active ? "Active" : "Archived"}</span>
+          <span className="text-xs text-slate-700 dark:text-slate-300">{row.is_active ? "Active" : "Archived"}</span>
         </div>
       ),
     },
@@ -183,7 +183,7 @@ export const AssignmentsPage: React.FC = () => {
             onClick={() => navigate(`/admin/assignments/${row.id}`)}
             title="View Details & Test Cases"
           >
-            <Eye className="h-4 w-4 text-slate-400 hover:text-white" />
+            <Eye className="h-4 w-4 text-slate-400 hover:text-slate-900 dark:hover:text-white" />
           </Button>
 
           <Button
@@ -192,7 +192,7 @@ export const AssignmentsPage: React.FC = () => {
             onClick={() => setDeletingQuestion(row)}
             title="Delete Question"
           >
-            <Trash2 className="h-4 w-4 text-rose-400 hover:text-rose-300" />
+            <Trash2 className="h-4 w-4 text-rose-500 hover:text-rose-600" />
           </Button>
         </div>
       ),
@@ -204,10 +204,10 @@ export const AssignmentsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             Coding Assignments & Problems
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Configure algorithmic questions, test suites, constraints, and sandbox execution parameters.
           </p>
         </div>
@@ -224,7 +224,7 @@ export const AssignmentsPage: React.FC = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-surface-800 bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-xs">
           <SearchInput
             value={search}

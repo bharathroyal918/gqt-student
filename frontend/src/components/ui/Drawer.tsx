@@ -54,16 +54,16 @@ export const Drawer: React.FC<DrawerProps> = ({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className={`relative w-full ${widthClass} h-full border-l border-surface-800 bg-surface-900 shadow-2xl z-10 flex flex-col`}
+            className={`relative w-full ${widthClass} h-full border-l border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-2xl z-10 flex flex-col`}
           >
-            <div className="flex items-center justify-between border-b border-surface-800 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-surface-800 px-6 py-4">
               <div>
-                <h3 className="text-lg font-semibold text-white tracking-tight">{title}</h3>
-                {description && <p className="mt-0.5 text-xs text-slate-400">{description}</p>}
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">{title}</h3>
+                {description && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{description}</p>}
               </div>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-surface-800 hover:text-white transition-colors"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-800 hover:text-slate-700 dark:hover:text-white transition-colors"
                 aria-label="Close drawer"
               >
                 <X className="h-5 w-5" />
@@ -73,7 +73,7 @@ export const Drawer: React.FC<DrawerProps> = ({
             <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
 
             {footer && (
-              <div className="flex items-center justify-end gap-3 border-t border-surface-800 bg-surface-950/40 px-6 py-4">
+              <div className="flex items-center justify-end gap-3 border-t border-slate-200 dark:border-surface-800 bg-slate-50/80 dark:bg-surface-950/40 px-6 py-4">
                 {footer}
               </div>
             )}

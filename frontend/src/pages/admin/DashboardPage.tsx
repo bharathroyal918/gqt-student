@@ -102,15 +102,15 @@ export const DashboardPage: React.FC = () => {
       {/* Page Title & Quick Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Institutional Dashboard</h1>
-          <p className="mt-1 text-xs text-slate-400">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Institutional Dashboard</h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Real-time platform overview &bull; Live operational metrics and academic telemetry
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             to="/admin/reports"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-surface-700 bg-surface-900 px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-surface-800 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-900 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-surface-800 transition-colors shadow-sm"
           >
             Generate Reports
             <ArrowUpRight className="h-3.5 w-3.5" />
@@ -126,14 +126,14 @@ export const DashboardPage: React.FC = () => {
             <Link key={card.title} to={card.link}>
               <Card className="hover:border-brand-500/40 transition-all duration-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-400">{card.title}</span>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{card.title}</span>
                   <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${card.color}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                 </div>
                 <div className="mt-3">
-                  <span className="text-2xl font-extrabold text-white tracking-tight">{card.value}</span>
-                  <p className="mt-1 text-xs text-slate-400">{card.subtitle}</p>
+                  <span className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{card.value}</span>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{card.subtitle}</p>
                 </div>
               </Card>
             </Link>
@@ -152,7 +152,7 @@ export const DashboardPage: React.FC = () => {
             {activityData?.timeline ? (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={activityData.timeline} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                   <XAxis
                     dataKey="date"
                     stroke="#64748b"
@@ -181,17 +181,17 @@ export const DashboardPage: React.FC = () => {
 
         {/* Top Performers Leaderboard Card */}
         <Card className="flex flex-col">
-          <div className="flex items-center justify-between border-b border-surface-800 pb-3">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-surface-800 pb-3">
             <div className="flex items-center gap-2">
-              <Award className="h-4 w-4 text-amber-400" />
-              <h3 className="font-semibold text-white tracking-tight text-base">Top Performers</h3>
+              <Award className="h-4 w-4 text-amber-500" />
+              <h3 className="font-semibold text-slate-900 dark:text-white tracking-tight text-base">Top Performers</h3>
             </div>
-            <Link to="/admin/students" className="text-xs text-brand-400 hover:text-brand-300">
+            <Link to="/admin/students" className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline">
               View All
             </Link>
           </div>
 
-          <div className="mt-3 divide-y divide-surface-800/60 flex-1">
+          <div className="mt-3 divide-y divide-slate-200/80 dark:divide-surface-800/60 flex-1">
             {dashboardData.top_performers.length === 0 ? (
               <p className="py-8 text-center text-xs text-slate-500">No student scores recorded yet.</p>
             ) : (
@@ -201,27 +201,27 @@ export const DashboardPage: React.FC = () => {
                     <span
                       className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold ${
                         idx === 0
-                          ? "bg-amber-500/20 text-amber-400"
+                          ? "bg-amber-500/20 text-amber-500"
                           : idx === 1
-                          ? "bg-slate-300/20 text-slate-300"
+                          ? "bg-slate-200 dark:bg-slate-300/20 text-slate-700 dark:text-slate-300"
                           : idx === 2
-                          ? "bg-amber-700/20 text-amber-500"
-                          : "bg-surface-800 text-slate-400"
+                          ? "bg-amber-700/20 text-amber-600"
+                          : "bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-slate-400"
                       }`}
                     >
                       {idx + 1}
                     </span>
                     <div>
-                      <p className="text-xs font-medium text-white">{student.full_name}</p>
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white">{student.full_name}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
                         {student.student_id_number} &bull; {student.batch_code}
                       </p>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-xs font-bold text-white">{student.total_points}</span>
-                    <div className="flex items-center gap-1 justify-end text-[10px] text-amber-400">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{student.total_points}</span>
+                    <div className="flex items-center gap-1 justify-end text-[10px] text-amber-500">
                       <Flame className="h-3 w-3" />
                       <span>{student.current_streak_days}d</span>
                     </div>
@@ -236,12 +236,12 @@ export const DashboardPage: React.FC = () => {
       {/* Operational Highlights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
             <TrendingUp className="h-6 w-6" />
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pass Rate</h4>
-            <p className="text-xl font-bold text-white">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pass Rate</h4>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
               {dashboardData.assignment_statistics.acceptance_rate}%
             </p>
             <p className="text-[11px] text-slate-500 mt-0.5">
@@ -251,12 +251,12 @@ export const DashboardPage: React.FC = () => {
         </Card>
 
         <Card className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Enrollment</h4>
-            <p className="text-xl font-bold text-white">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Enrollment</h4>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
               {dashboardData.active_students} Students
             </p>
             <p className="text-[11px] text-slate-500 mt-0.5">
@@ -266,12 +266,12 @@ export const DashboardPage: React.FC = () => {
         </Card>
 
         <Card className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-500">
             <FileCode className="h-6 w-6" />
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Daily Activity</h4>
-            <p className="text-xl font-bold text-white">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Daily Activity</h4>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
               {dashboardData.today_activity.submissions_count} Runs
             </p>
             <p className="text-[11px] text-slate-500 mt-0.5">Automated sandbox grading</p>

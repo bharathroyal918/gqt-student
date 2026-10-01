@@ -7,14 +7,19 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.accounts.serializers import (
+    AdminLoginSerializer,
     EmailLoginSerializer,
+    ForgotPasswordOTPRequestSerializer,
+    ForgotPasswordOTPVerifySerializer,
     ForgotPasswordSerializer,
     LogoutSerializer,
     RefreshTokenSerializer,
     RequestOTPSerializer,
     ResetPasswordSerializer,
+    StudentLoginSerializer,
     StudentProfileNestedSerializer,
     StudentProvisionSerializer,
+    StudentRegisterSerializer,
     StudentStatusUpdateSerializer,
     UserProfileSerializer,
     VerifyOTPSerializer,
@@ -25,6 +30,135 @@ from apps.common.responses import api_success
 from apps.common.utils import get_client_ip, mask_email, mask_phone
 
 logger = logging.getLogger(__name__)
+
+
+class StudentRegisterView(APIView):
+    """Register a new student account and provision student profile in the database."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=StudentRegisterSerializer,
+        responses={
+            201: OpenApiResponse(description="Registration successful"),
+            400: OpenApiResponse(description="Validation error or duplicate account"),
+        },
+        summary="Student Self-Registration",
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        serializer = StudentRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        ip_address = get_client_ip(request)
+        user_agent = request.META.get("HTTP_USER_AGENT", "")
+
+        user, access_token, refresh_token, user_data = AuthService.register_student(
+            full_name=serializer.validated_data["full_name"],
+            email=serializer.validated_data["email"],
+            mobile_number=serializer.validated_data["mobile_number"],
+            password=serializer.validated_data["password"],
+            student_id_number=serializer.validated_data.get("student_id_number", ""),
+            college_name=serializer.validated_data.get("college_name", ""),
+            batch_code=serializer.validated_data.get("batch_code", "BATCH-2026-A"),
+            graduation_year=serializer.validated_data.get("graduation_year", 2026),
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        return api_success(
+            data={
+                "access": access_token,
+                "refresh": refresh_token,
+                "user": user_data,
+            },
+            message="Student registration successful. Welcome to GQT!",
+            status_code=status.HTTP_201_CREATED,
+        )
+
+
+class StudentLoginView(APIView):
+    """Authenticate a student user specifically using email and password."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=StudentLoginSerializer,
+        responses={
+            200: OpenApiResponse(description="Student login successful"),
+            401: OpenApiResponse(description="Invalid credentials"),
+            403: OpenApiResponse(description="Forbidden role or inactive account"),
+        },
+        summary="Student Portal Login",
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        serializer = StudentLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"].strip().lower()
+        password = serializer.validated_data["password"]
+        ip_address = get_client_ip(request)
+        user_agent = request.META.get("HTTP_USER_AGENT", "")
+
+        user, access_token, refresh_token, user_data = AuthService.login_as_student(
+            email=email,
+            password=password,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        return api_success(
+            data={
+                "access": access_token,
+                "refresh": refresh_token,
+                "user": user_data,
+            },
+            message="Student authentication successful.",
+            status_code=status.HTTP_200_OK,
+        )
+
+
+class AdminLoginView(APIView):
+    """Authenticate an administrator or faculty member specifically using email and password."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=AdminLoginSerializer,
+        responses={
+            200: OpenApiResponse(description="Admin login successful"),
+            401: OpenApiResponse(description="Invalid credentials"),
+            403: OpenApiResponse(description="Forbidden role or unauthorized access"),
+        },
+        summary="Admin Portal Login",
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        serializer = AdminLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"].strip().lower()
+        password = serializer.validated_data["password"]
+        ip_address = get_client_ip(request)
+        user_agent = request.META.get("HTTP_USER_AGENT", "")
+
+        user, access_token, refresh_token, user_data = AuthService.login_as_admin(
+            email=email,
+            password=password,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        return api_success(
+            data={
+                "access": access_token,
+                "refresh": refresh_token,
+                "user": user_data,
+            },
+            message="Admin authentication successful.",
+            status_code=status.HTTP_200_OK,
+        )
 
 
 class EmailLoginView(APIView):
@@ -207,8 +341,71 @@ class LogoutView(APIView):
         )
 
 
+class ForgotPasswordOTPRequestView(APIView):
+    """Initiate OTP-based password reset for students and admins via email or mobile."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=ForgotPasswordOTPRequestSerializer,
+        responses={
+            200: OpenApiResponse(description="OTP dispatched if account exists"),
+            429: OpenApiResponse(description="Cooldown active or rate limit exceeded"),
+        },
+        summary="Request Password Reset OTP",
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        serializer = ForgotPasswordOTPRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        identifier = serializer.validated_data["identifier"].strip()
+        ip_address = get_client_ip(request)
+
+        result = AuthService.request_password_reset_otp(identifier=identifier, ip_address=ip_address)
+
+        return api_success(
+            data=result,
+            message="If an active account exists with these credentials, a 6-digit OTP has been sent.",
+            status_code=status.HTTP_200_OK,
+        )
+
+
+class ForgotPasswordOTPVerifyView(APIView):
+    """Verify numeric OTP code and exchange for a one-time password reset token."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=ForgotPasswordOTPVerifySerializer,
+        responses={
+            200: OpenApiResponse(description="OTP verified successfully, returns reset token"),
+            400: OpenApiResponse(description="Invalid, expired, or maximum attempts exceeded"),
+        },
+        summary="Verify Password Reset OTP",
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        serializer = ForgotPasswordOTPVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        identifier = serializer.validated_data["identifier"].strip()
+        otp = serializer.validated_data["otp"].strip()
+        ip_address = get_client_ip(request)
+
+        result = AuthService.verify_password_reset_otp(
+            identifier=identifier, otp=otp, ip_address=ip_address
+        )
+
+        return api_success(
+            data=result,
+            message="OTP verified successfully. You may now set your new password.",
+            status_code=status.HTTP_200_OK,
+        )
+
+
 class ForgotPasswordView(APIView):
-    """Initiate password reset flow for approved accounts with anti-enumeration protection."""
+    """Initiate password reset flow (supports both legacy token and modern OTP methods)."""
 
     permission_classes = [AllowAny]
 
@@ -227,17 +424,23 @@ class ForgotPasswordView(APIView):
         email = serializer.validated_data["email"].strip().lower()
         ip_address = get_client_ip(request)
 
+        # Triggers both email token and OTP records for seamless client compatibility
         AuthService.request_password_reset(email=email, ip_address=ip_address)
+        otp_info = AuthService.request_password_reset_otp(identifier=email, ip_address=ip_address)
 
         return api_success(
-            data={"email": mask_email(email)},
-            message="If an account with that email exists and is active, password reset instructions have been sent.",
+            data={
+                "email": mask_email(email),
+                "channel": "email",
+                "otp_dispatched": True,
+            },
+            message="If an account with that email exists and is active, a 6-digit OTP and reset instructions have been sent.",
             status_code=status.HTTP_200_OK,
         )
 
 
 class ResetPasswordView(APIView):
-    """Set new password using a valid cryptographic reset token."""
+    """Set new password using a valid cryptographic reset token or direct OTP verification."""
 
     permission_classes = [AllowAny]
 
@@ -245,7 +448,7 @@ class ResetPasswordView(APIView):
         request=ResetPasswordSerializer,
         responses={
             200: OpenApiResponse(description="Password reset successfully"),
-            400: OpenApiResponse(description="Invalid or expired reset token"),
+            400: OpenApiResponse(description="Invalid or expired reset token/OTP"),
         },
         summary="Complete Password Reset",
         tags=["Authentication"],
@@ -254,11 +457,19 @@ class ResetPasswordView(APIView):
         serializer = ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        token = serializer.validated_data["token"].strip()
+        token = serializer.validated_data.get("token", "").strip()
+        identifier = serializer.validated_data.get("identifier", "").strip()
+        otp = serializer.validated_data.get("otp", "").strip()
         new_password = serializer.validated_data["new_password"]
         ip_address = get_client_ip(request)
 
-        AuthService.reset_password(token=token, new_password=new_password, ip_address=ip_address)
+        AuthService.reset_password_flexible(
+            new_password=new_password,
+            token=token,
+            identifier=identifier,
+            otp=otp,
+            ip_address=ip_address,
+        )
 
         return api_success(
             data={},

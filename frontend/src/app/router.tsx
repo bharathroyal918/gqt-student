@@ -31,6 +31,9 @@ const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType<a
 const StudentLoginPage = lazy(() =>
   import("../pages/auth/StudentLoginPage").then((m) => ({ default: m.StudentLoginPage }))
 );
+const StudentRegisterPage = lazy(() =>
+  import("../pages/auth/StudentRegisterPage").then((m) => ({ default: m.StudentRegisterPage }))
+);
 const AdminLoginPage = lazy(() =>
   import("../pages/auth/AdminLoginPage").then((m) => ({ default: m.AdminLoginPage }))
 );
@@ -182,15 +185,43 @@ export const router = createBrowserRouter([
     path: "/login",
     element: withSuspense(StudentLoginPage),
   },
+  {
+    path: "/student/login",
+    element: withSuspense(StudentLoginPage),
+  },
+
+  // Public Student Registration
+  {
+    path: "/register",
+    element: withSuspense(StudentRegisterPage),
+  },
+  {
+    path: "/student/register",
+    element: withSuspense(StudentRegisterPage),
+  },
 
   // Public Admin Authentication
+  {
+    path: "/admin/login",
+    element: withSuspense(AdminLoginPage),
+  },
   {
     path: "/auth/login",
     element: withSuspense(AdminLoginPage),
   },
+
+  // Password Recovery & OTP Flows
+  {
+    path: "/forgot-password",
+    element: withSuspense(ForgotPasswordPage),
+  },
   {
     path: "/auth/forgot-password",
     element: withSuspense(ForgotPasswordPage),
+  },
+  {
+    path: "/reset-password",
+    element: withSuspense(ResetPasswordPage),
   },
   {
     path: "/auth/reset-password",

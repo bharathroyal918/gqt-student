@@ -141,11 +141,11 @@ export const CoursesPage: React.FC = () => {
           <div>
             <button
               onClick={() => navigate(`/admin/courses/${row.id}`)}
-              className="text-left font-semibold text-white hover:text-brand-400 transition-colors"
+              className="text-left font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               {row.title}
             </button>
-            <div className="text-xs text-slate-400 font-mono mt-0.5">{row.slug}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">{row.slug}</div>
           </div>
         </div>
       ),
@@ -155,12 +155,12 @@ export const CoursesPage: React.FC = () => {
       header: "Modules & Students",
       cell: (row) => (
         <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1.5 text-slate-300">
-            <Layers className="h-4 w-4 text-indigo-400" />
+          <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+            <Layers className="h-4 w-4 text-indigo-500" />
             {row.modules_count} modules
           </span>
-          <span className="flex items-center gap-1.5 text-slate-300">
-            <Users className="h-4 w-4 text-emerald-400" />
+          <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+            <Users className="h-4 w-4 text-emerald-500" />
             {row.enrolled_students_count} students
           </span>
         </div>
@@ -169,7 +169,7 @@ export const CoursesPage: React.FC = () => {
     {
       key: "order",
       header: "Display Order",
-      cell: (row) => <span className="font-mono text-xs text-slate-400">{row.order}</span>,
+      cell: (row) => <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{row.order}</span>,
     },
     {
       key: "status",
@@ -195,7 +195,7 @@ export const CoursesPage: React.FC = () => {
             onClick={() => navigate(`/admin/courses/${row.id}`)}
             title="View Course & Modules"
           >
-            <Eye className="h-4 w-4 text-slate-400 hover:text-white" />
+            <Eye className="h-4 w-4 text-slate-400 hover:text-slate-900 dark:hover:text-white" />
           </Button>
 
           <Button
@@ -204,7 +204,7 @@ export const CoursesPage: React.FC = () => {
             onClick={() => handleOpenEdit(row)}
             title="Edit Course"
           >
-            <Edit2 className="h-4 w-4 text-slate-400 hover:text-brand-400" />
+            <Edit2 className="h-4 w-4 text-slate-400 hover:text-brand-500" />
           </Button>
 
           <Button
@@ -214,9 +214,9 @@ export const CoursesPage: React.FC = () => {
             title={row.is_published ? "Unpublish" : "Publish"}
           >
             {row.is_published ? (
-              <XCircle className="h-4 w-4 text-amber-400 hover:text-amber-300" />
+              <XCircle className="h-4 w-4 text-amber-500 hover:text-amber-600" />
             ) : (
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 hover:text-emerald-300" />
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 hover:text-emerald-600" />
             )}
           </Button>
 
@@ -226,7 +226,7 @@ export const CoursesPage: React.FC = () => {
             onClick={() => setDeletingCourse(row)}
             title="Archive Course"
           >
-            <Trash2 className="h-4 w-4 text-rose-400 hover:text-rose-300" />
+            <Trash2 className="h-4 w-4 text-rose-500 hover:text-rose-600" />
           </Button>
         </div>
       ),
@@ -238,10 +238,10 @@ export const CoursesPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             Course Management
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Build learning curriculum paths, configure modules, prerequisites, and publish tracks.
           </p>
         </div>
@@ -253,7 +253,7 @@ export const CoursesPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-surface-800 bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-xs">
           <SearchInput
             value={search}

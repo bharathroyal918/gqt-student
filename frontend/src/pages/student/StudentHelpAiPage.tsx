@@ -114,14 +114,14 @@ function renderSimpleFormatting(content: string) {
     // Header styling
     if (line.startsWith("### ")) {
       return (
-        <h4 key={idx} className="text-sm font-bold text-white mt-3 mb-1.5 flex items-center gap-1.5">
+        <h4 key={idx} className="text-sm font-bold text-slate-900 dark:text-white mt-3 mb-1.5 flex items-center gap-1.5">
           {line.replace("### ", "")}
         </h4>
       );
     }
     if (line.startsWith("#### ")) {
       return (
-        <h5 key={idx} className="text-xs font-bold text-brand-300 mt-2 mb-1">
+        <h5 key={idx} className="text-xs font-bold text-brand-600 dark:text-brand-300 mt-2 mb-1">
           {line.replace("#### ", "")}
         </h5>
       );
@@ -129,8 +129,8 @@ function renderSimpleFormatting(content: string) {
     // Bullet points
     if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
       return (
-        <div key={idx} className="flex items-start gap-1.5 ml-2 my-0.5 text-slate-300">
-          <span className="text-brand-400 font-bold">•</span>
+        <div key={idx} className="flex items-start gap-1.5 ml-2 my-0.5 text-slate-700 dark:text-slate-300">
+          <span className="text-brand-500 dark:text-brand-400 font-bold">•</span>
           <span>{parseInline(line.trim().substring(2))}</span>
         </div>
       );
@@ -139,8 +139,8 @@ function renderSimpleFormatting(content: string) {
     const numMatch = line.trim().match(/^(\d+)\.\s+(.*)/);
     if (numMatch) {
       return (
-        <div key={idx} className="flex items-start gap-1.5 ml-2 my-0.5 text-slate-300">
-          <span className="text-brand-400 font-semibold">{numMatch[1]}.</span>
+        <div key={idx} className="flex items-start gap-1.5 ml-2 my-0.5 text-slate-700 dark:text-slate-300">
+          <span className="text-brand-500 dark:text-brand-400 font-semibold">{numMatch[1]}.</span>
           <span>{parseInline(numMatch[2])}</span>
         </div>
       );
@@ -151,7 +151,7 @@ function renderSimpleFormatting(content: string) {
     }
 
     return (
-      <p key={idx} className="my-0.5 text-slate-200">
+      <p key={idx} className="my-0.5 text-slate-800 dark:text-slate-200">
         {parseInline(line)}
       </p>
     );
@@ -174,14 +174,14 @@ function parseInline(text: string) {
       parts.push(
         <code
           key={`code-${match.index}`}
-          className="bg-surface-800 text-brand-300 px-1.5 py-0.5 rounded text-[11px] font-mono border border-surface-700"
+          className="bg-slate-100 dark:bg-surface-800 text-brand-600 dark:text-brand-300 px-1.5 py-0.5 rounded text-[11px] font-mono border border-slate-200 dark:border-surface-700"
         >
           {token.slice(1, -1)}
         </code>
       );
     } else if (token.startsWith("**") && token.endsWith("**")) {
       parts.push(
-        <strong key={`bold-${match.index}`} className="font-semibold text-white">
+        <strong key={`bold-${match.index}`} className="font-semibold text-slate-900 dark:text-white">
           {token.slice(2, -2)}
         </strong>
       );
@@ -372,11 +372,11 @@ export const StudentHelpAiPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-brand-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-brand-500" />
             AI Learning Mentor
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             24/7 intelligent tutoring, algorithmic hints, code debugging, and syntax explanations.
           </p>
         </div>
@@ -388,7 +388,7 @@ export const StudentHelpAiPage: React.FC = () => {
       {/* Main Container: Sidebar + Chat Area */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 min-h-0">
         {/* Left Column: Conversation Sessions Sidebar (3.5 cols) */}
-        <Card className="md:col-span-4 flex flex-col p-3 h-full border-surface-800 bg-surface-900/60 overflow-hidden">
+        <Card className="md:col-span-4 flex flex-col p-3 h-full border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 overflow-hidden">
           <div className="flex items-center justify-between gap-2 mb-3">
             <Button
               variant="primary"
@@ -404,33 +404,33 @@ export const StudentHelpAiPage: React.FC = () => {
 
           {/* Search bar */}
           <div className="relative mb-3">
-            <Search className="h-3.5 w-3.5 absolute left-2.5 top-2.5 text-slate-500" />
+            <Search className="h-3.5 w-3.5 absolute left-2.5 top-2.5 text-slate-400" />
             <input
               type="text"
               placeholder="Filter history..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-surface-950/80 border border-surface-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500"
+              className="w-full bg-slate-50 dark:bg-surface-950/80 border border-slate-200 dark:border-surface-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-brand-500"
             />
           </div>
 
           {/* Sessions List */}
           <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
             {isListLoading ? (
-              <div className="text-center py-8 text-xs text-slate-400">Loading consultations...</div>
+              <div className="text-center py-8 text-xs text-slate-500">Loading consultations...</div>
             ) : isListError ? (
-              <div className="p-3 text-center text-xs text-rose-400">
+              <div className="p-3 text-center text-xs text-rose-500">
                 Failed to load history.
                 <button
                   onClick={() => refetchList()}
-                  className="underline ml-1 text-brand-400 hover:text-brand-300"
+                  className="underline ml-1 text-brand-600 dark:text-brand-400 hover:text-brand-700"
                 >
                   Retry
                 </button>
               </div>
             ) : filteredConversations.length === 0 ? (
-              <div className="text-center py-10 px-3 text-xs text-slate-500">
-                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-slate-600 opacity-60" />
+              <div className="text-center py-10 px-3 text-xs text-slate-400">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-slate-400 opacity-60" />
                 No consultation history found. Start a new session above!
               </div>
             ) : (
@@ -442,19 +442,19 @@ export const StudentHelpAiPage: React.FC = () => {
                     onClick={() => setSelectedConvId(conv.id)}
                     className={`group relative flex items-center justify-between p-2.5 rounded-xl text-left cursor-pointer transition-all border ${
                       isSelected
-                        ? "bg-brand-950/40 border-brand-500/50 text-white shadow-sm"
-                        : "bg-surface-800/40 border-surface-700/40 text-slate-300 hover:bg-surface-800/80 hover:border-surface-600"
+                        ? "bg-brand-50 dark:bg-brand-950/40 border-brand-500/50 text-slate-900 dark:text-white shadow-sm"
+                        : "bg-slate-50 dark:bg-surface-800/40 border-slate-200 dark:border-surface-700/40 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-800/80 hover:border-slate-300 dark:hover:border-surface-600"
                     }`}
                   >
                     <div className="flex items-start gap-2.5 min-w-0 pr-2">
                       <Code2
                         className={`h-4 w-4 shrink-0 mt-0.5 ${
-                          isSelected ? "text-brand-400" : "text-slate-500 group-hover:text-slate-400"
+                          isSelected ? "text-brand-500" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-400"
                         }`}
                       />
                       <div className="min-w-0">
                         <div className="text-xs font-semibold truncate">{conv.title}</div>
-                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                           {conv.last_message_preview || "No messages yet"}
                         </div>
                       </div>
@@ -467,7 +467,7 @@ export const StudentHelpAiPage: React.FC = () => {
                           archiveMutation.mutate(conv.id);
                         }
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 p-1 rounded transition-opacity"
+                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 p-1 rounded transition-opacity"
                       title="Archive session"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -480,19 +480,19 @@ export const StudentHelpAiPage: React.FC = () => {
         </Card>
 
         {/* Right Column: Chat History & Input Area (8 cols) */}
-        <Card className="md:col-span-8 flex flex-col p-4 h-full border-surface-800 bg-surface-900/60 overflow-hidden">
+        <Card className="md:col-span-8 flex flex-col p-4 h-full border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 overflow-hidden">
           {/* Active Conversation Top Banner */}
-          <div className="flex items-center justify-between border-b border-surface-800 pb-3 mb-3">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-surface-800 pb-3 mb-3">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-brand-900/40 border border-brand-700/50 flex items-center justify-center text-brand-400">
+              <div className="h-8 w-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500">
                 <Bot className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {activeConversation?.title || "AI Consultation"}
                 </h3>
                 {activeConversation?.context_question_title && (
-                  <span className="text-[11px] text-brand-400 flex items-center gap-1">
+                  <span className="text-[11px] text-brand-600 dark:text-brand-400 flex items-center gap-1">
                     <Lightbulb className="h-3 w-3" /> Question:{" "}
                     {activeConversation.context_question_title}
                   </span>
@@ -504,7 +504,7 @@ export const StudentHelpAiPage: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs text-slate-400 hover:text-white"
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 onClick={() => retryMutation.mutate()}
                 disabled={isGenerating || (activeConversation?.messages?.length || 0) === 0}
                 title="Regenerate last answer"
@@ -517,14 +517,14 @@ export const StudentHelpAiPage: React.FC = () => {
 
           {/* Error Banner */}
           {errorBanner && (
-            <div className="mb-3 p-2.5 bg-rose-950/60 border border-rose-800/80 rounded-xl text-rose-300 text-xs flex items-center justify-between gap-2">
+            <div className="mb-3 p-2.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+                <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
                 <span>{errorBanner}</span>
               </div>
               <button
                 onClick={() => setErrorBanner(null)}
-                className="text-rose-400 hover:text-rose-200 text-xs px-2 py-0.5 rounded"
+                className="text-rose-500 hover:text-rose-700 text-xs px-2 py-0.5 rounded"
               >
                 Dismiss
               </button>
@@ -534,17 +534,17 @@ export const StudentHelpAiPage: React.FC = () => {
           {/* Messages Scroll Area */}
           <div className="flex-1 overflow-y-auto space-y-4 pr-2">
             {isConvLoading ? (
-              <div className="flex items-center justify-center h-full text-xs text-slate-400">
+              <div className="flex items-center justify-center h-full text-xs text-slate-500">
                 Loading session messages...
               </div>
             ) : !activeConversation || activeConversation.messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-4">
-                <div className="h-12 w-12 rounded-2xl bg-brand-900/30 border border-brand-700/40 flex items-center justify-center text-brand-400 shadow-inner">
+                <div className="h-12 w-12 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 shadow-inner">
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">How can I help you today?</h3>
-                  <p className="text-xs text-slate-400 max-w-md mt-1">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">How can I help you today?</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mt-1">
                     Ask any question regarding programming, debugging exceptions, OOP concepts, or
                     algorithmic problem-solving.
                   </p>
@@ -557,9 +557,9 @@ export const StudentHelpAiPage: React.FC = () => {
                       key={idx}
                       onClick={() => handleStartWithPrompt(q)}
                       disabled={isGenerating}
-                      className="text-left text-[11px] p-2.5 rounded-xl bg-surface-800/50 hover:bg-surface-800 border border-surface-700/60 text-slate-300 hover:text-white transition-all flex items-start gap-2 group"
+                      className="text-left text-[11px] p-2.5 rounded-xl bg-slate-50 dark:bg-surface-800/50 hover:bg-slate-100 dark:hover:bg-surface-800 border border-slate-200 dark:border-surface-700/60 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-start gap-2 group"
                     >
-                      <Lightbulb className="h-3.5 w-3.5 text-brand-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                      <Lightbulb className="h-3.5 w-3.5 text-brand-500 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                       <span className="line-clamp-2">{q}</span>
                     </button>
                   ))}
@@ -579,7 +579,7 @@ export const StudentHelpAiPage: React.FC = () => {
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold shadow-sm ${
                         isStudent
                           ? "bg-brand-600 text-white"
-                          : "bg-surface-800 text-brand-400 border border-surface-700"
+                          : "bg-slate-100 dark:bg-surface-800 text-brand-600 dark:text-brand-400 border border-slate-200 dark:border-surface-700"
                       }`}
                     >
                       {isStudent ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -589,7 +589,7 @@ export const StudentHelpAiPage: React.FC = () => {
                       className={`rounded-2xl p-4 text-xs max-w-2xl leading-relaxed shadow-sm ${
                         isStudent
                           ? "bg-brand-600 text-white rounded-tr-none"
-                          : "bg-surface-900 border border-surface-800 text-slate-200 rounded-tl-none"
+                          : "bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-surface-800 text-slate-800 dark:text-slate-200 rounded-tl-none"
                       }`}
                     >
                       {isStudent ? (
@@ -606,22 +606,22 @@ export const StudentHelpAiPage: React.FC = () => {
             {/* Typing Indicator */}
             {isGenerating && (
               <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface-800 text-brand-400 border border-surface-700">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-surface-800 text-brand-600 dark:text-brand-400 border border-slate-200 dark:border-surface-700">
                   <Bot className="h-4 w-4" />
                 </div>
-                <div className="rounded-2xl rounded-tl-none p-3.5 bg-surface-900 border border-surface-800 text-slate-400 text-xs flex items-center gap-2">
+                <div className="rounded-2xl rounded-tl-none p-3.5 bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-surface-800 text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2">
                   <span className="flex gap-1">
-                    <span className="h-2 w-2 rounded-full bg-brand-400 animate-bounce" />
+                    <span className="h-2 w-2 rounded-full bg-brand-500 animate-bounce" />
                     <span
-                      className="h-2 w-2 rounded-full bg-brand-400 animate-bounce"
+                      className="h-2 w-2 rounded-full bg-brand-500 animate-bounce"
                       style={{ animationDelay: "0.2s" }}
                     />
                     <span
-                      className="h-2 w-2 rounded-full bg-brand-400 animate-bounce"
+                      className="h-2 w-2 rounded-full bg-brand-500 animate-bounce"
                       style={{ animationDelay: "0.4s" }}
                     />
                   </span>
-                  <span className="text-[11px] text-slate-400">Mentor is analyzing...</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Mentor is analyzing...</span>
                 </div>
               </div>
             )}
@@ -630,7 +630,7 @@ export const StudentHelpAiPage: React.FC = () => {
           </div>
 
           {/* Bottom Input Form */}
-          <form onSubmit={handleSendMessage} className="mt-3 pt-3 border-t border-surface-800 flex gap-2">
+          <form onSubmit={handleSendMessage} className="mt-3 pt-3 border-t border-slate-200 dark:border-surface-800 flex gap-2">
             <div className="relative flex-1">
               <textarea
                 value={inputVal}
@@ -644,7 +644,7 @@ export const StudentHelpAiPage: React.FC = () => {
                 placeholder="Ask about Python code, error debugging, OOP concepts, or algorithms (Press Enter to send)..."
                 rows={1}
                 disabled={isGenerating}
-                className="w-full bg-surface-950 border border-surface-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-none min-h-[42px] max-h-[120px]"
+                className="w-full bg-slate-50 dark:bg-surface-950 border border-slate-200 dark:border-surface-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-none min-h-[42px] max-h-[120px]"
               />
             </div>
             <Button

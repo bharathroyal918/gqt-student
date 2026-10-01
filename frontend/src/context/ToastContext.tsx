@@ -51,17 +51,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const info = useCallback((title: string, message?: string) => toast({ type: "info", title, message }), [toast]);
 
   const icons = {
-    success: <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />,
-    error: <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />,
-    warning: <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />,
-    info: <Info className="h-5 w-5 text-cyan-400 shrink-0" />,
+    success: <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />,
+    error: <AlertCircle className="h-5 w-5 text-rose-500 shrink-0" />,
+    warning: <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />,
+    info: <Info className="h-5 w-5 text-brand-500 shrink-0" />,
   };
 
   const borders = {
-    success: "border-emerald-500/30 bg-emerald-950/40 text-emerald-100",
-    error: "border-rose-500/30 bg-rose-950/40 text-rose-100",
-    warning: "border-amber-500/30 bg-amber-950/40 text-amber-100",
-    info: "border-cyan-500/30 bg-cyan-950/40 text-cyan-100",
+    success: "border-emerald-500/30 bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100",
+    error: "border-rose-500/30 bg-rose-50/90 dark:bg-rose-950/40 text-rose-900 dark:text-rose-100",
+    warning: "border-amber-500/30 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-100",
+    info: "border-brand-500/30 bg-blue-50/90 dark:bg-brand-950/40 text-brand-900 dark:text-brand-100",
   };
 
   return (
@@ -75,16 +75,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-              className={`pointer-events-auto flex items-start gap-3 rounded-xl border p-4 shadow-xl backdrop-blur-md ${borders[t.type]} bg-surface-900/90 dark:bg-surface-900/90 text-slate-100`}
+              className={`pointer-events-auto flex items-start gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md ${borders[t.type]} bg-white dark:bg-surface-900 text-slate-900 dark:text-slate-100`}
             >
               {icons[t.type]}
               <div className="flex-1 text-sm">
-                <p className="font-semibold text-white">{t.title}</p>
-                {t.message && <p className="mt-0.5 text-xs text-slate-300 leading-relaxed">{t.message}</p>}
+                <p className="font-semibold text-slate-900 dark:text-white">{t.title}</p>
+                {t.message && <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{t.message}</p>}
               </div>
               <button
                 onClick={() => removeToast(t.id)}
-                className="text-slate-400 hover:text-white transition-colors p-1"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1"
                 aria-label="Close notification"
               >
                 <X className="h-4 w-4" />
@@ -104,3 +104,4 @@ export const useToast = () => {
   }
   return context;
 };
+

@@ -127,8 +127,8 @@ export const TasksPage: React.FC = () => {
             <CalendarCheck className="h-5 w-5" />
           </div>
           <div>
-            <div className="font-semibold text-white">{row.title}</div>
-            <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">{row.description}</div>
+            <div className="font-semibold text-slate-900 dark:text-white">{row.title}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{row.description}</div>
           </div>
         </div>
       ),
@@ -137,8 +137,8 @@ export const TasksPage: React.FC = () => {
       key: "date",
       header: "Scheduled Date",
       cell: (row) => (
-        <div className="flex items-center gap-1.5 text-xs text-slate-300">
-          <Calendar className="h-3.5 w-3.5 text-indigo-400" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+          <Calendar className="h-3.5 w-3.5 text-indigo-500" />
           <span>{row.scheduled_date}</span>
         </div>
       ),
@@ -149,12 +149,12 @@ export const TasksPage: React.FC = () => {
       cell: (row) => (
         <div className="text-xs">
           {row.question_title ? (
-            <span className="flex items-center gap-1 text-brand-300 font-medium">
-              <Code2 className="h-3.5 w-3.5 text-brand-400" />
+            <span className="flex items-center gap-1 text-brand-600 dark:text-brand-300 font-medium">
+              <Code2 className="h-3.5 w-3.5 text-brand-500" />
               {row.question_title}
             </span>
           ) : (
-            <span className="text-slate-500">Standalone Practice</span>
+            <span className="text-slate-400 dark:text-slate-500">Standalone Practice</span>
           )}
         </div>
       ),
@@ -162,7 +162,7 @@ export const TasksPage: React.FC = () => {
     {
       key: "points",
       header: "Points",
-      cell: (row) => <span className="font-semibold text-amber-400 text-xs">{row.points} pts</span>,
+      cell: (row) => <span className="font-semibold text-amber-500 text-xs">{row.points} pts</span>,
     },
     {
       key: "status",
@@ -183,10 +183,10 @@ export const TasksPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center justify-end gap-1.5">
           <Button size="sm" variant="ghost" onClick={() => handleOpenEdit(row)} title="Edit Task">
-            <Edit2 className="h-4 w-4 text-slate-400 hover:text-brand-400" />
+            <Edit2 className="h-4 w-4 text-slate-400 hover:text-brand-500" />
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setDeletingTask(row)} title="Delete Task">
-            <Trash2 className="h-4 w-4 text-rose-400 hover:text-rose-300" />
+            <Trash2 className="h-4 w-4 text-rose-500 hover:text-rose-600" />
           </Button>
         </div>
       ),
@@ -198,10 +198,10 @@ export const TasksPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             Daily Practice Tasks
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Schedule calendar-driven daily practice problems to drive student learning consistency and streaks.
           </p>
         </div>
@@ -218,7 +218,7 @@ export const TasksPage: React.FC = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-surface-800 bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-xs">
           <SearchInput
             value={search}

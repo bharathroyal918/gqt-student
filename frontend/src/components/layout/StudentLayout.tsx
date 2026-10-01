@@ -23,7 +23,7 @@ export const StudentLayout: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-surface-950 font-sans text-slate-100">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-surface-950 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Sidebar (Desktop + Mobile Drawer) */}
       <StudentSidebar
         isOpen={isMobileSidebarOpen}
@@ -41,7 +41,7 @@ export const StudentLayout: React.FC = () => {
         {/* Mobile Bottom Navigation Bar (Visible only on small screens) */}
         <nav
           aria-label="Mobile Navigation"
-          className="fixed bottom-0 inset-x-0 z-30 border-t border-surface-800 bg-surface-950/95 px-3 py-2 backdrop-blur-lg lg:hidden flex items-center justify-around"
+          className="fixed bottom-0 inset-x-0 z-30 border-t border-slate-200 dark:border-surface-800 bg-white/95 dark:bg-surface-950/95 px-3 py-2 backdrop-blur-lg lg:hidden flex items-center justify-around transition-colors"
         >
           {mobileBarItems.map((item) => {
             const Icon = item.icon;
@@ -52,8 +52,8 @@ export const StudentLayout: React.FC = () => {
                 className={({ isActive }) =>
                   `flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-medium transition-all ${
                     isActive
-                      ? "text-brand-400 font-semibold"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "text-brand-600 dark:text-brand-400 font-semibold"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   }`
                 }
               >

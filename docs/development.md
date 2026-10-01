@@ -28,13 +28,14 @@ source .venv/bin/activate
 # 3. Install development dependencies
 pip install -r requirements/local.txt
 
-# 4. Copy the environment configuration
+# 4. Copy the environment configuration and add your Supabase credentials
 cp ../.env.example .env
+# Set DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require
 
-# 5. Start required background services via Docker Compose
-docker compose -f ../infrastructure/docker-compose.dev.yml up -d postgres redis
+# 5. Start required background services via Docker Compose (Redis for cache/Celery)
+docker compose -f ../infrastructure/docker-compose.dev.yml up -d redis
 
-# 6. Apply database migrations
+# 6. Apply database migrations to Supabase
 python manage.py migrate
 
 # 7. Start the development server

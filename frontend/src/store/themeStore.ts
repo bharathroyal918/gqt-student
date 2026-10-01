@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type Theme = "dark" | "light";
+export type Theme = "dark" | "light";
 
 interface ThemeState {
   theme: Theme;
@@ -8,35 +8,44 @@ interface ThemeState {
   setTheme: (theme: Theme) => void;
 }
 
+const applyThemeToDOM = (theme: Theme) => {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  if (theme === "dark") {
+    root.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+  }
+};
+
 const getInitialTheme = (): Theme => {
+  if (typeof window === "undefined") return "dark";
   const saved = localStorage.getItem("gqt_theme");
   if (saved === "light" || saved === "dark") {
     return saved;
   }
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
 };
 
+// Initialize DOM immediately
+const initialTheme = getInitialTheme();
+applyThemeToDOM(initialTheme);
+
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  theme: getInitialTheme(),
+  theme: initialTheme,
 
   toggleTheme: () => {
     const nextTheme = get().theme === "dark" ? "light" : "dark";
     localStorage.setItem("gqt_theme", nextTheme);
-    if (nextTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    applyThemeToDOM(nextTheme);
     set({ theme: nextTheme });
   },
 
   setTheme: (theme: Theme) => {
     localStorage.setItem("gqt_theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    applyThemeToDOM(theme);
     set({ theme });
   },
 }));

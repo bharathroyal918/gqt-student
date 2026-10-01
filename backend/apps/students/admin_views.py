@@ -13,6 +13,8 @@ from apps.common.responses import api_success
 from apps.common.utils import get_client_ip
 from apps.students.admin_serializers import (
     AssignCoursesSerializer,
+    GrantAccessByEmailSerializer,
+    MarkAttendanceSerializer,
     StudentAdminDetailSerializer,
     StudentAdminListSerializer,
     StudentAdminUpdateSerializer,
@@ -201,4 +203,122 @@ class StudentAdminRankView(APIView):
         return api_success(
             data=rank_data,
             message="Student rank metrics retrieved successfully.",
+        )
+
+
+class StudentAdminGrantAccessView(APIView):
+    """Admin endpoint to grant full portal and course access to a specific student."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        responses={200: StudentAdminDetailSerializer},
+        summary="Admin Grant Student Access",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request, pk):
+        ip_address = get_client_ip(request)
+        student = StudentAdminService.grant_student_access(
+            student_id=str(pk), admin_user=request.user, ip_address=ip_address
+        )
+        return api_success(
+            data=StudentAdminDetailSerializer(student).data,
+            message=f"Access successfully granted for {student.full_name}.",
+        )
+
+
+class StudentAdminRevokeAccessView(APIView):
+    """Admin endpoint to suspend/revoke portal access for a specific student."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        responses={200: StudentAdminDetailSerializer},
+        summary="Admin Revoke Student Access",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request, pk):
+        ip_address = get_client_ip(request)
+        student = StudentAdminService.revoke_student_access(
+            student_id=str(pk), admin_user=request.user, ip_address=ip_address
+        )
+        return api_success(
+            data=StudentAdminDetailSerializer(student).data,
+            message=f"Access suspended for {student.full_name}.",
+        )
+
+
+class StudentAdminGrantAccessByEmailView(APIView):
+    """Admin grants access to a student by entering their registered institutional email."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        request=GrantAccessByEmailSerializer,
+        responses={200: StudentAdminDetailSerializer},
+        summary="Admin Authorize Student by Email",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request):
+        serializer = GrantAccessByEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip_address = get_client_ip(request)
+
+        student = StudentAdminService.grant_access_by_email(
+            email=serializer.validated_data["email"],
+            course_opted=serializer.validated_data.get("course_opted", "Full Stack Software & Assessment Track"),
+            batch_code=serializer.validated_data.get("batch_code", "BATCH-2026-A"),
+            admin_user=request.user,
+            ip_address=ip_address,
+        )
+        return api_success(
+            data=StudentAdminDetailSerializer(student).data,
+            message=f"Access successfully authorized for email {serializer.validated_data['email']}.",
+        )
+
+
+class StudentAdminAttendanceView(APIView):
+    """Admin retrieves student attendance records or marks a new session attendance."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        summary="Admin View Student Attendance",
+        tags=["Admin Student Management"],
+    )
+    def get(self, request, pk):
+        attendance_data = StudentAdminService.get_student_attendance(str(pk))
+        return api_success(
+            data=attendance_data,
+            message="Student attendance retrieved successfully.",
+        )
+
+    @extend_schema(
+        request=MarkAttendanceSerializer,
+        summary="Admin Mark Student Attendance",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request, pk):
+        serializer = MarkAttendanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip_address = get_client_ip(request)
+
+        record = StudentAdminService.mark_attendance(
+            student_id=str(pk),
+            date=serializer.validated_data["date"],
+            status=serializer.validated_data["status"],
+            session_title=serializer.validated_data.get("session_title", "Daily Training & Coding Lab"),
+            remarks=serializer.validated_data.get("remarks", ""),
+            admin_user=request.user,
+            ip_address=ip_address,
+        )
+        return api_success(
+            data={
+                "id": str(record.id),
+                "date": str(record.date),
+                "status": record.status,
+                "session_title": record.session_title,
+            },
+            message="Attendance recorded successfully.",
+            status_code=status.HTTP_201_CREATED,
         )

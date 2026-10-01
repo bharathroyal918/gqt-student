@@ -167,11 +167,11 @@ export const StudentNotificationsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Bell className="h-6 w-6 text-brand-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Bell className="h-6 w-6 text-brand-500" />
             Notifications & Announcements
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
             Real-time curriculum alerts, grading results, deadline reminders, and cohort updates.
           </p>
         </div>
@@ -184,24 +184,24 @@ export const StudentNotificationsPage: React.FC = () => {
             disabled={markAllReadMutation.isPending}
             className="flex items-center gap-2 self-start sm:self-auto text-xs"
           >
-            <CheckCheck className="h-4 w-4 text-brand-400" />
+            <CheckCheck className="h-4 w-4 text-brand-500" />
             <span>Mark all as read ({unreadCount})</span>
           </Button>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-surface-800 text-xs">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 dark:border-surface-800 text-xs">
         <button
           onClick={() => setActiveTab("all")}
           className={`px-3 py-2 rounded-xl font-medium transition-all shrink-0 flex items-center gap-1.5 ${
             activeTab === "all"
-              ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
-              : "text-slate-400 hover:text-white hover:bg-surface-800"
+              ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/25 font-semibold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-800"
           }`}
         >
           <span>All Alerts</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-800 text-slate-300">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-surface-800 text-slate-700 dark:text-slate-300">
             {notifications.length}
           </span>
         </button>
@@ -210,8 +210,8 @@ export const StudentNotificationsPage: React.FC = () => {
           onClick={() => setActiveTab("unread")}
           className={`px-3 py-2 rounded-xl font-medium transition-all shrink-0 flex items-center gap-1.5 ${
             activeTab === "unread"
-              ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
-              : "text-slate-400 hover:text-white hover:bg-surface-800"
+              ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/25 font-semibold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-800"
           }`}
         >
           <span>Unread</span>
@@ -226,13 +226,13 @@ export const StudentNotificationsPage: React.FC = () => {
           onClick={() => setActiveTab("announcements")}
           className={`px-3 py-2 rounded-xl font-medium transition-all shrink-0 flex items-center gap-1.5 ${
             activeTab === "announcements"
-              ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
-              : "text-slate-400 hover:text-white hover:bg-surface-800"
+              ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/25 font-semibold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-800"
           }`}
         >
-          <Megaphone className="h-3.5 w-3.5 text-amber-400" />
+          <Megaphone className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
           <span>Announcements</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-800 text-slate-300">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-surface-800 text-slate-700 dark:text-slate-300">
             {announcements.length}
           </span>
         </button>
@@ -241,11 +241,11 @@ export const StudentNotificationsPage: React.FC = () => {
           onClick={() => setActiveTab("tasks")}
           className={`px-3 py-2 rounded-xl font-medium transition-all shrink-0 flex items-center gap-1.5 ${
             activeTab === "tasks"
-              ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
-              : "text-slate-400 hover:text-white hover:bg-surface-800"
+              ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/25 font-semibold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-800"
           }`}
         >
-          <Clock className="h-3.5 w-3.5 text-amber-400" />
+          <Clock className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
           <span>Deadlines & Tasks</span>
         </button>
 
@@ -253,11 +253,11 @@ export const StudentNotificationsPage: React.FC = () => {
           onClick={() => setActiveTab("projects")}
           className={`px-3 py-2 rounded-xl font-medium transition-all shrink-0 flex items-center gap-1.5 ${
             activeTab === "projects"
-              ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
-              : "text-slate-400 hover:text-white hover:bg-surface-800"
+              ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/25 font-semibold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-800"
           }`}
         >
-          <FileCheck className="h-3.5 w-3.5 text-emerald-400" />
+          <FileCheck className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
           <span>Grades & Projects</span>
         </button>
 
@@ -265,11 +265,11 @@ export const StudentNotificationsPage: React.FC = () => {
           onClick={() => setActiveTab("achievements")}
           className={`px-3 py-2 rounded-xl font-medium transition-all shrink-0 flex items-center gap-1.5 ${
             activeTab === "achievements"
-              ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
-              : "text-slate-400 hover:text-white hover:bg-surface-800"
+              ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/25 font-semibold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-800"
           }`}
         >
-          <Award className="h-3.5 w-3.5 text-purple-400" />
+          <Award className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400" />
           <span>Achievements</span>
         </button>
       </div>
@@ -279,10 +279,10 @@ export const StudentNotificationsPage: React.FC = () => {
         // Institutional Announcements Feed
         <div className="space-y-4">
           {isAnnouncementsLoading ? (
-            <div className="py-12 text-center text-xs text-slate-400">Loading announcements...</div>
+            <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">Loading announcements...</div>
           ) : announcements.length === 0 ? (
             <EmptyState
-              icon={<Megaphone className="h-10 w-10 text-slate-500" />}
+              icon={<Megaphone className="h-10 w-10 text-slate-400 dark:text-slate-500" />}
               title="No Broadcast Announcements"
               description="There are currently no institution-wide or cohort announcements."
             />
@@ -290,26 +290,26 @@ export const StudentNotificationsPage: React.FC = () => {
             announcements.map((ann: StudentAnnouncementItem) => (
               <Card
                 key={ann.id}
-                className="p-5 border-surface-800 bg-surface-900/70 hover:border-surface-700 transition-colors"
+                className="p-5 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/70 hover:border-slate-300 dark:hover:border-surface-700 transition-colors shadow-sm"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     <Megaphone className="h-5 w-5" />
                   </div>
                   <div className="space-y-2 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="font-bold text-white text-base leading-tight">{ann.title}</h3>
+                      <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">{ann.title}</h3>
                       {getPriorityBadge(ann.priority)}
                     </div>
-                    <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
                       {ann.content}
                     </p>
-                    <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 pt-2 border-t border-surface-800/80">
+                    <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-surface-800/80">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-slate-400" />
                         <span>Published {formatTimestamp(ann.published_at || ann.created_at)}</span>
                       </span>
-                      <span className="text-slate-600">•</span>
+                      <span className="text-slate-300 dark:text-slate-600">•</span>
                       <span>By {ann.published_by_name}</span>
                     </div>
                   </div>
@@ -322,10 +322,10 @@ export const StudentNotificationsPage: React.FC = () => {
         // In-App Notifications Feed
         <div className="space-y-3">
           {isNotifLoading ? (
-            <div className="py-12 text-center text-xs text-slate-400">Loading notifications...</div>
+            <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">Loading notifications...</div>
           ) : filteredNotifications.length === 0 ? (
             <EmptyState
-              icon={<CheckCircle2 className="h-10 w-10 text-emerald-400" />}
+              icon={<CheckCircle2 className="h-10 w-10 text-emerald-500 dark:text-emerald-400" />}
               title="All Caught Up!"
               description={
                 activeTab === "unread"
@@ -341,8 +341,8 @@ export const StudentNotificationsPage: React.FC = () => {
                   key={notif.id}
                   className={`p-4 transition-all border ${
                     isUnread
-                      ? "bg-surface-900 border-brand-500/30 shadow-sm"
-                      : "bg-surface-900/40 border-surface-800/80 text-slate-400"
+                      ? "bg-brand-50/50 dark:bg-surface-900 border-brand-200 dark:border-brand-500/30 shadow-sm"
+                      : "bg-white dark:bg-surface-900/40 border-slate-200 dark:border-surface-800/80 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -350,8 +350,8 @@ export const StudentNotificationsPage: React.FC = () => {
                       <div
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
                           isUnread
-                            ? "bg-surface-800 border-surface-700"
-                            : "bg-surface-850 border-surface-800 opacity-70"
+                            ? "bg-brand-100/50 dark:bg-surface-800 border-brand-200 dark:border-surface-700 text-brand-600 dark:text-brand-400"
+                            : "bg-slate-100 dark:bg-surface-850 border-slate-200 dark:border-surface-800 text-slate-500 opacity-80"
                         }`}
                       >
                         {getNotificationIcon(notif.notification_type)}
@@ -360,28 +360,28 @@ export const StudentNotificationsPage: React.FC = () => {
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4
-                            className={`text-xs sm:text-sm font-semibold truncate ${
-                              isUnread ? "text-white font-bold" : "text-slate-300"
+                            className={`text-xs sm:text-sm truncate ${
+                              isUnread ? "text-slate-900 dark:text-white font-bold" : "text-slate-700 dark:text-slate-300 font-medium"
                             }`}
                           >
                             {notif.title}
                           </h4>
                           {isUnread && (
-                            <span className="h-2 w-2 rounded-full bg-brand-400 shrink-0" title="Unread" />
+                            <span className="h-2 w-2 rounded-full bg-brand-500 shrink-0" title="Unread" />
                           )}
                         </div>
 
-                        <p className="text-xs text-slate-300 leading-relaxed">{notif.body}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{notif.body}</p>
 
-                        <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-500">
+                        <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-400 dark:text-slate-500">
                           <span>{formatTimestamp(notif.created_at)}</span>
-                          <span className="text-slate-700">•</span>
-                          <span className="text-slate-400">{notif.notification_type_display}</span>
+                          <span className="text-slate-300 dark:text-slate-700">•</span>
+                          <span>{notif.notification_type_display}</span>
 
                           {notif.action_url && (
                             <Link
                               to={notif.action_url}
-                              className="flex items-center gap-1 text-brand-400 hover:text-brand-300 font-medium ml-2"
+                              className="flex items-center gap-1 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium ml-2"
                             >
                               <span>View details</span>
                               <ExternalLink className="h-3 w-3" />
@@ -396,7 +396,7 @@ export const StudentNotificationsPage: React.FC = () => {
                       {isUnread && (
                         <button
                           onClick={() => markReadMutation.mutate(notif.id)}
-                          className="text-slate-400 hover:text-brand-400 p-1.5 rounded-lg hover:bg-surface-800 transition-colors"
+                          className="text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-surface-800 transition-colors"
                           title="Mark as read"
                         >
                           <CheckCheck className="h-4 w-4" />
@@ -404,7 +404,7 @@ export const StudentNotificationsPage: React.FC = () => {
                       )}
                       <button
                         onClick={() => deleteMutation.mutate(notif.id)}
-                        className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-surface-800 transition-colors"
+                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-surface-800 transition-colors"
                         title="Dismiss alert"
                       >
                         <Trash2 className="h-4 w-4" />

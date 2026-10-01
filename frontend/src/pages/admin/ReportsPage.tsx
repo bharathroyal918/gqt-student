@@ -146,11 +146,11 @@ export const ReportsPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <FileSpreadsheet className="h-6 w-6 text-brand-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <FileSpreadsheet className="h-6 w-6 text-brand-500 dark:text-brand-400" />
             Executive Reports & Exports
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Compile aggregated cohort data, curriculum completion stats, and dispatch asynchronous exports.
           </p>
         </div>
@@ -162,7 +162,7 @@ export const ReportsPage: React.FC = () => {
             onClick={() => setShowExportsDrawer(true)}
             className="flex items-center gap-1.5"
           >
-            <Clock className="h-4 w-4 text-brand-400" />
+            <Clock className="h-4 w-4 text-brand-500 dark:text-brand-400" />
             Export Jobs ({exportJobs.length})
           </Button>
           <Button
@@ -191,13 +191,13 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-surface-800 overflow-x-auto">
+      <div className="flex border-b border-slate-200 dark:border-surface-800 overflow-x-auto">
         <button
           onClick={() => setReportType("performance")}
           className={`px-5 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
             reportType === "performance"
-              ? "border-brand-500 text-brand-400 font-semibold"
-              : "border-transparent text-slate-400 hover:text-white"
+              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+              : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Cohort Performance
@@ -206,8 +206,8 @@ export const ReportsPage: React.FC = () => {
           onClick={() => setReportType("completion")}
           className={`px-5 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
             reportType === "completion"
-              ? "border-brand-500 text-brand-400 font-semibold"
-              : "border-transparent text-slate-400 hover:text-white"
+              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+              : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Curriculum Track Completion
@@ -216,8 +216,8 @@ export const ReportsPage: React.FC = () => {
           onClick={() => setReportType("assignment")}
           className={`px-5 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
             reportType === "assignment"
-              ? "border-brand-500 text-brand-400 font-semibold"
-              : "border-transparent text-slate-400 hover:text-white"
+              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+              : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Assignment Solve Rates
@@ -226,8 +226,8 @@ export const ReportsPage: React.FC = () => {
           onClick={() => setReportType("project")}
           className={`px-5 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
             reportType === "project"
-              ? "border-brand-500 text-brand-400 font-semibold"
-              : "border-transparent text-slate-400 hover:text-white"
+              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+              : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Capstone Evaluations
@@ -236,8 +236,8 @@ export const ReportsPage: React.FC = () => {
           onClick={() => setReportType("monthly")}
           className={`px-5 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
             reportType === "monthly"
-              ? "border-brand-500 text-brand-400 font-semibold"
-              : "border-transparent text-slate-400 hover:text-white"
+              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+              : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Time Series Activity
@@ -274,34 +274,34 @@ export const ReportsPage: React.FC = () => {
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <Card className="p-4">
-                  <div className="text-xs text-slate-400">Total Enrolled Cohort</div>
-                  <div className="text-2xl font-bold text-white mt-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Total Enrolled Cohort</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                     {perfReport.total_students} students
                   </div>
                 </Card>
                 <Card className="p-4">
-                  <div className="text-xs text-slate-400">Average Points Awarded</div>
-                  <div className="text-2xl font-bold text-amber-400 mt-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Average Points Awarded</div>
+                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
                     {parseFloat(perfReport.average_points).toFixed(1)} pts
                   </div>
                 </Card>
                 <Card className="p-4">
-                  <div className="text-xs text-slate-400">Top Score Recorded</div>
-                  <div className="text-2xl font-bold text-emerald-400 mt-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Top Score Recorded</div>
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                     {parseFloat(perfReport.highest_points).toFixed(1)} pts
                   </div>
                 </Card>
                 <Card className="p-4">
-                  <div className="text-xs text-slate-400">Average Streak</div>
-                  <div className="text-2xl font-bold text-rose-400 mt-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Average Streak</div>
+                  <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
                     {perfReport.average_streak_days} days
                   </div>
                 </Card>
               </div>
 
               {/* Batch Breakdown Table */}
-              <div className="divide-y divide-surface-800 rounded-2xl border border-surface-800 bg-surface-900/60 overflow-hidden">
-                <div className="p-4 bg-surface-900 text-xs font-semibold text-slate-400 uppercase tracking-wider grid grid-cols-12">
+              <div className="divide-y divide-slate-200 dark:divide-surface-800 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 shadow-sm dark:shadow-none overflow-hidden">
+                <div className="p-4 bg-slate-50 dark:bg-surface-900 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider grid grid-cols-12">
                   <div className="col-span-4">Batch Code</div>
                   <div className="col-span-3">Student Count</div>
                   <div className="col-span-3">Average Points</div>
@@ -312,13 +312,13 @@ export const ReportsPage: React.FC = () => {
                     <div className="col-span-4">
                       <Badge variant="indigo" size="sm">{b.batch_code}</Badge>
                     </div>
-                    <div className="col-span-3 text-slate-300 font-medium">
+                    <div className="col-span-3 text-slate-700 dark:text-slate-300 font-medium">
                       {b.student_count} students
                     </div>
-                    <div className="col-span-3 font-semibold text-amber-400">
+                    <div className="col-span-3 font-semibold text-amber-600 dark:text-amber-400">
                       {parseFloat(b.average_points).toFixed(1)} pts
                     </div>
-                    <div className="col-span-2 text-right font-bold text-white">
+                    <div className="col-span-2 text-right font-bold text-slate-900 dark:text-white">
                       {parseFloat(b.total_points).toLocaleString()} pts
                     </div>
                   </div>
@@ -339,22 +339,22 @@ export const ReportsPage: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {compReport.courses?.map((course) => (
-                <Card key={course.course_id} className="p-6">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-surface-800 pb-4">
+                <Card key={course.course_id} className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-surface-800 pb-4">
                     <div>
-                      <h3 className="font-bold text-white text-base">{course.course_title}</h3>
-                      <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
+                      <h3 className="font-bold text-slate-900 dark:text-white text-base">{course.course_title}</h3>
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-1">
                         <span>Active: {course.active_enrollments} students</span>
                         <span>•</span>
-                        <span className="text-emerald-400 font-medium">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                           Completed: {course.completed_enrollments} students
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 divide-y divide-surface-800 rounded-xl border border-surface-800 bg-surface-900/40 overflow-hidden">
-                    <div className="p-3 bg-surface-900 text-xs font-semibold text-slate-400 uppercase tracking-wider grid grid-cols-12">
+                  <div className="mt-4 divide-y divide-slate-200 dark:divide-surface-800 rounded-xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/40 overflow-hidden">
+                    <div className="p-3 bg-slate-50 dark:bg-surface-900 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider grid grid-cols-12">
                       <div className="col-span-1">#</div>
                       <div className="col-span-6">Module Title</div>
                       <div className="col-span-3">Completed Students</div>
@@ -362,10 +362,10 @@ export const ReportsPage: React.FC = () => {
                     </div>
                     {course.modules?.map((m) => (
                       <div key={m.module_id} className="p-3 text-xs grid grid-cols-12 items-center">
-                        <div className="col-span-1 font-mono text-slate-400">#{m.order_index}</div>
-                        <div className="col-span-6 font-medium text-slate-200">{m.module_title}</div>
-                        <div className="col-span-3 text-slate-300">{m.completed_students} students</div>
-                        <div className="col-span-2 text-right font-bold text-emerald-400">
+                        <div className="col-span-1 font-mono text-slate-500 dark:text-slate-400">#{m.order_index}</div>
+                        <div className="col-span-6 font-medium text-slate-800 dark:text-slate-200">{m.module_title}</div>
+                        <div className="col-span-3 text-slate-600 dark:text-slate-300">{m.completed_students} students</div>
+                        <div className="col-span-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
                           {m.completion_rate}%
                         </div>
                       </div>
@@ -386,8 +386,8 @@ export const ReportsPage: React.FC = () => {
           ) : isAssignError || !assignReport ? (
             <ErrorState title="Report Error" message="Unable to generate assignment report." />
           ) : (
-            <div className="divide-y divide-surface-800 rounded-2xl border border-surface-800 bg-surface-900/60 overflow-hidden">
-              <div className="p-4 bg-surface-900 text-xs font-semibold text-slate-400 uppercase tracking-wider grid grid-cols-12">
+            <div className="divide-y divide-slate-200 dark:divide-surface-800 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 shadow-sm dark:shadow-none overflow-hidden">
+              <div className="p-4 bg-slate-50 dark:bg-surface-900 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider grid grid-cols-12">
                 <div className="col-span-5">Problem Statement</div>
                 <div className="col-span-2">Difficulty</div>
                 <div className="col-span-2">Submissions</div>
@@ -396,8 +396,8 @@ export const ReportsPage: React.FC = () => {
               {assignReport.questions?.map((q) => (
                 <div key={q.question_id} className="p-4 text-xs grid grid-cols-12 items-center">
                   <div className="col-span-5">
-                    <div className="font-semibold text-white">{q.title}</div>
-                    <div className="text-slate-400 mt-0.5">{q.module_title}</div>
+                    <div className="font-semibold text-slate-900 dark:text-white">{q.title}</div>
+                    <div className="text-slate-500 dark:text-slate-400 mt-0.5">{q.module_title}</div>
                   </div>
                   <div className="col-span-2">
                     <Badge
@@ -413,10 +413,10 @@ export const ReportsPage: React.FC = () => {
                       {q.difficulty}
                     </Badge>
                   </div>
-                  <div className="col-span-2 text-slate-300 font-medium">
+                  <div className="col-span-2 text-slate-700 dark:text-slate-300 font-medium">
                     {q.total_submissions} attempts
                   </div>
-                  <div className="col-span-3 text-right font-bold text-emerald-400">
+                  <div className="col-span-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
                     {q.pass_rate}%
                   </div>
                 </div>
@@ -434,8 +434,8 @@ export const ReportsPage: React.FC = () => {
           ) : isProjError || !projReport ? (
             <ErrorState title="Report Error" message="Unable to generate project report." />
           ) : (
-            <div className="divide-y divide-surface-800 rounded-2xl border border-surface-800 bg-surface-900/60 overflow-hidden">
-              <div className="p-4 bg-surface-900 text-xs font-semibold text-slate-400 uppercase tracking-wider grid grid-cols-12">
+            <div className="divide-y divide-slate-200 dark:divide-surface-800 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 shadow-sm dark:shadow-none overflow-hidden">
+              <div className="p-4 bg-slate-50 dark:bg-surface-900 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider grid grid-cols-12">
                 <div className="col-span-4">Project Title</div>
                 <div className="col-span-3">Course Track</div>
                 <div className="col-span-3">Approved / Total</div>
@@ -443,13 +443,13 @@ export const ReportsPage: React.FC = () => {
               </div>
               {projReport.projects?.map((p) => (
                 <div key={p.project_id} className="p-4 text-xs grid grid-cols-12 items-center">
-                  <div className="col-span-4 font-semibold text-white">{p.title}</div>
-                  <div className="col-span-3 text-slate-300">{p.course_title || "General"}</div>
-                  <div className="col-span-3 text-slate-300">
-                    <span className="font-semibold text-emerald-400">{p.approved_submissions}</span> of{" "}
+                  <div className="col-span-4 font-semibold text-slate-900 dark:text-white">{p.title}</div>
+                  <div className="col-span-3 text-slate-700 dark:text-slate-300">{p.course_title || "General"}</div>
+                  <div className="col-span-3 text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">{p.approved_submissions}</span> of{" "}
                     {p.total_submissions} approved
                   </div>
-                  <div className="col-span-2 text-right font-bold text-amber-400">
+                  <div className="col-span-2 text-right font-bold text-amber-600 dark:text-amber-400">
                     {parseFloat(p.average_score).toFixed(1)} / {p.max_score} pts
                   </div>
                 </div>
@@ -467,19 +467,19 @@ export const ReportsPage: React.FC = () => {
           ) : isMonthError || !monthReport ? (
             <ErrorState title="Report Error" message="Unable to generate monthly activity report." />
           ) : (
-            <div className="divide-y divide-surface-800 rounded-2xl border border-surface-800 bg-surface-900/60 overflow-hidden">
-              <div className="p-4 bg-surface-900 text-xs font-semibold text-slate-400 uppercase tracking-wider grid grid-cols-12">
+            <div className="divide-y divide-slate-200 dark:divide-surface-800 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 shadow-sm dark:shadow-none overflow-hidden">
+              <div className="p-4 bg-slate-50 dark:bg-surface-900 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider grid grid-cols-12">
                 <div className="col-span-4">Date</div>
                 <div className="col-span-4">Code Submissions</div>
                 <div className="col-span-4 text-right">Active Learners</div>
               </div>
               {monthReport.timeline?.map((t) => (
                 <div key={t.date} className="p-4 text-xs grid grid-cols-12 items-center">
-                  <div className="col-span-4 font-mono font-medium text-slate-300">{t.date}</div>
-                  <div className="col-span-4 font-semibold text-emerald-400">
+                  <div className="col-span-4 font-mono font-medium text-slate-700 dark:text-slate-300">{t.date}</div>
+                  <div className="col-span-4 font-semibold text-emerald-600 dark:text-emerald-400">
                     {t.submissions_count} submissions
                   </div>
-                  <div className="col-span-4 text-right font-bold text-indigo-400">
+                  <div className="col-span-4 text-right font-bold text-brand-600 dark:text-indigo-400">
                     {t.active_students} students
                   </div>
                 </div>
@@ -492,14 +492,14 @@ export const ReportsPage: React.FC = () => {
       {/* Exports History Modal / Drawer */}
       {showExportsDrawer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-2xl border border-surface-800 bg-surface-900 p-6 shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between border-b border-surface-800 pb-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-6 shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-surface-800 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-brand-400" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-brand-500 dark:text-brand-400" />
                   Background Export Jobs
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   Asynchronous compilation prevents server overload for large datasets.
                 </p>
               </div>
@@ -526,19 +526,19 @@ export const ReportsPage: React.FC = () => {
 
             <div className="mt-4 flex-1 overflow-y-auto space-y-3">
               {exportJobs.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-400">
-                  <FileText className="mx-auto h-10 w-10 text-slate-600 mb-2" />
+                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <FileText className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600 mb-2" />
                   No export jobs requested yet.
                 </div>
               ) : (
                 exportJobs.map((job) => (
                   <div
                     key={job.id}
-                    className="p-4 rounded-xl border border-surface-800 bg-surface-950/60 flex items-center justify-between gap-4"
+                    className="p-4 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-950/60 flex items-center justify-between gap-4"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs text-white">
+                        <span className="font-semibold text-xs text-slate-900 dark:text-white">
                           {job.report_type.replace(/_/g, " ")}
                         </span>
                         <Badge
@@ -558,7 +558,7 @@ export const ReportsPage: React.FC = () => {
                         </Badge>
                       </div>
 
-                      <div className="mt-1 text-[11px] text-slate-400 flex items-center gap-3">
+                      <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-3">
                         <span>Requested: {new Date(job.created_at).toLocaleTimeString()}</span>
                         {job.row_count > 0 && <span>• {job.row_count} rows</span>}
                         {job.file_size_bytes > 0 && (
@@ -579,9 +579,9 @@ export const ReportsPage: React.FC = () => {
                           Download
                         </a>
                       ) : job.status === "FAILED" ? (
-                        <span className="text-xs text-rose-400 font-medium">Failed</span>
+                        <span className="text-xs text-rose-500 dark:text-rose-400 font-medium">Failed</span>
                       ) : (
-                        <div className="flex items-center gap-1.5 text-xs text-amber-400">
+                        <div className="flex items-center gap-1.5 text-xs text-amber-500 dark:text-amber-400">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           Processing
                         </div>

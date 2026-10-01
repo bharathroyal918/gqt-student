@@ -17,7 +17,7 @@ from apps.courses.models import Course, CourseEnrollment
 from apps.modules.models import Module, StudentModuleProgress
 from apps.notifications.models import Notification
 from apps.scoring.models import ScoreEvent, ScoreRecord
-from apps.students.models import StudentProfile
+from apps.students.models import AttendanceRecord, StudentProfile
 from apps.tasks.models import StudentTask
 
 
@@ -33,6 +33,195 @@ class StudentAdminService:
 
     @classmethod
     @transaction.atomic
+    def grant_student_access(
+        cls, student_id: str, admin_user: User, ip_address: Optional[str] = None
+    ) -> StudentProfile:
+        """Admin explicitly grants full portal and curriculum access to a student."""
+        student = cls.get_student_detail(student_id)
+        user = student.user
+
+        user.onboarding_status = User.OnboardingStatusChoices.ACTIVE
+        user.is_active = True
+        user.save(update_fields=["onboarding_status", "is_active", "updated_at"])
+
+        # Automatically enroll in published courses if student has none
+        if not student.enrollments.filter(status=CourseEnrollment.EnrollmentStatus.ACTIVE).exists():
+            default_courses = Course.objects.filter(is_published=True, is_deleted=False)[:2]
+            for c in default_courses:
+                CourseEnrollment.objects.get_or_create(
+                    student=student,
+                    course=c,
+                    defaults={"status": CourseEnrollment.EnrollmentStatus.ACTIVE},
+                )
+
+        Notification.objects.create(
+            recipient=user,
+            title="Portal Access Granted!",
+            body="Your GQT Student Portal access has been verified and authorized by the administration.",
+            notification_type=Notification.NotificationType.SYSTEM,
+        )
+
+        AuditLog.objects.create(
+            actor=admin_user,
+            action="STUDENT_ACCESS_GRANTED",
+            target_model="StudentProfile",
+            target_id=str(student.id),
+            ip_address=ip_address,
+            payload={"student_email": user.email, "student_name": student.full_name},
+        )
+        return student
+
+    @classmethod
+    @transaction.atomic
+    def revoke_student_access(
+        cls, student_id: str, admin_user: User, ip_address: Optional[str] = None
+    ) -> StudentProfile:
+        """Admin suspends or revokes portal access for a student."""
+        student = cls.get_student_detail(student_id)
+        user = student.user
+
+        user.onboarding_status = User.OnboardingStatusChoices.SUSPENDED
+        user.save(update_fields=["onboarding_status", "updated_at"])
+
+        AuditLog.objects.create(
+            actor=admin_user,
+            action="STUDENT_ACCESS_REVOKED",
+            target_model="StudentProfile",
+            target_id=str(student.id),
+            ip_address=ip_address,
+            payload={"student_email": user.email, "student_name": student.full_name},
+        )
+        return student
+
+    @classmethod
+    @transaction.atomic
+    def grant_access_by_email(
+        cls,
+        email: str,
+        admin_user: User,
+        course_opted: str = "Full Stack Software & Assessment Track",
+        batch_code: str = "BATCH-2026-A",
+        ip_address: Optional[str] = None,
+    ) -> StudentProfile:
+        """Admin provides direct access to a student using their registered institutional email."""
+        clean_email = email.strip().lower()
+        user = User.objects.filter(email=clean_email).first()
+
+        if not user:
+            raise DomainException(f"No student registered with email {clean_email}.", status_code=404)
+
+        student = getattr(user, "student_profile", None)
+        if not student:
+            raise DomainException("User does not have an attached Student Profile.", status_code=400)
+
+        user.onboarding_status = User.OnboardingStatusChoices.ACTIVE
+        user.is_active = True
+        user.save(update_fields=["onboarding_status", "is_active", "updated_at"])
+
+        if course_opted:
+            student.course_opted = course_opted.strip()
+        if batch_code:
+            student.batch_code = batch_code.strip()
+        student.save(update_fields=["course_opted", "batch_code", "updated_at"])
+
+        # Auto-enroll in default published courses
+        default_courses = Course.objects.filter(is_published=True, is_deleted=False)[:2]
+        for c in default_courses:
+            CourseEnrollment.objects.get_or_create(
+                student=student,
+                course=c,
+                defaults={"status": CourseEnrollment.EnrollmentStatus.ACTIVE},
+            )
+
+        Notification.objects.create(
+            recipient=user,
+            title="Account Authorized by Administrator",
+            body=f"Your email ({clean_email}) has been authorized for {student.course_opted}.",
+            notification_type=Notification.NotificationType.SYSTEM,
+        )
+
+        AuditLog.objects.create(
+            actor=admin_user,
+            action="STUDENT_ACCESS_GRANTED_BY_EMAIL",
+            target_model="StudentProfile",
+            target_id=str(student.id),
+            ip_address=ip_address,
+            payload={"email": clean_email, "course_opted": student.course_opted},
+        )
+        return student
+
+    @classmethod
+    @transaction.atomic
+    def mark_attendance(
+        cls,
+        student_id: str,
+        date,
+        status: str,
+        session_title: str,
+        remarks: str,
+        admin_user: User,
+        ip_address: Optional[str] = None,
+    ) -> AttendanceRecord:
+        """Admin records daily session attendance for a student."""
+        student = cls.get_student_detail(student_id)
+
+        record, _ = AttendanceRecord.objects.update_or_create(
+            student_profile=student,
+            date=date,
+            defaults={
+                "status": status,
+                "session_title": session_title or "Daily Training & Coding Lab",
+                "remarks": remarks or "",
+            },
+        )
+
+        # Recalculate totals
+        total = AttendanceRecord.objects.filter(student_profile=student).count()
+        attended = AttendanceRecord.objects.filter(
+            student_profile=student,
+            status__in=[AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE],
+        ).count()
+
+        student.total_classes = max(total, student.total_classes)
+        student.attended_classes = attended
+        student.recalculate_attendance()
+        student.save(update_fields=["total_classes", "attended_classes", "attendance_percentage", "updated_at"])
+
+        AuditLog.objects.create(
+            actor=admin_user,
+            action="ATTENDANCE_MARKED",
+            target_model="AttendanceRecord",
+            target_id=str(record.id),
+            ip_address=ip_address,
+            payload={"student_id": str(student.id), "date": str(date), "status": status},
+        )
+        return record
+
+    @classmethod
+    def get_student_attendance(cls, student_id: str) -> Dict[str, Any]:
+        """Admin inspects student's full attendance history."""
+        student = cls.get_student_detail(student_id)
+        records = AttendanceRecord.objects.filter(student_profile=student).order_by("-date")[:50]
+        return {
+            "attendance_percentage": float(student.attendance_percentage),
+            "total_classes": student.total_classes,
+            "attended_classes": student.attended_classes,
+            "missed_classes": max(0, student.total_classes - student.attended_classes),
+            "records": [
+                {
+                    "id": str(r.id),
+                    "date": str(r.date),
+                    "session_title": r.session_title,
+                    "status": r.status,
+                    "remarks": r.remarks,
+                    "created_at": r.created_at.isoformat(),
+                }
+                for r in records
+            ],
+        }
+
+    @classmethod
+    @transaction.atomic
     def update_student(
         cls,
         student_id: str,
@@ -41,10 +230,15 @@ class StudentAdminService:
         batch_code: Optional[str] = None,
         college_name: Optional[str] = None,
         graduation_year: Optional[int] = None,
+        dob=None,
+        branch: Optional[str] = None,
+        course_opted: Optional[str] = None,
         email: Optional[str] = None,
         mobile_number: Optional[str] = None,
         is_active: Optional[bool] = None,
         onboarding_status: Optional[str] = None,
+        total_classes: Optional[int] = None,
+        attended_classes: Optional[int] = None,
         ip_address: Optional[str] = None,
     ) -> StudentProfile:
         student = cls.get_student_detail(student_id)
@@ -67,6 +261,30 @@ class StudentAdminService:
         if graduation_year is not None:
             student.graduation_year = graduation_year
             updated_fields_profile.append("graduation_year")
+
+        if dob is not None:
+            student.dob = dob
+            updated_fields_profile.append("dob")
+
+        if branch is not None:
+            student.branch = branch.strip()
+            updated_fields_profile.append("branch")
+
+        if course_opted is not None:
+            student.course_opted = course_opted.strip()
+            updated_fields_profile.append("course_opted")
+
+        if total_classes is not None:
+            student.total_classes = total_classes
+            updated_fields_profile.append("total_classes")
+
+        if attended_classes is not None:
+            student.attended_classes = attended_classes
+            updated_fields_profile.append("attended_classes")
+
+        if total_classes is not None or attended_classes is not None:
+            student.recalculate_attendance()
+            updated_fields_profile.append("attendance_percentage")
 
         if email is not None:
             email_clean = email.strip().lower()
@@ -337,10 +555,22 @@ class StudentDashboardService:
             "full_name": profile.full_name,
             "email": user.email,
             "avatar_url": profile.avatar_url,
-            "course": course_title,
+            "course": profile.course_opted or course_title,
             "course_id": course_id,
             "batch_code": profile.batch_code,
             "college_name": profile.college_name,
+            "graduation_year": profile.graduation_year,
+            "dob": str(profile.dob) if profile.dob else None,
+            "branch": profile.branch,
+            "bio": profile.bio,
+            "github_url": profile.github_url,
+            "linkedin_url": profile.linkedin_url,
+            "course_opted": profile.course_opted or course_title,
+            "attendance_percentage": float(profile.attendance_percentage),
+            "total_classes": profile.total_classes,
+            "attended_classes": profile.attended_classes,
+            "onboarding_status": user.onboarding_status,
+            "is_approved": user.onboarding_status == User.OnboardingStatusChoices.ACTIVE,
             "total_score": float(profile.total_points),
             "current_rank": global_rank,
             "total_students": total_students_global,
@@ -446,6 +676,12 @@ class StudentDashboardService:
                 "completed": tasks_completed,
                 "total_points": float(task_points),
             },
+            "attendance": {
+                "percentage": float(profile.attendance_percentage),
+                "total_classes": profile.total_classes,
+                "attended_classes": profile.attended_classes,
+                "missed_classes": max(0, profile.total_classes - profile.attended_classes),
+            },
             "chart_history": chart_history,
             "skills_radar": skills_radar,
         }
@@ -519,5 +755,92 @@ class StudentDashboardService:
                 "recent_achievements": recent_achievements,
                 "notifications": notifications,
             },
+        }
+
+    @classmethod
+    @transaction.atomic
+    def update_student_profile(
+        cls,
+        user: User,
+        dob=None,
+        branch: Optional[str] = None,
+        college_name: Optional[str] = None,
+        graduation_year: Optional[int] = None,
+        avatar_url: Optional[str] = None,
+        bio: Optional[str] = None,
+        github_url: Optional[str] = None,
+        linkedin_url: Optional[str] = None,
+    ) -> StudentProfile:
+        """Student updates their own permitted profile fields (DOB, branch, college, avatar, bio, URLs).
+        
+        Strictly prohibits mutating email, full_name, student_id_number, course_opted, or points.
+        """
+        profile = StudentProfile.objects.filter(user=user).first()
+        if not profile:
+            raise DomainException("Student profile not found.", status_code=404)
+
+        updated_fields = ["updated_at"]
+
+        if dob is not None:
+            profile.dob = dob
+            updated_fields.append("dob")
+
+        if branch is not None:
+            profile.branch = branch.strip()
+            updated_fields.append("branch")
+
+        if college_name is not None:
+            profile.college_name = college_name.strip()
+            updated_fields.append("college_name")
+
+        if graduation_year is not None:
+            profile.graduation_year = graduation_year
+            updated_fields.append("graduation_year")
+
+        if avatar_url is not None:
+            profile.avatar_url = avatar_url.strip()
+            updated_fields.append("avatar_url")
+
+        if bio is not None:
+            profile.bio = bio.strip()
+            updated_fields.append("bio")
+
+        if github_url is not None:
+            profile.github_url = github_url.strip()
+            updated_fields.append("github_url")
+
+        if linkedin_url is not None:
+            profile.linkedin_url = linkedin_url.strip()
+            updated_fields.append("linkedin_url")
+
+        if len(updated_fields) > 1:
+            profile.save(update_fields=updated_fields)
+
+        return profile
+
+    @classmethod
+    def get_student_attendance(cls, user: User) -> Dict[str, Any]:
+        """Retrieve authenticated student's attendance records and percentage."""
+        profile = StudentProfile.objects.filter(user=user).first()
+        if not profile:
+            raise DomainException("Student profile not found.", status_code=404)
+
+        records = AttendanceRecord.objects.filter(student_profile=profile).order_by("-date")[:50]
+        return {
+            "attendance_percentage": float(profile.attendance_percentage),
+            "total_classes": profile.total_classes,
+            "attended_classes": profile.attended_classes,
+            "missed_classes": max(0, profile.total_classes - profile.attended_classes),
+            "records": [
+                {
+                    "id": str(r.id),
+                    "date": str(r.date),
+                    "session_title": r.session_title,
+                    "status": r.status,
+                    "remarks": r.remarks,
+                    "created_at": r.created_at.isoformat(),
+                }
+                for r in records
+            ],
         }
 

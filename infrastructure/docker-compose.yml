@@ -1,24 +1,6 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: gqt_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-gqt_portal_db}
-      POSTGRES_USER: ${POSTGRES_USER:-gqt_portal_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gqt_portal_dev_password}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gqt_portal_user} -d ${POSTGRES_DB:-gqt_portal_db}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7-alpine
     container_name: gqt_redis
@@ -48,8 +30,6 @@ services:
       - ../backend:/app
       - backend_media:/app/media
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
@@ -66,8 +46,6 @@ services:
       - ../backend:/app
       - backend_media:/app/media
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     command: ["celery", "-A", "config", "worker", "-l", "info", "-Q", "code_execution,ai,notifications,reports,default"]
@@ -81,8 +59,6 @@ services:
     env_file:
       - ../.env
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     command: ["celery", "-A", "config", "beat", "-l", "info"]
@@ -99,6 +75,5 @@ services:
       - backend
 
 volumes:
-  postgres_data:
   redis_data:
   backend_media:

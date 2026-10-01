@@ -17,9 +17,9 @@ env = environ.Env(
 
 # Read environment file from backend root or parent repo root
 if (BASE_DIR / ".env").exists():
-    environ.Env.read_env(BASE_DIR / ".env")
+    environ.Env.read_env(str(BASE_DIR / ".env"), overwrite=True)
 elif (BASE_DIR.parent / ".env").exists():
-    environ.Env.read_env(BASE_DIR.parent / ".env")
+    environ.Env.read_env(str(BASE_DIR.parent / ".env"), overwrite=True)
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env("DEBUG")
@@ -348,3 +348,14 @@ LOGGING = {
         },
     },
 }
+
+# ------------------------------------------------------------------------------
+# SUPABASE CONFIGURATION
+# ------------------------------------------------------------------------------
+SUPABASE_URL = env("SUPABASE_URL", default="")
+SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY", default="")
+SUPABASE_SERVICE_ROLE_KEY = env(
+    "SUPABASE_SERVICE_ROLE_KEY",
+    default=env("SUPABASE_SERVICE_KEY", default=""),
+)
+SUPABASE_STORAGE_BUCKET = env("SUPABASE_STORAGE_BUCKET", default="media")

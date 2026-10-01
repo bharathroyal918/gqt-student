@@ -7,10 +7,20 @@ DEBUG = True
 ENVIRONMENT = "development"
 
 # Database Configuration
-# Uses PostgreSQL when DATABASE_URL is configured (e.g. docker dev),
-# or defaults to local SQLite file for standalone local development.
-default_db = f"sqlite:///{BASE_DIR / 'dev_db.sqlite3'}"
-DATABASES = {"default": env.db("DATABASE_URL", default=default_db)}
+# Uses Supabase PostgreSQL when DATABASE_URL is configured,
+# or defaults to local SQLite file for standalone local development when DATABASE_URL is empty.
+raw_db_url = env("DATABASE_URL", default="").strip()
+if raw_db_url:
+    DATABASES = {"default": env.db_url_config(raw_db_url)}
+else:
+    DATABASES = {"default": env.db_url_config(f"sqlite:///{BASE_DIR / 'dev_db.sqlite3'}")}
+
+if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
+    DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=0)
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = {}
+    DATABASES["default"]["OPTIONS"].setdefault("sslmode", env("DB_SSLMODE", default="require"))
 
 # Development Email Backend: Echoes emails to console
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

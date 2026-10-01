@@ -117,9 +117,9 @@ export const ProjectsPage: React.FC = () => {
       header: "Student & ID",
       cell: (row) => (
         <div>
-          <div className="font-semibold text-white">{row.student_name}</div>
-          <div className="text-xs text-slate-400 mt-0.5">
-            <span className="font-mono text-slate-300">{row.student_id_number}</span>
+          <div className="font-semibold text-slate-900 dark:text-white">{row.student_name}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <span className="font-mono text-slate-600 dark:text-slate-300">{row.student_id_number}</span>
           </div>
         </div>
       ),
@@ -129,13 +129,13 @@ export const ProjectsPage: React.FC = () => {
       header: "Project Title",
       cell: (row) => (
         <div>
-          <div className="font-medium text-slate-200">{row.project_title}</div>
+          <div className="font-medium text-slate-800 dark:text-slate-200">{row.project_title}</div>
           {row.github_repository_url && (
             <a
               href={row.github_repository_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 mt-0.5"
+              className="inline-flex items-center gap-1 text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 mt-0.5"
             >
               <Github className="h-3 w-3" />
               Repository
@@ -170,14 +170,14 @@ export const ProjectsPage: React.FC = () => {
       cell: (row) => (
         <div className="text-xs">
           {row.score !== null ? (
-            <div className="font-bold text-amber-400">
+            <div className="font-bold text-amber-500">
               {row.score} / {row.max_score} pts
             </div>
           ) : (
-            <span className="text-slate-500">Ungraded</span>
+            <span className="text-slate-400 dark:text-slate-500">Ungraded</span>
           )}
           {row.feedbacks && row.feedbacks.length > 0 && (
-            <div className="text-slate-400 truncate max-w-[180px] mt-0.5">
+            <div className="text-slate-500 dark:text-slate-400 truncate max-w-[180px] mt-0.5">
               {row.feedbacks[0].feedback_text}
             </div>
           )}
@@ -208,8 +208,8 @@ export const ProjectsPage: React.FC = () => {
       header: "Capstone Project",
       cell: (row) => (
         <div>
-          <div className="font-semibold text-white">{row.title}</div>
-          <div className="text-xs text-slate-400 line-clamp-1">{row.description}</div>
+          <div className="font-semibold text-slate-900 dark:text-white">{row.title}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{row.description}</div>
         </div>
       ),
     },
@@ -217,13 +217,13 @@ export const ProjectsPage: React.FC = () => {
       key: "course",
       header: "Course Track",
       cell: (row) => (
-        <div className="text-xs text-slate-300">{row.course_title || "General / Platform-wide"}</div>
+        <div className="text-xs text-slate-600 dark:text-slate-300">{row.course_title || "General / Platform-wide"}</div>
       ),
     },
     {
       key: "score",
       header: "Max Score",
-      cell: (row) => <span className="font-bold text-amber-400 text-xs">{row.max_score} pts</span>,
+      cell: (row) => <span className="font-bold text-amber-500 text-xs">{row.max_score} pts</span>,
     },
     {
       key: "submissions",
@@ -241,10 +241,10 @@ export const ProjectsPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             Capstone Projects & Reviews
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Grade student capstone repository submissions, examine code deliverables, and post qualitative feedback.
           </p>
         </div>
@@ -256,13 +256,13 @@ export const ProjectsPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-surface-800">
+      <div className="flex border-b border-slate-200 dark:border-surface-800">
         <button
           onClick={() => setActiveTab("submissions")}
           className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
             activeTab === "submissions"
-              ? "border-brand-500 text-brand-400 font-semibold"
-              : "border-transparent text-slate-400 hover:text-white"
+              ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Submissions Queue
@@ -271,8 +271,8 @@ export const ProjectsPage: React.FC = () => {
           onClick={() => setActiveTab("projects")}
           className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
             activeTab === "projects"
-              ? "border-brand-500 text-brand-400 font-semibold"
-              : "border-transparent text-slate-400 hover:text-white"
+              ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Project Catalog

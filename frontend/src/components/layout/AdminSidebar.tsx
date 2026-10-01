@@ -1,19 +1,18 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { BrandLogo } from "../common/BrandLogo";
 import {
   LayoutDashboard,
   Users,
   BookOpen,
-  Code2,
-  CalendarCheck,
-  FolderGit2,
-  Megaphone,
-  BarChart3,
-  FileSpreadsheet,
+  FolderKanban,
+  FileCheck,
   Award,
-  MessageSquare,
+  Bell,
+  BarChart3,
+  HelpCircle,
+  FileText,
 } from "lucide-react";
+import { BrandLogo } from "../common/BrandLogo";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -25,14 +24,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Students", href: "/admin/students", icon: Users },
     { name: "Courses", href: "/admin/courses", icon: BookOpen },
-    { name: "Assignments", href: "/admin/assignments", icon: Code2 },
-    { name: "Daily Tasks", href: "/admin/tasks", icon: CalendarCheck },
-    { name: "Projects", href: "/admin/projects", icon: FolderGit2 },
+    { name: "Assignments", href: "/admin/assignments", icon: FileCheck },
+    { name: "Daily Tasks", href: "/admin/tasks", icon: FolderKanban },
+    { name: "Projects", href: "/admin/projects", icon: FolderKanban },
     { name: "Certificates", href: "/admin/certificates", icon: Award },
-    { name: "Support Inquiries", href: "/admin/contact", icon: MessageSquare },
-    { name: "Announcements", href: "/admin/announcements", icon: Megaphone },
+    { name: "Announcements", href: "/admin/announcements", icon: Bell },
+    { name: "Inquiries", href: "/admin/inquiries", icon: HelpCircle },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-    { name: "Reports", href: "/admin/reports", icon: FileSpreadsheet },
+    { name: "Reports", href: "/admin/reports", icon: FileText },
   ];
 
   return (
@@ -46,17 +45,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-surface-800 bg-surface-950 transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-950 transition-all duration-300 lg:static lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Brand Logo Header */}
-        <div className="flex h-16 shrink-0 items-center border-b border-surface-800 px-5">
+        <div className="flex h-16 shrink-0 items-center border-b border-slate-200 dark:border-surface-800 px-5 bg-white dark:bg-surface-950">
           <BrandLogo
             variant="sidebar"
             badge="Admin"
             badgeVariant="admin"
-            subtitle="Learning Management"
+            subtitle="Global Quest Technologies"
           />
         </div>
 
@@ -72,8 +71,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
                 className={({ isActive }) =>
                   `group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
                     isActive
-                      ? "bg-brand-600 text-white shadow-md shadow-brand-500/25"
-                      : "text-slate-400 hover:bg-surface-900 hover:text-white"
+                      ? "bg-brand-600 text-white shadow-md shadow-brand-500/25 font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white"
                   }`
                 }
               >
@@ -85,13 +84,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
         </nav>
 
         {/* Environment footer */}
-        <div className="border-t border-surface-800 p-4">
-          <div className="rounded-xl border border-surface-800/80 bg-surface-900/60 p-3 text-xs">
-            <div className="flex items-center justify-between text-slate-400">
+        <div className="border-t border-slate-200 dark:border-surface-800 p-4">
+          <div className="rounded-xl border border-slate-200 dark:border-surface-800/80 bg-slate-50 dark:bg-surface-900/60 p-3 text-xs">
+            <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
               <span>Platform</span>
-              <span className="font-semibold text-emerald-400">Production</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">Production</span>
             </div>
-            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
               <span>API Gateway</span>
               <span>v1 REST</span>
             </div>

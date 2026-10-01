@@ -34,8 +34,8 @@ export const StudentProjectSubmitPage: React.FC = () => {
       </div>
 
       <Card className="p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-white">Submit Capstone Project</h1>
-        <p className="text-xs text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Submit Capstone Project</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Provide your public or authorized GitHub repository URL along with architecture notes.
         </p>
 
@@ -52,7 +52,7 @@ export const StudentProjectSubmitPage: React.FC = () => {
 
           <FormField label="GitHub Repository URL" required>
             <div className="relative">
-              <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <Input
                 placeholder="https://github.com/username/project-repo"
                 className="pl-10 font-mono text-xs"
@@ -65,7 +65,7 @@ export const StudentProjectSubmitPage: React.FC = () => {
 
           <FormField label="Live Demo URL (Optional)">
             <div className="relative">
-              <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <Input
                 placeholder="https://project-demo.vercel.app"
                 className="pl-10 font-mono text-xs"
@@ -84,7 +84,7 @@ export const StudentProjectSubmitPage: React.FC = () => {
             />
           </FormField>
 
-          <div className="pt-4 border-t border-surface-800 flex justify-end gap-3">
+          <div className="pt-4 border-t border-slate-200 dark:border-surface-800 flex justify-end gap-3">
             <Link to="/projects">
               <Button variant="secondary" type="button">
                 Cancel
@@ -100,3 +100,4 @@ export const StudentProjectSubmitPage: React.FC = () => {
     </div>
   );
 };
+

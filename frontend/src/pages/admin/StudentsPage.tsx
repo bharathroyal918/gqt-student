@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   BookOpen,
+  MailCheck,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
 import { StudentListItem } from "../../types/admin";
@@ -37,6 +38,7 @@ export const StudentsPage: React.FC = () => {
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAuthorizeEmailModalOpen, setIsAuthorizeEmailModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentListItem | null>(null);
   const [statusDialogStudent, setStatusDialogStudent] = useState<{
     student: StudentListItem;
@@ -53,6 +55,13 @@ export const StudentsPage: React.FC = () => {
     college_name: "",
     graduation_year: new Date().getFullYear(),
     password: "",
+  });
+
+  // Authorize by Email Form State
+  const [authEmailData, setAuthEmailData] = useState({
+    email: "",
+    course_opted: "Full Stack Software & Assessment Track",
+    batch_code: "BATCH-2026-A",
   });
 
   // Fetch Students Query
@@ -84,6 +93,26 @@ export const StudentsPage: React.FC = () => {
     },
   });
 
+  // Authorize By Email Mutation
+  const grantByEmailMutation = useMutation({
+    mutationFn: (payload: { email: string; course_opted?: string; batch_code?: string }) =>
+      adminApi.grantAccessByEmail(payload),
+    onSuccess: (student) => {
+      success("Access Granted", `Portal and curriculum access successfully authorized for ${student.full_name} (${student.email}).`);
+      setIsAuthorizeEmailModalOpen(false);
+      setAuthEmailData({
+        email: "",
+        course_opted: "Full Stack Software & Assessment Track",
+        batch_code: "BATCH-2026-A",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-students"] });
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.error?.message || "Failed to grant access by email.";
+      toastError("Authorization Failed", msg);
+    },
+  });
+
   // Update Student Mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<StudentListItem> }) =>
@@ -97,6 +126,26 @@ export const StudentsPage: React.FC = () => {
       const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to update student";
       toastError("Update Failed", msg);
     },
+  });
+
+  // Grant Access Direct Mutation
+  const grantAccessMutation = useMutation({
+    mutationFn: (id: string) => adminApi.grantStudentAccess(id),
+    onSuccess: (res) => {
+      success("Access Granted", `Portal access approved for ${res.full_name}.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-students"] });
+    },
+    onError: () => toastError("Error", "Could not grant student access."),
+  });
+
+  // Revoke Access Direct Mutation
+  const revokeAccessMutation = useMutation({
+    mutationFn: (id: string) => adminApi.revokeStudentAccess(id),
+    onSuccess: (res) => {
+      success("Access Revoked", `Portal access suspended for ${res.full_name}.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-students"] });
+    },
+    onError: () => toastError("Error", "Could not revoke student access."),
   });
 
   const resetForm = () => {
@@ -135,13 +184,16 @@ export const StudentsPage: React.FC = () => {
     if (!statusDialogStudent) return;
     const { student, action } = statusDialogStudent;
 
-    let payload: any = {};
-    if (action === "activate") payload = { is_active: true };
-    if (action === "deactivate") payload = { is_active: false };
-    if (action === "grant") payload = { onboarding_status: "ACTIVE" };
-    if (action === "revoke") payload = { onboarding_status: "SUSPENDED" };
-
-    updateMutation.mutate({ id: student.id, payload });
+    if (action === "grant") {
+      grantAccessMutation.mutate(student.id);
+    } else if (action === "revoke") {
+      revokeAccessMutation.mutate(student.id);
+    } else {
+      let payload: any = {};
+      if (action === "activate") payload = { is_active: true };
+      if (action === "deactivate") payload = { is_active: false };
+      updateMutation.mutate({ id: student.id, payload });
+    }
     setStatusDialogStudent(null);
   };
 
@@ -158,14 +210,14 @@ export const StudentsPage: React.FC = () => {
           <div className="min-w-0">
             <button
               onClick={() => navigate(`/admin/students/${row.id}`)}
-              className="text-left font-semibold text-white hover:text-brand-400 transition-colors truncate block"
+              className="text-left font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors truncate block"
             >
               {row.full_name}
             </button>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <span className="font-mono text-slate-300">{row.student_id_number}</span>
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-mono text-slate-600 dark:text-slate-300">{row.student_id_number}</span>
               <span>•</span>
-              <span className="text-slate-400">{row.email || row.mobile_number || "No Contact"}</span>
+              <span className="text-slate-500 dark:text-slate-400">{row.email || row.mobile_number || "No Contact"}</span>
             </div>
           </div>
         </div>
@@ -177,7 +229,7 @@ export const StudentsPage: React.FC = () => {
       cell: (row) => (
         <div className="text-xs">
           <Badge variant="indigo" size="sm">{row.batch_code}</Badge>
-          <div className="text-slate-400 mt-1 truncate max-w-[150px]">{row.college_name || "—"}</div>
+          <div className="text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[150px]">{row.college_name || "—"}</div>
         </div>
       ),
     },
@@ -186,10 +238,10 @@ export const StudentsPage: React.FC = () => {
       header: "Points / Courses",
       cell: (row) => (
         <div className="text-xs">
-          <div className="font-semibold text-amber-400 flex items-center gap-1">
+          <div className="font-semibold text-amber-500 flex items-center gap-1">
             <span>{parseFloat(row.total_points || "0").toLocaleString()} pts</span>
           </div>
-          <div className="text-slate-400 mt-0.5 flex items-center gap-1">
+          <div className="text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
             <BookOpen className="h-3 w-3" />
             <span>{row.enrolled_courses_count} enrolled</span>
           </div>
@@ -203,7 +255,7 @@ export const StudentsPage: React.FC = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
             <StatusDot status={row.is_active ? "online" : "offline"} pulse={row.is_active} />
-            <span className="text-xs font-medium text-slate-300">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
               {row.is_active ? "Active" : "Inactive"}
             </span>
           </div>
@@ -218,7 +270,7 @@ export const StudentsPage: React.FC = () => {
               }
               size="sm"
             >
-              {row.onboarding_status}
+              {row.onboarding_status === "PENDING_ACTIVATION" ? "Pending Approval" : row.onboarding_status}
             </Badge>
           </div>
         </div>
@@ -230,6 +282,20 @@ export const StudentsPage: React.FC = () => {
       align: "right",
       cell: (row) => (
         <div className="flex items-center justify-end gap-1.5">
+          {/* Quick Grant Access Button if pending */}
+          {row.onboarding_status !== "ACTIVE" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+              onClick={() => setStatusDialogStudent({ student: row, action: "grant" })}
+              title="Grant Full Portal Access"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 mr-1 text-emerald-500" />
+              Authorize
+            </Button>
+          )}
+
           {/* View Details */}
           <Button
             size="sm"
@@ -271,8 +337,8 @@ export const StudentsPage: React.FC = () => {
             </Button>
           )}
 
-          {/* Toggle Portal Access */}
-          {row.onboarding_status === "ACTIVE" ? (
+          {/* Revoke Portal Access */}
+          {row.onboarding_status === "ACTIVE" && (
             <Button
               size="sm"
               variant="ghost"
@@ -280,15 +346,6 @@ export const StudentsPage: React.FC = () => {
               title="Revoke Portal Access"
             >
               <ShieldAlert className="h-4 w-4 text-amber-400 hover:text-amber-300" />
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setStatusDialogStudent({ student: row, action: "grant" })}
-              title="Grant Portal Access"
-            >
-              <ShieldCheck className="h-4 w-4 text-emerald-400 hover:text-emerald-300" />
             </Button>
           )}
         </div>
@@ -301,22 +358,33 @@ export const StudentsPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            Student Management
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            Student Management & Access Control
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Provision student profiles, manage portal credentials, monitor progress and course enrollments.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Authorize registered student accounts, manage institutional courses, attendance, and credentials.
           </p>
         </div>
 
-        <Button onClick={handleOpenAdd} className="shadow-lg shadow-brand-600/25">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Student
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setIsAuthorizeEmailModalOpen(true)}
+            className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+          >
+            <MailCheck className="h-4 w-4 mr-2 text-emerald-500" />
+            Authorize by Email
+          </Button>
+
+          <Button onClick={handleOpenAdd} className="shadow-lg shadow-brand-600/25">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Student
+          </Button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-surface-800 bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-xs">
           <SearchInput
             value={search}
@@ -346,7 +414,7 @@ export const StudentsPage: React.FC = () => {
           </div>
 
           {/* Access Status Filter */}
-          <div className="w-40">
+          <div className="w-48">
             <Select
               value={statusFilter}
               onChange={(e) => {
@@ -355,9 +423,9 @@ export const StudentsPage: React.FC = () => {
               }}
             >
               <option value="">All Access States</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="PENDING_ACTIVATION">PENDING</option>
-              <option value="SUSPENDED">SUSPENDED</option>
+              <option value="PENDING_ACTIVATION">⏳ Pending Approval</option>
+              <option value="ACTIVE">✓ Active (Approved)</option>
+              <option value="SUSPENDED">✗ Suspended</option>
             </Select>
           </div>
 
@@ -387,7 +455,7 @@ export const StudentsPage: React.FC = () => {
         errorMessage="Failed to load student profiles. Ensure the backend services are running."
         onRetry={() => refetch()}
         emptyTitle="No Students Found"
-        emptyDescription="No registered students match your filter criteria. Click 'Add Student' to provision a new account."
+        emptyDescription="No registered students match your filter criteria. Click 'Add Student' or 'Authorize by Email'."
         pagination={
           data?.meta?.pagination
             ? {
@@ -404,6 +472,71 @@ export const StudentsPage: React.FC = () => {
             : undefined
         }
       />
+
+      {/* Quick Authorize by Email Modal */}
+      <Modal
+        isOpen={isAuthorizeEmailModalOpen}
+        onClose={() => setIsAuthorizeEmailModalOpen(false)}
+        title="Authorize Student by Institutional Email"
+        description="Enter the registered email of the student to grant them full access to the portal, course curriculum, and daily attendance."
+        size="md"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!authEmailData.email.trim()) return;
+            grantByEmailMutation.mutate(authEmailData);
+          }}
+          className="space-y-4"
+        >
+          <FormField label="Student Registered Email" required>
+            <Input
+              type="email"
+              placeholder="student@gqt.edu / student@example.com"
+              value={authEmailData.email}
+              onChange={(e) => setAuthEmailData({ ...authEmailData, email: e.target.value })}
+              required
+            />
+          </FormField>
+
+          <FormField label="Assigned Fixed Course Track">
+            <Select
+              value={authEmailData.course_opted}
+              onChange={(e) => setAuthEmailData({ ...authEmailData, course_opted: e.target.value })}
+            >
+              <option value="Full Stack Software & Assessment Track">Full Stack Software & Assessment Track</option>
+              <option value="Java Enterprise & Cloud Microservices">Java Enterprise & Cloud Microservices</option>
+              <option value="Data Science, Python & AI Track">Data Science, Python & AI Track</option>
+              <option value="Frontend Modern Web Architecture">Frontend Modern Web Architecture</option>
+            </Select>
+          </FormField>
+
+          <FormField label="Batch Assignment">
+            <Select
+              value={authEmailData.batch_code}
+              onChange={(e) => setAuthEmailData({ ...authEmailData, batch_code: e.target.value })}
+            >
+              <option value="BATCH-2026-A">BATCH-2026-A (Active Cohort)</option>
+              <option value="BATCH-2025-A">BATCH-2025-A</option>
+              <option value="BATCH-2025-B">BATCH-2025-B</option>
+            </Select>
+          </FormField>
+
+          <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-surface-800">
+            <Button variant="secondary" type="button" onClick={() => setIsAuthorizeEmailModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={grantByEmailMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+            >
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              Authorize Access
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Provision Student Modal */}
       <Modal
@@ -613,14 +746,14 @@ export const StudentsPage: React.FC = () => {
         isOpen={Boolean(statusDialogStudent)}
         onClose={() => setStatusDialogStudent(null)}
         onConfirm={handleStatusActionConfirm}
-        isLoading={updateMutation.isPending}
+        isLoading={updateMutation.isPending || grantAccessMutation.isPending || revokeAccessMutation.isPending}
         title={
           statusDialogStudent?.action === "activate"
             ? "Activate Student Account?"
             : statusDialogStudent?.action === "deactivate"
             ? "Deactivate Student Account?"
             : statusDialogStudent?.action === "grant"
-            ? "Grant Portal Access?"
+            ? "Grant Full Portal Access?"
             : "Revoke Portal Access?"
         }
         message={
@@ -629,7 +762,7 @@ export const StudentsPage: React.FC = () => {
             : statusDialogStudent?.action === "deactivate"
             ? `Deactivating ${statusDialogStudent?.student.full_name} will immediately prevent portal login.`
             : statusDialogStudent?.action === "grant"
-            ? `Approve ${statusDialogStudent?.student.full_name}'s onboarding status to ACTIVE.`
+            ? `Approve ${statusDialogStudent?.student.full_name}'s access to all course curriculum, assessments, and attendance.`
             : `Suspended status will prevent ${statusDialogStudent?.student.full_name} from taking assessments and accessing modules.`
         }
         confirmText={
@@ -646,3 +779,4 @@ export const StudentsPage: React.FC = () => {
     </div>
   );
 };
+

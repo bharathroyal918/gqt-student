@@ -57,7 +57,7 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   if (isLoading && data.length === 0) {
     return (
-      <div className={`overflow-hidden rounded-2xl border border-surface-800 bg-surface-900/60 shadow-xl ${className}`}>
+      <div className={`overflow-hidden rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 shadow-sm dark:shadow-xl ${className}`}>
         <LoadingState type="skeleton" rows={5} />
       </div>
     );
@@ -65,18 +65,18 @@ export function DataTable<T>({
 
   if (isError && data.length === 0) {
     return (
-      <div className={`overflow-hidden rounded-2xl border border-surface-800 bg-surface-900/60 shadow-xl ${className}`}>
+      <div className={`overflow-hidden rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 shadow-sm dark:shadow-xl ${className}`}>
         <ErrorState message={errorMessage} onRetry={onRetry} />
       </div>
     );
   }
 
   return (
-    <div className={`overflow-hidden rounded-2xl border border-surface-800 bg-surface-900/60 shadow-xl backdrop-blur-md flex flex-col ${className}`}>
+    <div className={`overflow-hidden rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 shadow-sm dark:shadow-xl backdrop-blur-md flex flex-col ${className}`}>
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-surface-800 bg-surface-950/40 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <tr className="border-b border-slate-200 dark:border-surface-800 bg-slate-50/80 dark:bg-surface-950/40 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {columns.map((col, idx) => (
                 <th
                   key={col.key || idx}
@@ -93,7 +93,7 @@ export function DataTable<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-800/60 text-sm">
+          <tbody className="divide-y divide-slate-100 dark:divide-surface-800/60 text-sm">
             {data.length === 0 ? (
               <tr>
                 <td colSpan={columns.length}>
@@ -110,7 +110,7 @@ export function DataTable<T>({
                   <tr
                     key={rowKey}
                     onClick={() => onRowClick && onRowClick(row)}
-                    className={`transition-colors duration-150 hover:bg-surface-800/40 ${
+                    className={`transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-surface-800/40 ${
                       onRowClick ? "cursor-pointer" : ""
                     }`}
                   >
@@ -127,7 +127,7 @@ export function DataTable<T>({
                       return (
                         <td
                           key={col.key || colIdx}
-                          className={`px-5 py-4 whitespace-nowrap text-slate-200 ${
+                          className={`px-5 py-4 whitespace-nowrap text-slate-800 dark:text-slate-200 ${
                             col.align === "right"
                               ? "text-right"
                               : col.align === "center"
@@ -160,3 +160,4 @@ export function DataTable<T>({
     </div>
   );
 }
+

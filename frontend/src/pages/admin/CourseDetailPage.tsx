@@ -190,21 +190,21 @@ export const CourseDetailPage: React.FC = () => {
       </div>
 
       {/* Course Overview Card */}
-      <Card className="p-6">
+      <Card className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
               <BookOpen className="h-7 w-7" />
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-white">{course.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{course.title}</h1>
                 <Badge variant={course.is_published ? "emerald" : "slate"}>
                   {course.is_published ? "Published" : "Draft"}
                 </Badge>
               </div>
-              <div className="text-xs text-slate-400 font-mono mt-1">Slug: {course.slug}</div>
-              <p className="text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">Slug: {course.slug}</div>
+              <p className="text-sm text-slate-700 dark:text-slate-300 mt-2 max-w-2xl leading-relaxed">
                 {course.description || "No description provided for this track."}
               </p>
             </div>
@@ -219,18 +219,18 @@ export const CourseDetailPage: React.FC = () => {
         </div>
 
         {/* Quick Highlights */}
-        <div className="mt-6 grid grid-cols-2 gap-4 border-t border-surface-800 pt-4 sm:grid-cols-3">
-          <div className="rounded-xl bg-surface-900/60 p-3">
-            <div className="text-xs text-slate-400">Total Modules</div>
-            <div className="text-lg font-bold text-white">{sortedModules.length}</div>
+        <div className="mt-6 grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-surface-800 pt-4 sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-50 dark:bg-surface-900/60 p-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">Total Modules</div>
+            <div className="text-lg font-bold text-slate-900 dark:text-white">{sortedModules.length}</div>
           </div>
-          <div className="rounded-xl bg-surface-900/60 p-3">
-            <div className="text-xs text-slate-400">Enrolled Students</div>
-            <div className="text-lg font-bold text-emerald-400">{course.enrolled_students_count}</div>
+          <div className="rounded-xl bg-slate-50 dark:bg-surface-900/60 p-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">Enrolled Students</div>
+            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{course.enrolled_students_count}</div>
           </div>
-          <div className="rounded-xl bg-surface-900/60 p-3">
-            <div className="text-xs text-slate-400">Sequential Lock</div>
-            <div className="text-sm font-semibold text-brand-400 mt-0.5">Enforced by Order</div>
+          <div className="rounded-xl bg-slate-50 dark:bg-surface-900/60 p-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">Sequential Lock</div>
+            <div className="text-sm font-semibold text-brand-600 dark:text-brand-400 mt-0.5">Enforced by Order</div>
           </div>
         </div>
       </Card>
@@ -238,11 +238,11 @@ export const CourseDetailPage: React.FC = () => {
       {/* Modules List Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Layers className="h-5 w-5 text-indigo-400" />
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <Layers className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
             Curriculum Modules & Sequence
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Modules must be completed sequentially by students according to this order index.
           </p>
         </div>
@@ -261,17 +261,17 @@ export const CourseDetailPage: React.FC = () => {
       ) : (
         <div className="space-y-3">
           {sortedModules.map((mod, index) => (
-            <Card key={mod.id} className="p-4 transition-all hover:border-surface-700">
+            <Card key={mod.id} className="p-4 transition-all border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none hover:border-slate-300 dark:hover:border-surface-700">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-4">
                   {/* Sequence Order Badge */}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-800 text-slate-200 font-bold font-mono text-sm border border-surface-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-surface-800 text-slate-700 dark:text-slate-200 font-bold font-mono text-sm border border-slate-200 dark:border-surface-700">
                     #{mod.order_index}
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2.5">
-                      <h3 className="font-semibold text-white text-base">{mod.title}</h3>
+                      <h3 className="font-semibold text-slate-900 dark:text-white text-base">{mod.title}</h3>
                       <StatusDot status={mod.is_published ? "online" : "offline"} pulse={mod.is_published} />
                       <Badge variant={mod.is_published ? "emerald" : "slate"} size="sm">
                         {mod.is_published ? "Published" : "Draft"}
@@ -279,11 +279,11 @@ export const CourseDetailPage: React.FC = () => {
                       <Badge variant="indigo" size="sm">Pass: {mod.passing_percentage}%</Badge>
                     </div>
 
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-1">{mod.summary || "No summary provided."}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-1">{mod.summary || "No summary provided."}</p>
 
-                    <div className="mt-2 flex items-center gap-4 text-xs text-slate-400">
+                    <div className="mt-2 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-1">
-                        <Code2 className="h-3.5 w-3.5 text-brand-400" />
+                        <Code2 className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
                         {mod.questions_count} coding questions
                       </span>
                       {mod.prerequisites?.length > 0 && (
@@ -327,9 +327,9 @@ export const CourseDetailPage: React.FC = () => {
                     title={mod.is_published ? "Unpublish Module" : "Publish Module"}
                   >
                     {mod.is_published ? (
-                      <XCircle className="h-4 w-4 text-amber-400 hover:text-amber-300" />
+                      <XCircle className="h-4 w-4 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300" />
                     ) : (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 hover:text-emerald-300" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300" />
                     )}
                   </Button>
 
@@ -340,7 +340,7 @@ export const CourseDetailPage: React.FC = () => {
                     onClick={() => handleOpenEditModule(mod)}
                     title="Edit Module"
                   >
-                    <Edit2 className="h-4 w-4 text-slate-400 hover:text-brand-400" />
+                    <Edit2 className="h-4 w-4 text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400" />
                   </Button>
                 </div>
               </div>

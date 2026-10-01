@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 
-from apps.common.models import BaseModel
+from apps.common.models import BaseModel, TimeStampedModel, UUIDModel
 
 
 class StudentProfile(BaseModel):
@@ -18,6 +18,26 @@ class StudentProfile(BaseModel):
     college_name = models.CharField(max_length=255, blank=True, default="")
     graduation_year = models.PositiveIntegerField(null=True, blank=True)
 
+    # Student Editable profile extensions
+    dob = models.DateField(null=True, blank=True)
+    branch = models.CharField(max_length=100, blank=True, default="Computer Science")
+    bio = models.TextField(blank=True, default="")
+    github_url = models.URLField(max_length=255, blank=True, default="")
+    linkedin_url = models.URLField(max_length=255, blank=True, default="")
+
+    # Fixed course opted (assigned by institutional admin)
+    course_opted = models.CharField(
+        max_length=200, blank=True, default="Full Stack Software & Assessment Track"
+    )
+
+    # Attendance telemetry
+    attendance_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, default=Decimal("100.00"), db_index=True
+    )
+    total_classes = models.PositiveIntegerField(default=45)
+    attended_classes = models.PositiveIntegerField(default=45)
+
+    # Gamification & Progress
     current_streak_days = models.PositiveIntegerField(default=0)
     highest_streak_days = models.PositiveIntegerField(default=0)
     total_points = models.DecimalField(
@@ -44,12 +64,22 @@ class StudentProfile(BaseModel):
             ),
         ]
 
+    def recalculate_attendance(self):
+        """Calculate live attendance percentage based on total and attended sessions."""
+        if self.total_classes > 0:
+            pct = (Decimal(self.attended_classes) / Decimal(self.total_classes)) * Decimal("100.00")
+            self.attendance_percentage = min(Decimal("100.00"), max(Decimal("0.00"), round(pct, 2)))
+        else:
+            self.attendance_percentage = Decimal("100.00")
+
     def clean(self):
         super().clean()
         if self.current_streak_days > self.highest_streak_days:
             self.highest_streak_days = self.current_streak_days
+        self.recalculate_attendance()
 
     def save(self, *args, **kwargs):
+        self.recalculate_attendance()
         super().save(*args, **kwargs)
         try:
             from apps.leaderboard.services import LeaderboardService
@@ -60,3 +90,34 @@ class StudentProfile(BaseModel):
     def __str__(self):
         return f"{self.full_name} ({self.student_id_number})"
 
+
+class AttendanceRecord(UUIDModel, TimeStampedModel):
+    """Daily or session attendance tracking for enrolled students."""
+
+    class AttendanceStatus(models.TextChoices):
+        PRESENT = "PRESENT", "Present"
+        ABSENT = "ABSENT", "Absent"
+        LATE = "LATE", "Late"
+        EXCUSED = "EXCUSED", "Excused"
+
+    student_profile = models.ForeignKey(
+        StudentProfile, on_delete=models.CASCADE, related_name="attendance_records"
+    )
+    date = models.DateField(db_index=True)
+    session_title = models.CharField(max_length=200, default="Daily Training & Coding Lab")
+    status = models.CharField(
+        max_length=20, choices=AttendanceStatus.choices, default=AttendanceStatus.PRESENT
+    )
+    remarks = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        verbose_name = "Attendance Record"
+        verbose_name_plural = "Attendance Records"
+        ordering = ["-date", "-created_at"]
+        indexes = [
+            models.Index(fields=["student_profile", "date"], name="attendance_stud_date_idx"),
+            models.Index(fields=["date", "status"], name="attendance_date_status_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.student_profile.full_name} - {self.date}: {self.status}"

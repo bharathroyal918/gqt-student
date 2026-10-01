@@ -44,6 +44,13 @@ class HealthCheckView(APIView):
             logger.warning(f"Health probe Redis check failed: {e}")
             redis_healthy = False
 
+        # 3. Probe Supabase (if configured)
+        supabase_status = "unconfigured"
+        if getattr(settings, "SUPABASE_URL", "") and (
+            getattr(settings, "SUPABASE_ANON_KEY", "") or getattr(settings, "SUPABASE_SERVICE_ROLE_KEY", "")
+        ):
+            supabase_status = "configured"
+
         overall_status = "healthy" if db_healthy else "degraded"
         status_code = status.HTTP_200_OK if db_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -56,6 +63,7 @@ class HealthCheckView(APIView):
                 "subsystems": {
                     "database": "healthy" if db_healthy else "unhealthy",
                     "redis": "healthy" if redis_healthy else "unhealthy",
+                    "supabase": supabase_status,
                 },
             },
             status_code=status_code,

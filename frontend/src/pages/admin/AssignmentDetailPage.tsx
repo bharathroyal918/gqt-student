@@ -145,15 +145,15 @@ export const AssignmentDetailPage: React.FC = () => {
       </div>
 
       {/* Question Header Card */}
-      <Card className="p-6">
+      <Card className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
               <Code2 className="h-7 w-7" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl font-bold text-white">{question.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{question.title}</h1>
                 <Badge
                   variant={
                     question.difficulty === "EASY"
@@ -168,7 +168,7 @@ export const AssignmentDetailPage: React.FC = () => {
                 <Badge variant="indigo">{question.points} Points</Badge>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-400">
+              <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                 <span>Module: {question.module_title}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
@@ -191,18 +191,18 @@ export const AssignmentDetailPage: React.FC = () => {
         </div>
 
         {/* Problem Statement Preview */}
-        <div className="mt-6 border-t border-surface-800 pt-4">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+        <div className="mt-6 border-t border-slate-200 dark:border-surface-800 pt-4">
+          <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
             Problem Statement
           </h3>
-          <div className="rounded-xl bg-surface-900/60 p-4 text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed border border-surface-800">
+          <div className="rounded-xl bg-slate-50 dark:bg-surface-900/60 p-4 text-sm text-slate-800 dark:text-slate-300 whitespace-pre-wrap font-sans leading-relaxed border border-slate-200 dark:border-surface-800">
             {question.problem_statement}
           </div>
         </div>
 
         {/* Languages Allowed */}
         <div className="mt-4 flex items-center gap-2">
-          <span className="text-xs text-slate-400">Allowed Languages:</span>
+          <span className="text-xs text-slate-600 dark:text-slate-400">Allowed Languages:</span>
           {question.allowed_languages.map((l) => (
             <Badge key={l} variant="slate" size="sm">
               {l}
@@ -216,46 +216,46 @@ export const AssignmentDetailPage: React.FC = () => {
         {/* Visible Test Cases */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-white flex items-center gap-2">
-              <Eye className="h-4 w-4 text-emerald-400" />
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Eye className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
               Visible Test Cases (Student Samples)
-              <span className="text-xs text-slate-400 font-normal">({visibleTestCases.length})</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">({visibleTestCases.length})</span>
             </h2>
           </div>
 
           {visibleTestCases.length === 0 ? (
-            <div className="rounded-xl border border-surface-800 bg-surface-900/40 p-6 text-center text-sm text-slate-400">
+            <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/40 p-6 text-center text-sm text-slate-600 dark:text-slate-400">
               No sample visible test cases created.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {visibleTestCases.map((tc) => (
-                <Card key={tc.id} className="p-4 space-y-3">
+                <Card key={tc.id} className="p-4 space-y-3 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge variant="emerald" size="sm">Sample #{tc.order}</Badge>
-                      <span className="text-xs text-slate-400">Weight: {tc.weight}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Weight: {tc.weight}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button size="sm" variant="ghost" onClick={() => handleOpenEdit(tc)}>
-                        <Edit2 className="h-3.5 w-3.5 text-slate-400 hover:text-white" />
+                        <Edit2 className="h-3.5 w-3.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" />
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setDeletingTestCase(tc)}>
-                        <Trash2 className="h-3.5 w-3.5 text-rose-400 hover:text-rose-300" />
+                        <Trash2 className="h-3.5 w-3.5 text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300" />
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-2 text-xs font-mono">
                     <div>
-                      <span className="text-slate-400 font-sans">Input:</span>
-                      <pre className="mt-1 rounded-lg bg-surface-950 p-2.5 text-slate-200 overflow-x-auto border border-surface-800">
+                      <span className="text-slate-600 dark:text-slate-400 font-sans">Input:</span>
+                      <pre className="mt-1 rounded-lg bg-slate-50 dark:bg-surface-950 p-2.5 text-slate-800 dark:text-slate-200 overflow-x-auto border border-slate-200 dark:border-surface-800">
                         {tc.input_data || "<empty>"}
                       </pre>
                     </div>
                     <div>
-                      <span className="text-slate-400 font-sans">Expected Output:</span>
-                      <pre className="mt-1 rounded-lg bg-surface-950 p-2.5 text-emerald-300 overflow-x-auto border border-surface-800">
+                      <span className="text-slate-600 dark:text-slate-400 font-sans">Expected Output:</span>
+                      <pre className="mt-1 rounded-lg bg-slate-50 dark:bg-surface-950 p-2.5 text-emerald-700 dark:text-emerald-300 overflow-x-auto border border-slate-200 dark:border-surface-800">
                         {tc.expected_output || "<empty>"}
                       </pre>
                     </div>
@@ -269,46 +269,46 @@ export const AssignmentDetailPage: React.FC = () => {
         {/* Hidden Test Cases */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-white flex items-center gap-2">
-              <EyeOff className="h-4 w-4 text-amber-400" />
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <EyeOff className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               Hidden Test Cases (Grading Suite)
-              <span className="text-xs text-slate-400 font-normal">({hiddenTestCases.length})</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">({hiddenTestCases.length})</span>
             </h2>
           </div>
 
           {hiddenTestCases.length === 0 ? (
-            <div className="rounded-xl border border-surface-800 bg-surface-900/40 p-6 text-center text-sm text-slate-400">
+            <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/40 p-6 text-center text-sm text-slate-600 dark:text-slate-400">
               No hidden test cases configured. Submissions will only be verified against visible samples.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {hiddenTestCases.map((tc) => (
-                <Card key={tc.id} className="p-4 space-y-3 border-amber-500/20">
+                <Card key={tc.id} className="p-4 space-y-3 border-amber-500/30 dark:border-amber-500/20 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge variant="amber" size="sm">Hidden #{tc.order}</Badge>
-                      <span className="text-xs text-slate-400">Weight: {tc.weight}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Weight: {tc.weight}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button size="sm" variant="ghost" onClick={() => handleOpenEdit(tc)}>
-                        <Edit2 className="h-3.5 w-3.5 text-slate-400 hover:text-white" />
+                        <Edit2 className="h-3.5 w-3.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" />
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setDeletingTestCase(tc)}>
-                        <Trash2 className="h-3.5 w-3.5 text-rose-400 hover:text-rose-300" />
+                        <Trash2 className="h-3.5 w-3.5 text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300" />
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-2 text-xs font-mono">
                     <div>
-                      <span className="text-slate-400 font-sans">Input:</span>
-                      <pre className="mt-1 rounded-lg bg-surface-950 p-2.5 text-slate-200 overflow-x-auto border border-surface-800">
+                      <span className="text-slate-600 dark:text-slate-400 font-sans">Input:</span>
+                      <pre className="mt-1 rounded-lg bg-slate-50 dark:bg-surface-950 p-2.5 text-slate-800 dark:text-slate-200 overflow-x-auto border border-slate-200 dark:border-surface-800">
                         {tc.input_data || "<empty>"}
                       </pre>
                     </div>
                     <div>
-                      <span className="text-slate-400 font-sans">Expected Output:</span>
-                      <pre className="mt-1 rounded-lg bg-surface-950 p-2.5 text-amber-300 overflow-x-auto border border-surface-800">
+                      <span className="text-slate-600 dark:text-slate-400 font-sans">Expected Output:</span>
+                      <pre className="mt-1 rounded-lg bg-slate-50 dark:bg-surface-950 p-2.5 text-amber-700 dark:text-amber-300 overflow-x-auto border border-slate-200 dark:border-surface-800">
                         {tc.expected_output || "<empty>"}
                       </pre>
                     </div>

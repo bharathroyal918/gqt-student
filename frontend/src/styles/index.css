@@ -4,15 +4,29 @@
 
 @layer base {
   :root {
-    --color-bg: #020617;
-    --color-surface: #0f172a;
-    --color-border: #1e293b;
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text: #0f172a;
+    --color-text-muted: #64748b;
+    color-scheme: light;
+  }
+
+  :root.dark,
+  html.dark {
+    --color-bg: #040812;
+    --color-surface: #070e1b;
+    --color-border: #0f1c30;
+    --color-text: #f8fafc;
+    --color-text-muted: #94a3b8;
+    color-scheme: dark;
   }
 
   body {
     background-color: var(--color-bg);
-    color: #f8fafc;
-    font-family: 'Inter', sans-serif;
+    color: var(--color-text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   code, pre {
@@ -20,21 +34,61 @@
   }
 }
 
-/* Custom scrollbar for Monaco panes and dashboard feeds */
+/* Light mode default ambient background */
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Dark mode ambient GQT Brand Background */
+.dark body,
+html.dark body {
+  background-color: #040812;
+  color: #f8fafc;
+}
+
+.dark .gqt-ambient-bg {
+  background: radial-gradient(circle at 50% 0%, rgba(0, 102, 255, 0.12) 0%, rgba(0, 33, 77, 0.05) 45%, transparent 70%),
+              radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+              #040812;
+}
+
+.gqt-ambient-bg {
+  background: radial-gradient(circle at 50% 0%, rgba(0, 102, 255, 0.05) 0%, rgba(224, 242, 254, 0.4) 45%, transparent 70%),
+              #f8fafc;
+}
+
+/* Custom scrollbar matching GQT brand colors */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #f1f5f9;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #070e1b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #1b283d;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 132, 255, 0.15);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #0066ff;
+}
+
+/* Text Selection in GQT Electric Blue */
+::selection {
+  background-color: rgba(0, 132, 255, 0.35);
+  color: #ffffff;
 }

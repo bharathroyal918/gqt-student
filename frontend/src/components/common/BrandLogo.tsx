@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface BrandLogoProps {
-  variant?: "full" | "icon" | "image-card" | "sidebar";
+  variant?: "full" | "icon" | "image-card" | "sidebar" | "banner";
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
   subtitle?: string;
@@ -27,55 +27,41 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   // Badge styles
   const badgeStyles = {
-    admin: "bg-brand-500/15 text-brand-400 border border-brand-500/25",
-    student: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
-    default: "bg-surface-800 text-slate-300 border border-surface-700",
+    admin: "bg-brand-500/15 text-brand-600 dark:text-brand-400 border border-brand-500/25",
+    student: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+    default: "bg-slate-100 dark:bg-surface-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-surface-700",
   };
 
-  if (variant === "icon") {
+  // Full Image Card for Login Screens and Prominent Branding
+  if (variant === "image-card" || variant === "banner") {
     return (
-      <div className={`relative flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#001845] to-[#002868] p-1.5 shadow-md shadow-brand-500/20 border border-brand-500/30 ${iconSizes[size]} ${className}`}>
-        <img
-          src="/gqt-icon.svg"
-          alt="GQT"
-          className="h-full w-full object-contain"
-          onError={(e) => {
-            // Fallback to stylized text if svg fails
-            e.currentTarget.style.display = "none";
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (variant === "image-card") {
-    return (
-      <div className={`inline-flex items-center justify-center rounded-2xl bg-white p-2.5 shadow-xl shadow-brand-900/30 ring-1 ring-slate-200/80 ${className}`}>
+      <div className={`inline-flex items-center justify-center rounded-2xl bg-white p-3.5 shadow-xl shadow-brand-500/5 dark:shadow-black/40 ring-1 ring-slate-200/80 transition-all duration-300 hover:shadow-brand-500/20 hover:ring-brand-500/30 ${className}`}>
         <img
           src="/gqt-logo.jpg"
-          alt="Global Quest Technologies"
-          className="h-12 w-auto max-w-[200px] object-contain"
+          alt="Global Quest Technologies - Training | Innovation | Placement"
+          className="h-16 w-auto max-w-[260px] object-contain select-none"
         />
       </div>
     );
   }
 
+  // Sidebar Header Layout
   if (variant === "sidebar") {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
-        {/* Crisp high-resolution GQT Brand Icon */}
-        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#00173d] via-[#002868] to-[#0047ba] p-1.5 shadow-lg shadow-brand-600/20 border border-brand-500/30 transition-transform duration-200 group-hover:scale-105">
+        {/* Crisp White Logo Badge */}
+        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-brand-950/20 dark:shadow-brand-950/50 ring-1 ring-slate-200 dark:ring-white/30 transition-transform duration-200 hover:scale-105">
           <img
-            src="/gqt-icon.svg"
+            src="/gqt-logo.jpg"
             alt="GQT"
-            className="h-full w-full object-contain filter drop-shadow"
+            className="h-full w-full object-contain"
           />
         </div>
 
         {/* Brand Text Lockup */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold tracking-tight text-white">
+            <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
               GQT Portal
             </span>
             {badge && (
@@ -84,7 +70,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
               </span>
             )}
           </div>
-          <p className="text-[11px] text-slate-400 font-medium truncate">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
             {subtitle || "Global Quest Technologies"}
           </p>
         </div>
@@ -92,19 +78,32 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     );
   }
 
+  // Icon Only
+  if (variant === "icon") {
+    return (
+      <div className={`relative flex shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-brand-950/20 ring-1 ring-slate-200 ${iconSizes[size]} ${className}`}>
+        <img
+          src="/gqt-logo.jpg"
+          alt="GQT"
+          className="h-full w-full object-contain"
+        />
+      </div>
+    );
+  }
+
   // Default 'full' variant
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#001845] to-[#002868] p-1.5 shadow-md shadow-brand-500/20 border border-brand-500/30">
+      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-brand-950/20 ring-1 ring-slate-200">
         <img
-          src="/gqt-icon.svg"
+          src="/gqt-logo.jpg"
           alt="GQT"
           className="h-full w-full object-contain"
         />
       </div>
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-base font-extrabold tracking-tight text-white">
+          <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
             GQT Portal
           </span>
           {badge && (
@@ -113,7 +112,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-400 font-medium">
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           {subtitle || "Global Quest Technologies"}
         </p>
       </div>

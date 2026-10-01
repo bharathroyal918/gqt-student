@@ -115,12 +115,12 @@ export const AnnouncementsPage: React.FC = () => {
       header: "Announcement & Notice",
       cell: (row) => (
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
             <Megaphone className="h-5 w-5" />
           </div>
           <div>
-            <div className="font-semibold text-white">{row.title}</div>
-            <div className="text-xs text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">{row.content}</div>
+            <div className="font-semibold text-slate-900 dark:text-white">{row.title}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">{row.content}</div>
           </div>
         </div>
       ),
@@ -165,7 +165,7 @@ export const AnnouncementsPage: React.FC = () => {
       key: "date",
       header: "Created",
       cell: (row) => (
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-600 dark:text-slate-400">
           {new Date(row.created_at).toLocaleDateString()}
         </div>
       ),
@@ -176,7 +176,7 @@ export const AnnouncementsPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center gap-1.5">
           <StatusDot status={row.is_active ? "online" : "offline"} pulse={row.is_active} />
-          <span className="text-xs text-slate-300">{row.is_active ? "Active" : "Expired"}</span>
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{row.is_active ? "Active" : "Expired"}</span>
         </div>
       ),
     },
@@ -187,10 +187,10 @@ export const AnnouncementsPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center justify-end gap-1.5">
           <Button size="sm" variant="ghost" onClick={() => handleOpenEdit(row)} title="Edit Notice">
-            <Edit2 className="h-4 w-4 text-slate-400 hover:text-brand-400" />
+            <Edit2 className="h-4 w-4 text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400" />
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setDeletingItem(row)} title="Delete Notice">
-            <Trash2 className="h-4 w-4 text-rose-400 hover:text-rose-300" />
+            <Trash2 className="h-4 w-4 text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300" />
           </Button>
         </div>
       ),
@@ -202,10 +202,10 @@ export const AnnouncementsPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             Announcements & Broadcasts
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Broadcast platform-wide updates, deadline extensions, or targeted notifications to specific cohorts.
           </p>
         </div>
@@ -222,7 +222,7 @@ export const AnnouncementsPage: React.FC = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-surface-800 bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 p-4 sm:flex-row sm:items-center sm:justify-between shadow-sm dark:shadow-none">
         <div className="w-full sm:max-w-xs">
           <SearchInput
             value={search}

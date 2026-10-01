@@ -305,10 +305,52 @@ export interface QuestionSubmissionHistoryItem {
   submitted_at: string;
 }
 
+export interface AttendanceRecordItem {
+  id: string;
+  date: string;
+  status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+  session_title: string;
+  remarks: string;
+  marked_at: string;
+}
+
+export interface StudentAttendanceSummary {
+  attendance_percentage: number;
+  total_classes: number;
+  attended_classes: number;
+  records: AttendanceRecordItem[];
+}
+
+export interface StudentProfileUpdatePayload {
+  dob?: string | null;
+  avatar_url?: string;
+  branch?: string;
+  college_name?: string;
+  graduation_year?: number | null;
+  bio?: string;
+  github_url?: string;
+  linkedin_url?: string;
+}
+
 export const studentApi = {
   getDashboard: async (): Promise<StudentDashboardData> => {
     const { data } = await apiClient.get<ApiSuccessResponse<StudentDashboardData>>(
       "/students/dashboard/"
+    );
+    return data.data;
+  },
+
+  getAttendance: async (): Promise<StudentAttendanceSummary> => {
+    const { data } = await apiClient.get<ApiSuccessResponse<StudentAttendanceSummary>>(
+      "/students/me/attendance/"
+    );
+    return data.data;
+  },
+
+  updateProfile: async (payload: StudentProfileUpdatePayload): Promise<any> => {
+    const { data } = await apiClient.patch<ApiSuccessResponse<any>>(
+      "/students/me/profile/",
+      payload
     );
     return data.data;
   },

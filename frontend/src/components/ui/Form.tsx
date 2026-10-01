@@ -19,13 +19,13 @@ export const FormField: React.FC<FormFieldProps> = ({
 }) => {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      <label className="block text-xs font-semibold text-slate-300 tracking-tight">
+      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 tracking-tight">
         {label}
-        {required && <span className="text-rose-400 ml-1">*</span>}
+        {required && <span className="text-rose-500 dark:text-rose-400 ml-1">*</span>}
       </label>
       {children}
-      {helpText && !error && <p className="text-xs text-slate-400">{helpText}</p>}
-      {error && <p className="text-xs text-rose-400 font-medium">{error}</p>}
+      {helpText && !error && <p className="text-xs text-slate-500 dark:text-slate-400">{helpText}</p>}
+      {error && <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{error}</p>}
     </div>
   );
 };
@@ -39,10 +39,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         ref={ref}
-        className={`h-10 w-full rounded-xl border bg-surface-900 px-3.5 text-sm text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-1 ${
+        className={`h-10 w-full rounded-xl border bg-white dark:bg-surface-900 px-3.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/20 ${
           error
-            ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
-            : "border-surface-700 focus:border-brand-500 focus:ring-brand-500"
+            ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
+            : "border-slate-300 dark:border-surface-700 focus:border-brand-500"
         } ${className}`}
         {...props}
       />
@@ -61,10 +61,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <textarea
         ref={ref}
         rows={rows}
-        className={`w-full rounded-xl border bg-surface-900 p-3 text-sm text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-1 ${
+        className={`w-full rounded-xl border bg-white dark:bg-surface-900 p-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/20 ${
           error
-            ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
-            : "border-surface-700 focus:border-brand-500 focus:ring-brand-500"
+            ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
+            : "border-slate-300 dark:border-surface-700 focus:border-brand-500"
         } ${className}`}
         {...props}
       />
@@ -83,16 +83,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <select
         ref={ref}
-        className={`h-10 w-full rounded-xl border bg-surface-900 px-3.5 text-sm text-white transition-colors focus:outline-none focus:ring-1 ${
+        className={`h-10 w-full rounded-xl border bg-white dark:bg-surface-900 px-3.5 text-sm text-slate-900 dark:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/20 ${
           error
-            ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
-            : "border-surface-700 focus:border-brand-500 focus:ring-brand-500"
+            ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
+            : "border-slate-300 dark:border-surface-700 focus:border-brand-500"
         } ${className}`}
         {...props}
       >
         {options
           ? options.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-surface-900 text-white">
+              <option key={opt.value} value={opt.value} className="bg-white dark:bg-surface-900 text-slate-900 dark:text-white">
                 {opt.label}
               </option>
             ))
@@ -110,11 +110,11 @@ export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElemen
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ label, className = "", ...props }, ref) => {
     return (
-      <label className={`inline-flex items-center gap-2.5 cursor-pointer text-sm text-slate-300 select-none ${className}`}>
+      <label className={`inline-flex items-center gap-2.5 cursor-pointer text-sm text-slate-700 dark:text-slate-300 select-none ${className}`}>
         <input
           ref={ref}
           type="checkbox"
-          className="h-4 w-4 rounded border-surface-700 bg-surface-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-surface-950"
+          className="h-4 w-4 rounded border-slate-300 dark:border-surface-700 bg-white dark:bg-surface-900 text-brand-600 focus:ring-brand-500 focus:ring-offset-white dark:focus:ring-offset-surface-950"
           {...props}
         />
         <span>{label}</span>
@@ -123,3 +123,4 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 Checkbox.displayName = "Checkbox";
+

@@ -10,7 +10,77 @@ from apps.common.permissions import IsOwnerOrAdmin
 from apps.common.responses import api_error, api_success
 from apps.modules.services import StudentModuleService
 from apps.students.models import StudentProfile
+from apps.students.serializers import (
+    AttendanceRecordSerializer,
+    StudentAttendanceSummarySerializer,
+    StudentProfileUpdateSerializer,
+)
 from apps.students.services import StudentDashboardService
+
+
+class StudentProfileSelfUpdateView(APIView):
+    """Authenticated student views or updates their own allowed profile fields (DOB, branch, college, bio, URLs, avatar).
+    
+    Email, Name, Student ID, Course Opted, and Points cannot be altered by student.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={200: StudentProfileNestedSerializer},
+        summary="Retrieve Authenticated Student Profile",
+        tags=["Students"],
+    )
+    def get(self, request):
+        profile = StudentProfile.objects.filter(user=request.user).first()
+        if not profile:
+            return api_error(
+                code="STUDENT_PROFILE_REQUIRED",
+                message="User does not have an active student profile.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        return api_success(
+            data=StudentProfileNestedSerializer(profile).data,
+            message="Student profile retrieved successfully.",
+        )
+
+    @extend_schema(
+        request=StudentProfileUpdateSerializer,
+        responses={200: StudentProfileNestedSerializer},
+        summary="Update Allowed Student Profile Fields",
+        tags=["Students"],
+    )
+    def patch(self, request):
+        serializer = StudentProfileUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        updated_profile = StudentDashboardService.update_student_profile(
+            user=request.user,
+            **serializer.validated_data,
+        )
+
+        return api_success(
+            data=StudentProfileNestedSerializer(updated_profile).data,
+            message="Profile details updated successfully.",
+        )
+
+
+class StudentAttendanceSelfView(APIView):
+    """Authenticated student retrieves their attendance summary and session logs."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={200: StudentAttendanceSummarySerializer},
+        summary="Retrieve Student Attendance Telemetry",
+        tags=["Students"],
+    )
+    def get(self, request):
+        attendance_data = StudentDashboardService.get_student_attendance(request.user)
+        return api_success(
+            data=attendance_data,
+            message="Attendance telemetry retrieved successfully.",
+        )
 
 
 class StudentDashboardView(APIView):

@@ -40,7 +40,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         value={innerVal}
         onChange={(e) => setInnerVal(e.target.value)}
         placeholder={placeholder}
-        className="h-10 w-full rounded-xl border border-surface-700 bg-surface-900/80 pl-10 pr-9 text-sm text-white placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors"
+        className="h-10 w-full rounded-xl border border-slate-300 dark:border-surface-700 bg-white dark:bg-surface-900/80 pl-10 pr-9 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-colors"
       />
       {innerVal && (
         <button
@@ -48,7 +48,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             setInnerVal("");
             onChange("");
           }}
-          className="absolute right-3 rounded-md p-0.5 text-slate-400 hover:text-white transition-colors"
+          className="absolute right-3 rounded-md p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -56,3 +56,4 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     </div>
   );
 };
+

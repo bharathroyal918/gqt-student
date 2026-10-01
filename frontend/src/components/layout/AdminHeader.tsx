@@ -28,11 +28,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-surface-800 bg-surface-950/80 px-4 sm:px-6 backdrop-blur-md">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/80 px-4 sm:px-6 backdrop-blur-md transition-colors duration-200">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMobileSidebar}
-          className="rounded-lg p-2 text-slate-400 hover:bg-surface-800 hover:text-white lg:hidden transition-colors"
+          className="rounded-lg p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-800 hover:text-slate-900 dark:hover:text-white lg:hidden transition-colors"
           aria-label="Toggle navigation"
         >
           <Menu className="h-5 w-5" />
@@ -40,10 +40,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
 
         <div className="flex items-center gap-2 lg:hidden">
           <img src="/gqt-icon.svg" alt="GQT" className="h-6 w-6 rounded-md object-contain" />
-          <span className="font-bold text-xs text-white">GQT Admin</span>
+          <span className="font-bold text-xs text-slate-900 dark:text-white">GQT Admin</span>
         </div>
 
-        <span className="hidden sm:inline-block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        <span className="hidden sm:inline-block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           Institutional Administration
         </span>
       </div>
@@ -52,27 +52,27 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-surface-800 bg-surface-900 text-slate-400 hover:text-white hover:bg-surface-800 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
           aria-label="Toggle dark/light theme"
         >
-          {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+          {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
         </button>
 
-        {/* User profile dropdown / info */}
-        <div className="flex items-center gap-2.5 rounded-xl border border-surface-800 bg-surface-900/80 px-3 py-1.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500/20 text-brand-400">
+        {/* User profile info */}
+        <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/80 px-3 py-1.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-400">
             <User className="h-4 w-4" />
           </div>
           <div className="hidden sm:block text-left text-xs">
-            <p className="font-semibold text-white truncate max-w-[140px]">{user?.email || "Admin User"}</p>
-            <p className="text-[10px] text-slate-400">Administrator</p>
+            <p className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px]">{user?.email || "Admin User"}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">Administrator</p>
           </div>
         </div>
 
         {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-surface-800 bg-surface-900 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 text-slate-600 dark:text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
           title="Sign out"
           aria-label="Sign out"
         >

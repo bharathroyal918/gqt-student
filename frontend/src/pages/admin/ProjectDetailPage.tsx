@@ -100,11 +100,11 @@ export const ProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Header Info */}
-      <Card className="p-6">
+      <Card className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-white">{submission.project_title}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{submission.project_title}</h1>
               <Badge
                 variant={
                   submission.status === "APPROVED"
@@ -120,10 +120,10 @@ export const ProjectDetailPage: React.FC = () => {
               </Badge>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-              <span className="font-semibold text-slate-200">Student: {submission.student_name}</span>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">Student: {submission.student_name}</span>
               <span>•</span>
-              <span className="font-mono text-slate-300">ID: {submission.student_id_number}</span>
+              <span className="font-mono text-slate-700 dark:text-slate-300">ID: {submission.student_id_number}</span>
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
@@ -143,7 +143,7 @@ export const ProjectDetailPage: React.FC = () => {
                 <Button variant="secondary" size="sm">
                   <Github className="h-4 w-4 mr-1.5" />
                   GitHub Repository
-                  <ExternalLink className="h-3.5 w-3.5 ml-1.5 text-slate-400" />
+                  <ExternalLink className="h-3.5 w-3.5 ml-1.5 text-slate-500 dark:text-slate-400" />
                 </Button>
               </a>
             )}
@@ -154,9 +154,9 @@ export const ProjectDetailPage: React.FC = () => {
                 rel="noopener noreferrer"
               >
                 <Button variant="secondary" size="sm">
-                  <Sparkles className="h-4 w-4 mr-1.5 text-brand-400" />
+                  <Sparkles className="h-4 w-4 mr-1.5 text-brand-500 dark:text-brand-400" />
                   Live Demo
-                  <ExternalLink className="h-3.5 w-3.5 ml-1.5 text-slate-400" />
+                  <ExternalLink className="h-3.5 w-3.5 ml-1.5 text-slate-500 dark:text-slate-400" />
                 </Button>
               </a>
             )}
@@ -169,34 +169,34 @@ export const ProjectDetailPage: React.FC = () => {
         {/* Left: Deliverables & Files (7 cols) */}
         <div className="space-y-6 lg:col-span-7">
           {/* Student Notes */}
-          <Card className="p-6">
-            <h2 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-brand-400" />
+          <Card className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-brand-500 dark:text-brand-400" />
               Student Notes & Submission Summary
             </h2>
-            <div className="rounded-xl bg-surface-900/60 p-4 text-sm text-slate-300 whitespace-pre-wrap leading-relaxed border border-surface-800">
+            <div className="rounded-xl bg-slate-50 dark:bg-surface-900/60 p-4 text-sm text-slate-800 dark:text-slate-300 whitespace-pre-wrap leading-relaxed border border-slate-200 dark:border-surface-800">
               {submission.notes || "No additional comments submitted by the student."}
             </div>
           </Card>
 
           {/* Attached Deliverable Files */}
-          <Card className="p-6">
-            <h2 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
-              <FileCode className="h-4 w-4 text-indigo-400" />
+          <Card className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <FileCode className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
               Attached Deliverable Files ({submission.files?.length || 0})
             </h2>
 
             {!submission.files || submission.files.length === 0 ? (
-              <div className="rounded-xl border border-surface-800 bg-surface-900/40 p-6 text-center text-sm text-slate-400">
+              <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/40 p-6 text-center text-sm text-slate-600 dark:text-slate-400">
                 No uploaded files attached (Repository link was provided).
               </div>
             ) : (
-              <div className="divide-y divide-surface-800 rounded-xl border border-surface-800 bg-surface-900/50 overflow-hidden">
+              <div className="divide-y divide-slate-200 dark:divide-surface-800 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/50 overflow-hidden">
                 {submission.files.map((f) => (
                   <div key={f.id} className="p-4 flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-slate-200 text-sm">{f.file_name}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">
+                      <div className="font-medium text-slate-800 dark:text-slate-200 text-sm">{f.file_name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {(f.file_size_bytes / 1024).toFixed(1)} KB • {f.mime_type || "Document"}
                       </div>
                     </div>
@@ -216,9 +216,9 @@ export const ProjectDetailPage: React.FC = () => {
 
         {/* Right: Review & Grading Form (5 cols) */}
         <div className="space-y-6 lg:col-span-5">
-          <Card className="p-6">
-            <h2 className="text-base font-semibold text-white mb-1">Grading & Review Rubric</h2>
-            <p className="text-xs text-slate-400 mb-6">
+          <Card className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm dark:shadow-none">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-1">Grading & Review Rubric</h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-6">
               Evaluate submission code quality, allocate points, and specify corrective actions.
             </p>
 
@@ -295,7 +295,7 @@ export const ProjectDetailPage: React.FC = () => {
                 />
               </FormField>
 
-              <div className="pt-4 border-t border-surface-800">
+              <div className="pt-4 border-t border-slate-200 dark:border-surface-800">
                 <Button type="submit" className="w-full" isLoading={reviewMutation.isPending}>
                   Save Evaluation & Feedback
                 </Button>

@@ -10,12 +10,16 @@ import {
   ArrowRight,
   ShieldCheck,
   KeyRound,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { authApi } from "../../api/authApi";
 import { useAuthStore } from "../../store/authStore";
+import { useThemeStore } from "../../store/themeStore";
 import { useToast } from "../../context/ToastContext";
 import { Button } from "../../components/ui/Button";
 import { FormField, Input } from "../../components/ui/Form";
+import { BrandLogo } from "../../components/common/BrandLogo";
 
 // Validation schemas
 const phoneSchema = z.object({
@@ -45,6 +49,7 @@ export const StudentLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { setAuth } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const { success, error: toastError } = useToast();
 
   const [authMethod, setAuthMethod] = useState<"otp" | "email">("otp");
@@ -122,7 +127,7 @@ export const StudentLoginPage: React.FC = () => {
   const onEmailLogin = async (data: EmailFormValues) => {
     setIsSubmitting(true);
     try {
-      const res = await authApi.loginEmail(data.email, data.password);
+      const res = await authApi.loginStudent(data.email, data.password);
 
       if (res.user.role === "ADMIN") {
         toastError("Access Denied", "Admin accounts must log in via the Admin Portal.");
@@ -142,30 +147,37 @@ export const StudentLoginPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-950 p-4 font-sans text-slate-100">
-      {/* Background radial gradient */}
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+      {/* Background ambient glow */}
       <div className="pointer-events-none fixed inset-0 flex items-center justify-center">
         <div className="h-[500px] w-[500px] rounded-full bg-brand-500/10 blur-[120px]" />
       </div>
 
-      <div className="relative w-full max-w-md rounded-3xl border border-surface-800 bg-surface-900/80 p-8 shadow-2xl backdrop-blur-2xl">
+      {/* Floating Theme Toggle */}
+      <div className="absolute top-4 right-4 z-20">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-900/90 text-slate-600 dark:text-slate-300 shadow-md backdrop-blur-md hover:bg-slate-100 dark:hover:bg-surface-800 transition-all"
+          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          aria-label="Toggle Theme"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
+        </button>
+      </div>
+
+      <div className="relative w-full max-w-md rounded-3xl border border-slate-200 dark:border-surface-800 bg-white/95 dark:bg-surface-900/80 p-8 shadow-2xl shadow-brand-500/5 dark:shadow-black/60 backdrop-blur-2xl">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-white shadow-xl shadow-brand-900/40 ring-1 ring-white/20 mb-4 transition-transform duration-200 hover:scale-[1.02]">
-            <img
-              src="/gqt-logo.jpg"
-              alt="Global Quest Technologies"
-              className="h-11 w-auto max-w-[210px] object-contain"
-            />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Student Portal</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <BrandLogo variant="image-card" className="mb-4" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Student Portal</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Access your curriculum, coding labs, tasks, and project submissions.
           </p>
         </div>
 
         {/* Method Toggle: OTP vs Password */}
-        <div className="flex rounded-xl bg-surface-950 p-1 border border-surface-800 mb-6">
+        <div className="flex rounded-xl bg-slate-100 dark:bg-surface-950 p-1 border border-slate-200 dark:border-surface-800 mb-6">
           <button
             type="button"
             onClick={() => {
@@ -175,7 +187,7 @@ export const StudentLoginPage: React.FC = () => {
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
               authMethod === "otp"
                 ? "bg-brand-600 text-white shadow-md shadow-brand-600/20"
-                : "text-slate-400 hover:text-white"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             <Phone className="h-3.5 w-3.5" />
@@ -187,7 +199,7 @@ export const StudentLoginPage: React.FC = () => {
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
               authMethod === "email"
                 ? "bg-brand-600 text-white shadow-md shadow-brand-600/20"
-                : "text-slate-400 hover:text-white"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             <Mail className="h-3.5 w-3.5" />
@@ -216,7 +228,7 @@ export const StudentLoginPage: React.FC = () => {
                   </div>
                 </FormField>
 
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                   Only student accounts provisioned by administrators can receive access codes.
                 </p>
 
@@ -227,12 +239,12 @@ export const StudentLoginPage: React.FC = () => {
               </form>
             ) : (
               <form onSubmit={handleSubmitOtp(onVerifyOtp)} className="space-y-4">
-                <div className="rounded-xl border border-surface-800 bg-surface-950/60 p-3 text-xs text-slate-300 flex items-center justify-between">
-                  <span>Code sent to: <span className="font-mono text-brand-400">{targetPhone}</span></span>
+                <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-950/60 p-3 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                  <span>Code sent to: <span className="font-mono font-semibold text-brand-600 dark:text-brand-400">{targetPhone}</span></span>
                   <button
                     type="button"
                     onClick={() => setOtpStep("request")}
-                    className="text-xs text-brand-400 hover:underline"
+                    className="text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline"
                   >
                     Change
                   </button>
@@ -278,7 +290,7 @@ export const StudentLoginPage: React.FC = () => {
                 <Input
                   {...registerEmail("email")}
                   type="email"
-                  placeholder="student@institution.edu"
+                  placeholder="student@gqt.edu"
                   className="pl-10"
                 />
               </div>
@@ -302,8 +314,8 @@ export const StudentLoginPage: React.FC = () => {
 
             <div className="flex justify-end">
               <Link
-                to="/auth/forgot-password"
-                className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                to="/forgot-password"
+                className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium transition-colors"
               >
                 Forgot your password?
               </Link>
@@ -316,11 +328,17 @@ export const StudentLoginPage: React.FC = () => {
           </form>
         )}
 
-        {/* Footer Notice */}
-        <div className="mt-8 border-t border-surface-800 pt-4 text-center">
+        {/* Footer Notice & Registration Link */}
+        <div className="mt-8 border-t border-slate-200 dark:border-surface-800 pt-5 space-y-3 text-center">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-brand-600 dark:text-brand-400 hover:underline font-semibold">
+              Register as a Student &rarr;
+            </Link>
+          </p>
           <p className="text-xs text-slate-500">
             Staff or Faculty Member?{" "}
-            <Link to="/auth/login" className="text-brand-400 hover:underline font-medium">
+            <Link to="/admin/login" className="text-slate-700 dark:text-slate-300 hover:underline font-medium">
               Admin Login Portal
             </Link>
           </p>

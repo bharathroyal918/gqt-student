@@ -88,10 +88,10 @@ export const AnalyticsPage: React.FC = () => {
   const scoreData = analytics.score_distribution || [];
   const diffData = analytics.assignment_statistics?.difficulty_distribution
     ? [
-        { name: "Easy", count: analytics.assignment_statistics.difficulty_distribution.easy, color: DIFFICULTY_COLORS.easy },
-        { name: "Medium", count: analytics.assignment_statistics.difficulty_distribution.medium, color: DIFFICULTY_COLORS.medium },
-        { name: "Hard", count: analytics.assignment_statistics.difficulty_distribution.hard, color: DIFFICULTY_COLORS.hard },
-      ]
+      { name: "Easy", count: analytics.assignment_statistics.difficulty_distribution.easy, color: DIFFICULTY_COLORS.easy },
+      { name: "Medium", count: analytics.assignment_statistics.difficulty_distribution.medium, color: DIFFICULTY_COLORS.medium },
+      { name: "Hard", count: analytics.assignment_statistics.difficulty_distribution.hard, color: DIFFICULTY_COLORS.hard },
+    ]
     : [];
 
   const coursesList = coursesData?.data || [];
@@ -101,11 +101,11 @@ export const AnalyticsPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-brand-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <TrendingUp className="h-6 w-6 text-brand-500 dark:text-brand-400" />
             Analytics & Platform Telemetry
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Real-time curriculum progression, sandbox execution metrics, and cohort score distributions.
           </p>
         </div>
@@ -126,10 +126,10 @@ export const AnalyticsPage: React.FC = () => {
       </div>
 
       {/* Multi-Dimensional Filters Bar */}
-      <Card className="p-4 bg-surface-900/60 border-surface-800">
+      <Card className="p-4 bg-white dark:bg-surface-900/60 border-slate-200 dark:border-surface-800 shadow-sm dark:shadow-none">
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 shrink-0">
-            <Filter className="h-4 w-4 text-brand-400" />
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400 shrink-0">
+            <Filter className="h-4 w-4 text-brand-500 dark:text-brand-400" />
             Filters:
           </div>
 
@@ -196,63 +196,63 @@ export const AnalyticsPage: React.FC = () => {
 
       {/* Summary KPI Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-5 bg-gradient-to-br from-surface-900 to-emerald-950/20 border-emerald-500/20">
+        <Card className="p-5 bg-white dark:bg-gradient-to-br dark:from-surface-900 dark:to-emerald-950/20 border-slate-200 dark:border-emerald-500/20 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Curriculum Completion</span>
-            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Curriculum Completion</span>
+            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-bold text-white">
+          <div className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
             {analytics.module_completion_rate}%
           </div>
-          <div className="mt-1 text-xs text-slate-400">
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {analytics.completed_modules_count} module completions logged
           </div>
         </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-surface-900 to-indigo-950/20 border-indigo-500/20">
+        <Card className="p-5 bg-white dark:bg-gradient-to-br dark:from-surface-900 dark:to-indigo-950/20 border-slate-200 dark:border-indigo-500/20 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Coding Pass Rate</span>
-            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Coding Pass Rate</span>
+            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <TrendingUp className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-bold text-indigo-400">
+          <div className="mt-3 text-2xl font-bold text-brand-600 dark:text-indigo-400">
             {analytics.assignment_statistics?.acceptance_rate || 0}%
           </div>
-          <div className="mt-1 text-xs text-slate-400">
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {analytics.assignment_statistics?.accepted_submissions || 0} accepted of{" "}
             {analytics.assignment_statistics?.total_submissions || 0}
           </div>
         </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-surface-900 to-amber-950/20 border-amber-500/20">
+        <Card className="p-5 bg-white dark:bg-gradient-to-br dark:from-surface-900 dark:to-amber-950/20 border-slate-200 dark:border-amber-500/20 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Capstone Project Approvals</span>
-            <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Capstone Project Approvals</span>
+            <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <FolderGit2 className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-bold text-amber-400">
+          <div className="mt-3 text-2xl font-bold text-amber-600 dark:text-amber-400">
             {analytics.project_statistics?.approval_rate || 0}%
           </div>
-          <div className="mt-1 text-xs text-slate-400">
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {analytics.project_statistics?.approved_submissions || 0} approved submissions
           </div>
         </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-surface-900 to-rose-950/20 border-rose-500/20">
+        <Card className="p-5 bg-white dark:bg-gradient-to-br dark:from-surface-900 dark:to-rose-950/20 border-slate-200 dark:border-rose-500/20 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Active Learners</span>
-            <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Active Learners</span>
+            <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
               <Flame className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-bold text-rose-400">
+          <div className="mt-3 text-2xl font-bold text-rose-600 dark:text-rose-400">
             {analytics.active_students}
           </div>
-          <div className="mt-1 text-xs text-slate-400">
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Out of {analytics.total_students} registered students
           </div>
         </Card>
@@ -274,15 +274,15 @@ export const AnalyticsPage: React.FC = () => {
                 >
                   <defs>
                     <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#0066FF" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#0066FF" stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="colorSubmissions" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" strokeOpacity={0.4} />
                   <XAxis
                     dataKey="label"
                     stroke="#64748b"
@@ -291,7 +291,7 @@ export const AnalyticsPage: React.FC = () => {
                   <YAxis stroke="#64748b" fontSize={11} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#0f172a",
+                      backgroundColor: "var(--color-surface-900, #0f172a)",
                       borderColor: "#334155",
                       borderRadius: "0.75rem",
                       fontSize: "12px",
@@ -303,7 +303,7 @@ export const AnalyticsPage: React.FC = () => {
                     type="monotone"
                     dataKey="active_students"
                     name="Active Learners"
-                    stroke="#6366f1"
+                    stroke="#0066FF"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorStudents)"
@@ -347,7 +347,7 @@ export const AnalyticsPage: React.FC = () => {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#0f172a",
+                      backgroundColor: "var(--color-surface-900, #0f172a)",
                       borderColor: "#334155",
                       borderRadius: "0.75rem",
                       fontSize: "12px",
@@ -360,8 +360,8 @@ export const AnalyticsPage: React.FC = () => {
                 {diffData.map((d) => (
                   <div key={d.name} className="flex items-center gap-1.5">
                     <div className="h-3 w-3 rounded-full" style={{ backgroundColor: d.color }} />
-                    <span className="text-slate-300">
-                      {d.name}: <strong className="text-white">{d.count}</strong>
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {d.name}: <strong className="text-slate-900 dark:text-white">{d.count}</strong>
                     </span>
                   </div>
                 ))}
@@ -381,12 +381,12 @@ export const AnalyticsPage: React.FC = () => {
           <div className="h-72 w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={scoreData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" strokeOpacity={0.4} />
                 <XAxis dataKey="bracket" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={11} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
+                    backgroundColor: "var(--color-surface-900, #0f172a)",
                     borderColor: "#334155",
                     borderRadius: "0.75rem",
                     fontSize: "12px",
@@ -404,15 +404,15 @@ export const AnalyticsPage: React.FC = () => {
         </ChartCard>
 
         {/* Top Performers Widget */}
-        <Card className="p-6 border-surface-800 flex flex-col justify-between">
+        <Card className="p-6 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 flex flex-col justify-between shadow-sm dark:shadow-none">
           <div>
-            <div className="flex items-center justify-between border-b border-surface-800 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-surface-800 pb-4">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500 dark:text-amber-400 fill-amber-400" />
                   Top Cohort Performers
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   Leading students by accumulated assessment points
                 </p>
               </div>
@@ -421,33 +421,33 @@ export const AnalyticsPage: React.FC = () => {
               </Badge>
             </div>
 
-            <div className="mt-4 divide-y divide-surface-800/60">
+            <div className="mt-4 divide-y divide-slate-200 dark:divide-surface-800/60">
               {analytics.top_performers?.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-500">
+                <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
                   No active student scores logged yet.
                 </div>
               ) : (
                 analytics.top_performers.map((student, idx) => (
                   <div key={student.id} className="py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-800 font-bold text-xs text-slate-300">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-surface-800 font-bold text-xs text-slate-700 dark:text-slate-300">
                         #{idx + 1}
                       </div>
                       <div>
-                        <div className="text-xs font-semibold text-white">
+                        <div className="text-xs font-semibold text-slate-900 dark:text-white">
                           {student.full_name}
                         </div>
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
                           {student.student_id_number} • {student.batch_code}
                         </div>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-xs font-bold text-amber-300">
+                      <div className="text-xs font-bold text-amber-600 dark:text-amber-300">
                         {student.total_points.toLocaleString()} pts
                       </div>
-                      <div className="text-[11px] text-rose-400 flex items-center justify-end gap-1">
+                      <div className="text-[11px] text-rose-500 dark:text-rose-400 flex items-center justify-end gap-1">
                         <Flame className="h-3 w-3" />
                         {student.current_streak_days}d streak
                       </div>

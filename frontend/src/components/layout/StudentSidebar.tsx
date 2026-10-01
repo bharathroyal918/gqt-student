@@ -71,12 +71,12 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-surface-800 bg-surface-950 transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-950 transition-all duration-300 lg:static lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Brand Logo Header */}
-        <div className="flex h-16 shrink-0 items-center border-b border-surface-800 px-5">
+        <div className="flex h-16 shrink-0 items-center border-b border-slate-200 dark:border-surface-800 px-5 bg-white dark:bg-surface-950">
           <BrandLogo
             variant="sidebar"
             badge="Student"
@@ -87,13 +87,13 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
 
         {/* Student Profile Quick Banner */}
         {user && (
-          <div className="p-4 border-b border-surface-800/80 bg-surface-900/40">
+          <div className="p-4 border-b border-slate-200 dark:border-surface-800/80 bg-slate-50 dark:bg-surface-900/40">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600/30 to-indigo-600/30 text-brand-300 font-bold border border-brand-500/20 text-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600/20 to-indigo-600/20 text-brand-600 dark:text-brand-300 font-bold border border-brand-500/20 text-sm">
                 {initials}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-white text-xs truncate">{displayName}</div>
+                <div className="font-semibold text-slate-900 dark:text-white text-xs truncate">{displayName}</div>
                 <div className="flex items-center gap-2 mt-0.5">
                   {studentProfile?.batch_code && (
                     <Badge variant="indigo" size="sm">
@@ -101,7 +101,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
                     </Badge>
                   )}
                   {studentProfile?.current_streak_days !== undefined && (
-                    <span className="flex items-center gap-0.5 text-[11px] font-bold text-rose-400">
+                    <span className="flex items-center gap-0.5 text-[11px] font-bold text-rose-500 dark:text-rose-400">
                       <Flame className="h-3 w-3" />
                       {studentProfile.current_streak_days}d
                     </span>
@@ -124,8 +124,8 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
                 className={({ isActive }) =>
                   `group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
                     isActive
-                      ? "bg-brand-600 text-white shadow-md shadow-brand-500/25"
-                      : "text-slate-400 hover:bg-surface-900 hover:text-white"
+                      ? "bg-brand-600 text-white shadow-md shadow-brand-500/25 font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white"
                   }`
                 }
               >
@@ -137,23 +137,23 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
         </nav>
 
         {/* Footer with Theme toggle & Logout */}
-        <div className="border-t border-surface-800 p-4 space-y-2">
+        <div className="border-t border-slate-200 dark:border-surface-800 p-4 space-y-2">
           {/* Quick theme toggle */}
           <button
             onClick={toggleTheme}
-            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-slate-400 hover:bg-surface-900 hover:text-white transition-colors"
+            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <span className="flex items-center gap-2">
-              {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+              {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
               <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
             </span>
-            <span className="text-[10px] uppercase font-mono text-slate-500">{theme}</span>
+            <span className="text-[10px] uppercase font-mono text-slate-400 dark:text-slate-500">{theme}</span>
           </button>
 
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 transition-colors"
           >
             <LogOut className="h-4 w-4" />
             <span>Sign Out</span>

@@ -135,7 +135,7 @@ export const StudentAssignmentsPage: React.FC = () => {
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                 selectedDifficulty === diff
                   ? "bg-brand-600 text-white shadow-sm"
-                  : "bg-surface-800/60 text-slate-400 hover:text-slate-200 hover:bg-surface-800"
+                  : "bg-slate-100 dark:bg-surface-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-surface-800"
               }`}
             >
               {diff === "ALL" ? "All Levels" : diff.charAt(0) + diff.slice(1).toLowerCase()}
@@ -150,7 +150,7 @@ export const StudentAssignmentsPage: React.FC = () => {
             placeholder="Search problems..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-surface-800 bg-surface-900/90 pl-9 pr-4 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+            className="w-full rounded-xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/90 pl-9 pr-4 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-500 focus:outline-none"
           />
         </div>
       </div>

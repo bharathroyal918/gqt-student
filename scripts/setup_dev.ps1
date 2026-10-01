@@ -19,8 +19,9 @@ if (-not (Test-Path "frontend\.env")) {
     Copy-Item "frontend\.env.example" "frontend\.env"
 }
 
-Write-Host ">>> Checking Docker status..." -ForegroundColor Cyan
-docker compose -f infrastructure/docker-compose.dev.yml up -d postgres redis
+Write-Host ">>> Checking Docker status for background cache/broker (Redis)..." -ForegroundColor Cyan
+docker compose -f infrastructure/docker-compose.dev.yml up -d redis
 
-Write-Host ">>> Backing services started (PostgreSQL & Redis)." -ForegroundColor Green
+Write-Host ">>> Redis cache & message broker online." -ForegroundColor Green
+Write-Host ">>> Supabase Database configured via DATABASE_URL in .env." -ForegroundColor Green
 Write-Host ">>> Run backend migrations and frontend dev server to proceed." -ForegroundColor Green

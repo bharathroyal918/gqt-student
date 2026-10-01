@@ -11,7 +11,7 @@ def get_current_request_id() -> Optional[str]:
 
 
 class RequestIDMiddleware:
-    """Middleware that assigns a unique UUID to every incoming HTTP request.
+    """Middleware that assigns a unique ID to every incoming HTTP request.
 
     - Extracts 'X-Request-ID' header if present; otherwise generates a new UUID4.
     - Sets request.id and contextvar for structured logging.

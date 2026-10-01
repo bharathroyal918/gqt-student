@@ -135,11 +135,11 @@ export const StudentContactPage: React.FC = () => {
     <div className="space-y-8 max-w-6xl pb-12">
       {/* Top Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <Mail className="h-6 w-6 text-brand-400" />
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <Mail className="h-6 w-6 text-brand-500" />
           Contact & Academic Support
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Have questions regarding curriculum tracks, sandbox challenges, or account credentials? Connect with our team.
         </p>
       </div>
@@ -148,61 +148,61 @@ export const StudentContactPage: React.FC = () => {
         {/* Left Column: Institutional Information & Hotlines (5 cols) */}
         <div className="space-y-6 lg:col-span-5">
           {/* Company Card */}
-          <Card className="p-6 bg-gradient-to-br from-surface-900 to-surface-950 border-surface-800 space-y-4">
+          <Card className="p-6 bg-white dark:bg-surface-900 border-slate-200 dark:border-surface-800 space-y-4 shadow-sm">
             <div>
               <div className="flex items-center gap-2">
                 <Badge variant="indigo" size="sm">
                   Official Institutional Support
                 </Badge>
               </div>
-              <h2 className="text-lg font-bold text-white mt-2">{info.company_name}</h2>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">{info.tagline}</p>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-2">{info.company_name}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{info.tagline}</p>
             </div>
 
-            <div className="pt-2 border-t border-surface-800/80 space-y-3.5 text-xs">
+            <div className="pt-2 border-t border-slate-100 dark:border-surface-800/80 space-y-3.5 text-xs">
               {/* Phone */}
-              <div className="flex items-start gap-3 text-slate-300">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+              <div className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
                   <Phone className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Phone Numbers
                   </span>
-                  <p className="font-semibold text-white mt-0.5">{info.phone_primary}</p>
-                  <p className="text-slate-400 text-[11px]">{info.phone_support} (Student Hotline)</p>
+                  <p className="font-semibold text-slate-900 dark:text-white mt-0.5">{info.phone_primary}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px]">{info.phone_support} (Student Hotline)</p>
                 </div>
               </div>
 
               {/* Email */}
-              <div className="flex items-start gap-3 text-slate-300">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <div className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   <Mail className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Email Desks
                   </span>
                   <a
                     href={`mailto:${info.support_email}`}
-                    className="font-semibold text-emerald-300 hover:underline mt-0.5 block"
+                    className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline mt-0.5 block"
                   >
                     {info.support_email}
                   </a>
-                  <span className="text-slate-400 text-[11px]">{info.admissions_email}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">{info.admissions_email}</span>
                 </div>
               </div>
 
               {/* Address */}
-              <div className="flex items-start gap-3 text-slate-300">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <div className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                   <Building className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Headquarters
                   </span>
-                  <p className="text-slate-300 mt-0.5 leading-relaxed">
+                  <p className="text-slate-700 dark:text-slate-300 mt-0.5 leading-relaxed">
                     {info.office_address.street}, {info.office_address.city},{" "}
                     {info.office_address.state} {info.office_address.postal_code},{" "}
                     {info.office_address.country}
@@ -211,24 +211,24 @@ export const StudentContactPage: React.FC = () => {
               </div>
 
               {/* Hours */}
-              <div className="flex items-start gap-3 text-slate-300">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <div className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Office Hours
                   </span>
-                  <p className="text-slate-300 mt-0.5">{info.office_hours}</p>
+                  <p className="text-slate-700 dark:text-slate-300 mt-0.5">{info.office_hours}</p>
                 </div>
               </div>
             </div>
           </Card>
 
           {/* Social Links Card */}
-          <Card className="p-5 border-surface-800">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-3">
-              <Share2 className="h-3.5 w-3.5 text-brand-400" />
+          <Card className="p-5 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-3">
+              <Share2 className="h-3.5 w-3.5 text-brand-500" />
               Official Social Channels
             </h3>
 
@@ -237,37 +237,37 @@ export const StudentContactPage: React.FC = () => {
                 href={info.social_links.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-2.5 rounded-xl bg-surface-900 border border-surface-800/80 hover:bg-surface-800/80 hover:border-surface-700 transition-colors text-slate-300"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-surface-800/80 hover:bg-slate-100 dark:hover:bg-surface-800/80 hover:border-slate-300 dark:hover:border-surface-700 transition-colors text-slate-700 dark:text-slate-300"
               >
                 <span>LinkedIn</span>
-                <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
               </a>
               <a
                 href={info.social_links.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-2.5 rounded-xl bg-surface-900 border border-surface-800/80 hover:bg-surface-800/80 hover:border-surface-700 transition-colors text-slate-300"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-surface-800/80 hover:bg-slate-100 dark:hover:bg-surface-800/80 hover:border-slate-300 dark:hover:border-surface-700 transition-colors text-slate-700 dark:text-slate-300"
               >
                 <span>GitHub</span>
-                <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
               </a>
               <a
                 href={info.social_links.youtube}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-2.5 rounded-xl bg-surface-900 border border-surface-800/80 hover:bg-surface-800/80 hover:border-surface-700 transition-colors text-slate-300"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-surface-800/80 hover:bg-slate-100 dark:hover:bg-surface-800/80 hover:border-slate-300 dark:hover:border-surface-700 transition-colors text-slate-700 dark:text-slate-300"
               >
                 <span>YouTube</span>
-                <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
               </a>
               <a
                 href={info.social_links.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-2.5 rounded-xl bg-surface-900 border border-surface-800/80 hover:bg-surface-800/80 hover:border-surface-700 transition-colors text-slate-300"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-surface-800/80 hover:bg-slate-100 dark:hover:bg-surface-800/80 hover:border-slate-300 dark:hover:border-surface-700 transition-colors text-slate-700 dark:text-slate-300"
               >
                 <span>Twitter / X</span>
-                <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
               </a>
             </div>
           </Card>
@@ -275,15 +275,15 @@ export const StudentContactPage: React.FC = () => {
 
         {/* Right Column: Contact Inquiry Form (7 cols) */}
         <div className="lg:col-span-7">
-          <Card className="p-6 sm:p-8 border-surface-800">
+          <Card className="p-6 sm:p-8 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm">
             {submittedSuccess ? (
               <div className="text-center py-10 space-y-4">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">Inquiry Successfully Logged</h2>
-                  <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed mt-2">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Inquiry Successfully Logged</h2>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed mt-2">
                     Your inquiry has been submitted to the academic administration queue. Our instructors and support team will reply to your registered email address within 24 hours.
                   </p>
                 </div>
@@ -295,12 +295,12 @@ export const StudentContactPage: React.FC = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="border-b border-surface-800 pb-4">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-brand-400" />
+                <div className="border-b border-slate-100 dark:border-surface-800 pb-4">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-brand-500" />
                     Submit Support Inquiry
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Fill in the details below. All tickets are assigned directly to academic support staff.
                   </p>
                 </div>
@@ -374,7 +374,7 @@ export const StudentContactPage: React.FC = () => {
                   </div>
                 </FormField>
 
-                <div className="pt-4 border-t border-surface-800 flex items-center justify-between">
+                <div className="pt-4 border-t border-slate-100 dark:border-surface-800 flex items-center justify-between">
                   <div className="text-[11px] text-slate-500">
                     Submissions are rate-limited to 5 inquiries per 10 minutes.
                   </div>
@@ -399,3 +399,4 @@ export const StudentContactPage: React.FC = () => {
     </div>
   );
 };
+

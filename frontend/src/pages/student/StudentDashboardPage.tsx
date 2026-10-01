@@ -81,6 +81,34 @@ export const StudentDashboardPage: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* =========================================================================
+          0. ACCESS AUTHORIZATION STATUS BANNER
+         ========================================================================= */}
+      {user?.onboarding_status === "PENDING_ACTIVATION" && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500 text-lg font-bold">
+              ⏳
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-900 dark:text-amber-300">
+                Institutional Access Authorization Pending
+              </h3>
+              <p className="text-xs text-amber-800/90 dark:text-amber-300/80 mt-0.5">
+                Your registered email (<strong>{user?.email}</strong>) has been submitted to the administration. Once an administrator approves your account, your full curriculum modules, daily live attendance, and coding assessments will be unlocked.
+              </p>
+            </div>
+          </div>
+          <Badge variant="amber" size="md" className="shrink-0 font-semibold">
+            Awaiting Admin Approval
+          </Badge>
+        </motion.div>
+      )}
+
+      {/* =========================================================================
           1. PROFILE BANNER & HERO CARD
          ========================================================================= */}
       <motion.div
@@ -167,7 +195,7 @@ export const StudentDashboardPage: React.FC = () => {
         {/* Hero KPI Stat Strip */}
         <div className="mt-8 grid grid-cols-2 gap-4 border-t border-slate-200/80 dark:border-surface-800/80 pt-6 sm:grid-cols-4">
           <div>
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Score</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Score</span>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-slate-900 dark:text-white">
                 {profile.total_score.toLocaleString()}
@@ -177,27 +205,27 @@ export const StudentDashboardPage: React.FC = () => {
           </div>
 
           <div>
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Current Rank</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Current Rank</span>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-amber-500">
                 #{profile.current_rank}
               </span>
-              <span className="text-xs text-slate-400">of {profile.total_students}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">of {profile.total_students}</span>
             </div>
           </div>
 
           <div>
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Completed Modules</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Completed Modules</span>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-slate-900 dark:text-white">
                 {profile.completed_modules}
               </span>
-              <span className="text-xs text-slate-400">/ {profile.total_modules}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">/ {profile.total_modules}</span>
             </div>
           </div>
 
           <div>
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Curriculum Progress</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Curriculum Progress</span>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-emerald-500">
                 {profile.overall_progress}%
@@ -305,16 +333,16 @@ export const StudentDashboardPage: React.FC = () => {
                           <p className="font-bold text-slate-900 dark:text-white truncate">
                             {student.full_name}
                             {student.is_current_student && (
-                              <span className="ml-1.5 text-[10px] text-brand-400 font-semibold">(You)</span>
+                              <span className="ml-1.5 text-[10px] text-brand-600 dark:text-brand-400 font-semibold">(You)</span>
                             )}
                           </p>
-                          <span className="text-xs text-slate-400">{student.batch_code}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">{student.batch_code}</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-surface-800/80 flex items-center justify-between">
-                      <span className="text-xs text-slate-500">Verified Points</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Verified Points</span>
                       <span className="text-sm font-black text-slate-900 dark:text-white">
                         {student.total_points.toLocaleString()} pts
                       </span>
@@ -575,7 +603,7 @@ export const StudentDashboardPage: React.FC = () => {
             </div>
 
             <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-3 mt-4 flex items-center justify-between text-xs">
-              <span className="text-slate-500">Daily Task Completions:</span>
+              <span className="text-slate-600 dark:text-slate-400">Daily Task Completions:</span>
               <span className="font-bold text-slate-900 dark:text-white">
                 {progress.task_progress.completed} Tasks ({progress.task_progress.total_points} pts)
               </span>
@@ -594,7 +622,7 @@ export const StudentDashboardPage: React.FC = () => {
               <Clock className="h-5 w-5 text-brand-500" />
               Activity Stream & Alerts
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
               Live audit trail of your code runs, daily challenge completions, badges, and alerts.
             </p>
           </div>
@@ -605,7 +633,7 @@ export const StudentDashboardPage: React.FC = () => {
               onClick={() => setActiveTab("submissions")}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                 activeTab === "submissions"
-                  ? "bg-brand-500 text-white shadow-sm"
+                  ? "bg-brand-600 text-white shadow-sm font-bold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -615,7 +643,7 @@ export const StudentDashboardPage: React.FC = () => {
               onClick={() => setActiveTab("tasks")}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                 activeTab === "tasks"
-                  ? "bg-brand-500 text-white shadow-sm"
+                  ? "bg-brand-600 text-white shadow-sm font-bold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -625,7 +653,7 @@ export const StudentDashboardPage: React.FC = () => {
               onClick={() => setActiveTab("achievements")}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                 activeTab === "achievements"
-                  ? "bg-brand-500 text-white shadow-sm"
+                  ? "bg-brand-600 text-white shadow-sm font-bold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -635,7 +663,7 @@ export const StudentDashboardPage: React.FC = () => {
               onClick={() => setActiveTab("notifications")}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                 activeTab === "notifications"
-                  ? "bg-brand-500 text-white shadow-sm"
+                  ? "bg-brand-600 text-white shadow-sm font-bold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -655,8 +683,8 @@ export const StudentDashboardPage: React.FC = () => {
               className="space-y-3"
             >
               {activity.recent_submissions.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500">
-                  <Code2 className="h-8 w-8 mx-auto mb-2 text-slate-400 opacity-60" />
+                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <Code2 className="h-8 w-8 mx-auto mb-2 text-slate-400 dark:text-slate-600 opacity-60" />
                   No code submissions recorded yet. Head over to Coding Labs to get started!
                 </div>
               ) : (
@@ -666,15 +694,15 @@ export const StudentDashboardPage: React.FC = () => {
                     className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 dark:border-surface-800 p-4 transition-colors hover:border-brand-500/40"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 font-bold">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold">
                         <Code2 className="h-5 w-5" />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-white text-sm">
                           {sub.question_title}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                          <span className="uppercase font-semibold text-slate-500">{sub.language}</span>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <span className="uppercase font-semibold text-slate-600 dark:text-slate-400">{sub.language}</span>
                           <span>•</span>
                           <span>{sub.execution_time_ms ? `${sub.execution_time_ms}ms` : "N/A"}</span>
                           <span>•</span>
@@ -714,8 +742,8 @@ export const StudentDashboardPage: React.FC = () => {
               className="space-y-3"
             >
               {activity.recent_tasks.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500">
-                  <CalendarCheck className="h-8 w-8 mx-auto mb-2 text-slate-400 opacity-60" />
+                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <CalendarCheck className="h-8 w-8 mx-auto mb-2 text-slate-400 dark:text-slate-600 opacity-60" />
                   No completed daily tasks recorded yet. Maintain your streak on the Tasks page!
                 </div>
               ) : (
@@ -732,7 +760,7 @@ export const StudentDashboardPage: React.FC = () => {
                         <p className="font-semibold text-slate-900 dark:text-white text-sm">
                           {task.task_title}
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           Scheduled for: {task.scheduled_date} • Completed: {new Date(task.completed_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -759,8 +787,8 @@ export const StudentDashboardPage: React.FC = () => {
               className="grid grid-cols-1 gap-4 sm:grid-cols-2"
             >
               {activity.recent_achievements.length === 0 ? (
-                <div className="col-span-2 py-12 text-center text-xs text-slate-500">
-                  <Award className="h-8 w-8 mx-auto mb-2 text-slate-400 opacity-60" />
+                <div className="col-span-2 py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <Award className="h-8 w-8 mx-auto mb-2 text-slate-400 dark:text-slate-600 opacity-60" />
                   No badges unlocked yet. Keep solving assignments and building your streak!
                 </div>
               ) : (
@@ -776,10 +804,10 @@ export const StudentDashboardPage: React.FC = () => {
                       <h4 className="font-bold text-slate-900 dark:text-white text-sm">
                         {ach.badge_name}
                       </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                         {ach.badge_description}
                       </p>
-                      <span className="text-[10px] text-slate-400 block mt-2">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-2">
                         Unlocked on {new Date(ach.awarded_at).toLocaleDateString()}
                       </span>
                     </div>
@@ -798,8 +826,8 @@ export const StudentDashboardPage: React.FC = () => {
               className="space-y-3"
             >
               {activity.notifications.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500">
-                  <Bell className="h-8 w-8 mx-auto mb-2 text-slate-400 opacity-60" />
+                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <Bell className="h-8 w-8 mx-auto mb-2 text-slate-400 dark:text-slate-600 opacity-60" />
                   You're all caught up! No unread notifications.
                 </div>
               ) : (
@@ -812,7 +840,7 @@ export const StudentDashboardPage: React.FC = () => {
                         : "border-brand-500/40 bg-brand-500/5 dark:bg-brand-500/10"
                     }`}
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 font-bold">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold">
                       <Bell className="h-4 w-4" />
                     </div>
                     <div className="flex-1">
@@ -820,11 +848,11 @@ export const StudentDashboardPage: React.FC = () => {
                         <h4 className="font-semibold text-slate-900 dark:text-white text-sm">
                           {notif.title}
                         </h4>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {new Date(notif.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
                         {notif.body}
                       </p>
                     </div>

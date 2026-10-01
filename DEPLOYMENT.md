@@ -14,7 +14,7 @@ This document outlines the standard operating procedures for deploying, maintain
 | **Settings Module** | `config.settings.development` | `config.settings.staging` | `config.settings.production` |
 | **DEBUG** | `True` | `False` | `False` |
 | **HTTPS / SSL** | Optional | Enforced (`SECURE_SSL_REDIRECT=True`) | Enforced (`HSTS 31536000s + Preload`) |
-| **Database** | PostgreSQL / SQLite | Managed PostgreSQL (RDS/Cloud SQL) | High-Availability PostgreSQL Cluster |
+| **Database** | Supabase PostgreSQL / Local SQLite | Supabase PostgreSQL (Staging project) | Supabase PostgreSQL (Production project + Pooler) |
 | **Cache / Queue** | Local Redis | Managed Redis (ElastiCache/MemoryStore) | Multi-node Redis Cluster |
 | **Media Assets** | Local filesystem (`media/`) | S3 / R2 Bucket | S3 Bucket + CloudFront CDN |
 | **Code Judge** | Mock Provider / Local Judge0 | Isolated Judge0 Container | High-Throughput Judge0 Cluster |
@@ -128,11 +128,11 @@ The platform exposes standardized endpoints for load balancers and orchestrators
 
 ## 6. Backup & Disaster Recovery
 
-### Automated Database Backups
-- **Schedule**: Full database snapshots daily at 02:00 UTC; continuous WAL archiving for Point-in-Time Recovery (PITR).
-- **Manual Backup Command**:
+### Automated Database Backups & Supabase PITR
+- **Supabase Cloud Backups**: Supabase provides automatic daily backups and Point-in-Time Recovery (PITR) in project settings.
+- **Manual CLI Export via pg_dump**:
 ```bash
-pg_dump -Fc --no-acl --no-owner -h postgres-cluster.internal -U gqt_db_user gqt_portal_prod > /backup/gqt_db_$(date +%Y%m%d_%H%M%S).dump
+pg_dump -Fc --no-acl --no-owner "postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require" > /backup/gqt_db_$(date +%Y%m%d_%H%M%S).dump
 ```
 
 ### Database Restore Procedure
@@ -142,7 +142,7 @@ pg_dump -Fc --no-acl --no-owner -h postgres-cluster.internal -U gqt_db_user gqt_
    ```
 2. Restore database schema and data:
    ```bash
-   pg_restore --clean --if-exists --no-acl --no-owner -h postgres-cluster.internal -U gqt_db_user -d gqt_portal_prod /backup/gqt_db_YYYYMMDD_HHMMSS.dump
+   pg_restore --clean --if-exists --no-acl --no-owner -d "postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require" /backup/gqt_db_YYYYMMDD_HHMMSS.dump
    ```
 3. Run migrations and restart services:
    ```bash

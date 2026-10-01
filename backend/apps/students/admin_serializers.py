@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from apps.accounts.models import User
 from apps.courses.models import CourseEnrollment
-from apps.students.models import StudentProfile
+from apps.students.models import AttendanceRecord, StudentProfile
 
 
 class StudentEnrollmentBriefSerializer(serializers.ModelSerializer):
@@ -32,6 +32,12 @@ class StudentAdminListSerializer(serializers.ModelSerializer):
             "batch_code",
             "college_name",
             "graduation_year",
+            "dob",
+            "branch",
+            "course_opted",
+            "attendance_percentage",
+            "total_classes",
+            "attended_classes",
             "total_points",
             "current_streak_days",
             "email",
@@ -39,6 +45,7 @@ class StudentAdminListSerializer(serializers.ModelSerializer):
             "is_active",
             "onboarding_status",
             "enrolled_courses_count",
+            "avatar_url",
             "created_at",
         ]
 
@@ -50,7 +57,12 @@ class StudentAdminDetailSerializer(StudentAdminListSerializer):
     enrollments = StudentEnrollmentBriefSerializer(many=True, read_only=True)
 
     class Meta(StudentAdminListSerializer.Meta):
-        fields = StudentAdminListSerializer.Meta.fields + ["avatar_url", "enrollments"]
+        fields = StudentAdminListSerializer.Meta.fields + [
+            "bio",
+            "github_url",
+            "linkedin_url",
+            "enrollments",
+        ]
 
 
 class StudentAdminUpdateSerializer(serializers.Serializer):
@@ -58,12 +70,17 @@ class StudentAdminUpdateSerializer(serializers.Serializer):
     batch_code = serializers.CharField(max_length=50, required=False)
     college_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     graduation_year = serializers.IntegerField(required=False, allow_null=True)
+    dob = serializers.DateField(required=False, allow_null=True)
+    branch = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    course_opted = serializers.CharField(max_length=200, required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_null=True)
     mobile_number = serializers.CharField(max_length=20, required=False, allow_null=True)
     is_active = serializers.BooleanField(required=False)
     onboarding_status = serializers.ChoiceField(
         choices=User.OnboardingStatusChoices.choices, required=False
     )
+    total_classes = serializers.IntegerField(required=False)
+    attended_classes = serializers.IntegerField(required=False)
 
 
 class AssignCoursesSerializer(serializers.Serializer):
@@ -72,3 +89,16 @@ class AssignCoursesSerializer(serializers.Serializer):
         allow_empty=False,
         help_text="List of course UUIDs to enroll student into",
     )
+
+
+class GrantAccessByEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(help_text="Student's registered institutional email to authorize")
+    course_opted = serializers.CharField(max_length=200, required=False, default="Full Stack Software & Assessment Track")
+    batch_code = serializers.CharField(max_length=50, required=False, default="BATCH-2026-A")
+
+
+class MarkAttendanceSerializer(serializers.Serializer):
+    date = serializers.DateField(required=True)
+    status = serializers.ChoiceField(choices=AttendanceRecord.AttendanceStatus.choices, default=AttendanceRecord.AttendanceStatus.PRESENT)
+    session_title = serializers.CharField(max_length=200, required=False, default="Daily Training & Coding Lab")
+    remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")

@@ -59,6 +59,46 @@ export const adminApi = {
     return data.data;
   },
 
+  grantStudentAccess: async (id: string): Promise<StudentDetail> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<StudentDetail>>(`/admin/students/${id}/grant-access/`);
+    return data.data;
+  },
+
+  revokeStudentAccess: async (id: string): Promise<StudentDetail> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<StudentDetail>>(`/admin/students/${id}/revoke-access/`);
+    return data.data;
+  },
+
+  grantAccessByEmail: async (payload: {
+    email: string;
+    course_opted?: string;
+    batch_code?: string;
+  }): Promise<StudentDetail> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<StudentDetail>>(
+      "/admin/students/grant-access-by-email/",
+      payload
+    );
+    return data.data;
+  },
+
+  getStudentAttendance: async (id: string): Promise<any> => {
+    const { data } = await apiClient.get<ApiSuccessResponse<any>>(`/admin/students/${id}/attendance/`);
+    return data.data;
+  },
+
+  markStudentAttendance: async (
+    id: string,
+    payload: {
+      date: string;
+      status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+      session_title?: string;
+      remarks?: string;
+    }
+  ): Promise<any> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<any>>(`/admin/students/${id}/attendance/`, payload);
+    return data.data;
+  },
+
   assignCourses: async (studentId: string, courseIds: string[]): Promise<StudentEnrollment[]> => {
     const { data } = await apiClient.post<ApiSuccessResponse<StudentEnrollment[]>>(
       `/admin/students/${studentId}/courses/`,

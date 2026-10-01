@@ -41,7 +41,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = "" 
   }, [items, location.pathname]);
 
   return (
-    <nav aria-label="Breadcrumb" className={`flex items-center text-xs text-slate-400 ${className}`}>
+    <nav aria-label="Breadcrumb" className={`flex items-center text-xs text-slate-500 dark:text-slate-400 ${className}`}>
       <ol className="flex items-center space-x-1.5 overflow-x-auto whitespace-nowrap">
         {breadcrumbItems.map((item, index) => {
           const isLast = index === breadcrumbItems.length - 1;
@@ -49,16 +49,16 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = "" 
 
           return (
             <li key={index} className="flex items-center">
-              {index > 0 && <ChevronRight className="h-3.5 w-3.5 mx-1 text-slate-600 shrink-0" />}
+              {index > 0 && <ChevronRight className="h-3.5 w-3.5 mx-1 text-slate-400 dark:text-slate-600 shrink-0" />}
 
               {isLast ? (
-                <span className="font-semibold text-white truncate max-w-[200px]" aria-current="page">
+                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[200px]" aria-current="page">
                   {item.label}
                 </span>
               ) : (
                 <Link
                   to={item.href || "#"}
-                  className="flex items-center gap-1 hover:text-brand-400 transition-colors"
+                  className="flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-400 text-slate-600 dark:text-slate-400 transition-colors"
                 >
                   {isFirst && <Home className="h-3.5 w-3.5" />}
                   <span>{item.label}</span>
@@ -71,3 +71,4 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = "" 
     </nav>
   );
 };
+

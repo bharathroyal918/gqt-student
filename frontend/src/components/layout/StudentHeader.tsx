@@ -54,12 +54,12 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-surface-800 bg-surface-950/80 px-4 sm:px-6 lg:px-8 backdrop-blur-md z-30">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/80 px-4 sm:px-6 lg:px-8 backdrop-blur-md z-30 transition-colors duration-200">
       {/* Left: Mobile Toggle & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMobileSidebar}
-          className="rounded-xl border border-surface-800 bg-surface-900/80 p-2 text-slate-400 hover:text-white hover:bg-surface-800 lg:hidden transition-colors"
+          className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900/80 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 lg:hidden transition-colors"
           aria-label="Toggle navigation menu"
         >
           <Menu className="h-5 w-5" />
@@ -67,7 +67,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
 
         <div className="flex items-center gap-2 lg:hidden">
           <img src="/gqt-icon.svg" alt="GQT" className="h-6 w-6 rounded-md object-contain" />
-          <span className="font-bold text-xs text-white">GQT Portal</span>
+          <span className="font-bold text-xs text-slate-900 dark:text-white">GQT Portal</span>
         </div>
 
         <div className="hidden sm:block">
@@ -79,14 +79,14 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
       <div className="flex items-center gap-2.5 sm:gap-4">
         {/* Streak Counter Pill */}
         {studentProfile?.current_streak_days !== undefined && (
-          <div className="flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-400">
+          <div className="flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-500 dark:text-rose-400">
             <Flame className="h-4 w-4" />
             <span>{studentProfile.current_streak_days} days</span>
           </div>
         )}
 
         {/* Points Pill */}
-        <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-400">
+        <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
           <Award className="h-4 w-4" />
           <span>{pointsFormatted} pts</span>
         </div>
@@ -94,16 +94,16 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
-          className="rounded-xl border border-surface-800 bg-surface-900/80 p-2 text-slate-400 hover:text-white hover:bg-surface-800 transition-colors"
+          className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900/80 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
           title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
         >
-          {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+          {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
         </button>
 
         {/* Notifications Icon Button */}
         <Link
           to="/notifications"
-          className="relative rounded-xl border border-surface-800 bg-surface-900/80 p-2 text-slate-400 hover:text-white hover:bg-surface-800 transition-colors"
+          className="relative rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900/80 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
           title="Notifications"
         >
           <Bell className="h-4 w-4" />
@@ -119,14 +119,14 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-xl border border-surface-800 bg-surface-900/60 p-1.5 pr-3 text-left hover:bg-surface-800/80 transition-colors"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-1.5 pr-3 text-left hover:bg-slate-100 dark:hover:bg-surface-800/80 transition-colors"
             >
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 text-xs font-bold text-white shadow-sm">
                 {initials}
               </div>
               <div className="hidden md:block">
-                <div className="text-xs font-semibold text-white leading-none">{displayName}</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">{studentProfile?.student_id_number || "Student"}</div>
+                <div className="text-xs font-semibold text-slate-900 dark:text-white leading-none">{displayName}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{studentProfile?.student_id_number || "Student"}</div>
               </div>
               <ChevronDown className="h-3 w-3 text-slate-400 ml-1" />
             </button>
@@ -138,16 +138,16 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
                   className="fixed inset-0 z-30"
                   onClick={() => setIsDropdownOpen(false)}
                 />
-                <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-surface-800 bg-surface-900 p-2 shadow-2xl z-40">
-                  <div className="px-3 py-2 border-b border-surface-800 mb-1">
-                    <p className="text-xs font-semibold text-white truncate">{displayName}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{user.email || user.mobile_number}</p>
+                <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-2 shadow-2xl z-40">
+                  <div className="px-3 py-2 border-b border-slate-100 dark:border-surface-800 mb-1">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{displayName}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email || user.mobile_number}</p>
                   </div>
 
                   <Link
                     to="/profile"
                     onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 hover:bg-surface-800 hover:text-white transition-colors"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     <UserIcon className="h-4 w-4 text-slate-400" />
                     <span>My Profile</span>
@@ -158,7 +158,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
                       setIsDropdownOpen(false);
                       handleLogout();
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Sign Out</span>

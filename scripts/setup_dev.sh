@@ -19,7 +19,8 @@ if [ ! -f "frontend/.env" ]; then
     cp frontend/.env.example frontend/.env
 fi
 
-echo ">>> Launching backing services (PostgreSQL & Redis)..."
-docker compose -f infrastructure/docker-compose.dev.yml up -d postgres redis
+echo ">>> Launching backing services (Redis)..."
+docker compose -f infrastructure/docker-compose.dev.yml up -d redis
 
 echo ">>> Local development infrastructure is online."
+echo ">>> Supabase Database configured via DATABASE_URL in .env."
