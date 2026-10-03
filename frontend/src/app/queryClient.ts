@@ -6,7 +6,7 @@ export const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 2, // 2 minutes fresh
       gcTime: 1000 * 60 * 15, // 15 minutes garbage collection
       retry: 1,
-      refetchOnWindowFocus: true, // auto-refetch on tab refocus for live telemetry
+      refetchOnWindowFocus: false, // Prevents jarring background refreshes on tab refocus
     },
   },
 });

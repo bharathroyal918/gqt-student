@@ -41,7 +41,7 @@ const LANGUAGE_OPTIONS = [
 
 export const StudentAssignmentDetailPage: React.FC = () => {
   const { assignmentId } = useParams<{ assignmentId: string }>();
-  const { user } = useAuthStore();
+  const { user, hydrateAuth } = useAuthStore();
   const queryClient = useQueryClient();
   const { success: toastSuccess, error: toastError } = useToast();
 
@@ -122,7 +122,7 @@ export const StudentAssignmentDetailPage: React.FC = () => {
       if (data.status === "ACCEPTED") {
         toastSuccess(
           "Accepted! 🎉",
-          `All ${data.total_test_cases} test cases passed. +${data.score_awarded} points awarded!`
+          `All ${data.total_test_cases} test cases passed. +${data.score_awarded} points added to your profile!`
         );
       } else {
         toastError(
@@ -131,9 +131,9 @@ export const StudentAssignmentDetailPage: React.FC = () => {
         );
       }
 
-      queryClient.invalidateQueries({ queryKey: ["student", "assignment-detail", assignmentId] });
-      queryClient.invalidateQueries({ queryKey: ["student", "assignment-submissions", assignmentId] });
-      queryClient.invalidateQueries({ queryKey: ["student", "dashboard"] });
+      // Immediately synchronize queries & live student profile points across header/sidebar
+      queryClient.invalidateQueries({ queryKey: ["student"] });
+      hydrateAuth(true);
     },
     onError: (err: any) => {
       const msg = err?.response?.data?.error?.message || "Submission failed.";

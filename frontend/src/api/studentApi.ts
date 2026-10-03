@@ -499,6 +499,63 @@ export const studentApi = {
   },
 
   // --------------------------------------------------------------------------
+  // DAILY PRACTICE TASKS
+  // --------------------------------------------------------------------------
+  getTasks: async (params?: {
+    status?: string;
+  }): Promise<{ tasks: StudentTaskItem[]; count: number }> => {
+    const { data } = await apiClient.get<
+      ApiSuccessResponse<{ tasks: StudentTaskItem[]; count: number }>
+    >("/students/tasks/", { params });
+    return data.data;
+  },
+
+  getTaskDetail: async (taskId: string): Promise<StudentTaskDetail> => {
+    const { data } = await apiClient.get<ApiSuccessResponse<StudentTaskDetail>>(
+      `/students/tasks/${taskId}/`
+    );
+    return data.data;
+  },
+
+  completeTask: async (
+    taskId: string,
+    payload?: { submission_notes?: string }
+  ): Promise<StudentTaskCompletionResponse> => {
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<StudentTaskCompletionResponse>
+    >(`/students/tasks/${taskId}/complete/`, payload || {});
+    return data.data;
+  },
+
+  // --------------------------------------------------------------------------
+  // CAPSTONE PROJECTS
+  // --------------------------------------------------------------------------
+  getProjects: async (): Promise<{ projects: StudentProjectItem[]; count: number }> => {
+    const { data } = await apiClient.get<
+      ApiSuccessResponse<{ projects: StudentProjectItem[]; count: number }>
+    >("/students/projects/");
+    return data.data;
+  },
+
+  getProjectDetail: async (projectId: string): Promise<StudentProjectDetailData> => {
+    const { data } = await apiClient.get<
+      ApiSuccessResponse<StudentProjectDetailData>
+    >(`/students/projects/${projectId}/`);
+    return data.data;
+  },
+
+  submitProject: async (
+    projectId: string,
+    payload: StudentProjectSubmitPayload
+  ): Promise<any> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<any>>(
+      `/students/projects/${projectId}/submit/`,
+      payload
+    );
+    return data.data;
+  },
+
+  // --------------------------------------------------------------------------
   // NOTIFICATIONS & ANNOUNCEMENTS
   // --------------------------------------------------------------------------
   getNotifications: async (params?: {
@@ -737,5 +794,96 @@ export interface StudentAnnouncementItem {
   created_at: string;
   expires_at: string | null;
 }
+
+export interface StudentTaskItem {
+  id: string;
+  title: string;
+  description: string;
+  scheduled_date: string | null;
+  deadline: string | null;
+  points: number;
+  question_id: string | null;
+  question_title: string | null;
+  course_id: string | null;
+  course_title: string | null;
+  status: "PENDING" | "COMPLETED" | "OVERDUE" | "DUE_SOON" | string;
+  deadline_status: string;
+  is_completed: boolean;
+  completed_at: string | null;
+  score_awarded: number;
+  submission_notes: string;
+}
+
+export interface StudentTaskDetail extends StudentTaskItem {}
+
+export interface StudentTaskCompletionResponse {
+  id: string;
+  task_id: string;
+  student_id: string;
+  is_completed: boolean;
+  score_awarded: number;
+  completed_at: string;
+  submission_notes: string;
+  status: string;
+}
+
+export interface StudentProjectItem {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  course_id: string | null;
+  course_title: string | null;
+  max_score: number;
+  due_date: string | null;
+  has_submitted: boolean;
+  submission_id: string | null;
+  status: "NOT_SUBMITTED" | "PENDING_REVIEW" | "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | string;
+  score: number | null;
+  submitted_at: string | null;
+}
+
+export interface ProjectFeedbackItem {
+  id: string;
+  reviewer_name: string;
+  feedback_text: string;
+  suggested_changes: string;
+  rating: number | null;
+  created_at: string;
+}
+
+export interface ProjectFileItem {
+  id: string;
+  file_name: string;
+  file_size_bytes: number;
+  mime_type: string;
+  download_url: string;
+  uploaded_at: string;
+}
+
+export interface StudentProjectSubmissionDetail {
+  id: string;
+  github_repository_url: string;
+  live_demo_url: string;
+  notes: string;
+  status: string;
+  score: number | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  files: ProjectFileItem[];
+  feedbacks: ProjectFeedbackItem[];
+}
+
+export interface StudentProjectDetailData extends StudentProjectItem {
+  deliverables_instructions: string;
+  submission_detail: StudentProjectSubmissionDetail | null;
+}
+
+export interface StudentProjectSubmitPayload {
+  github_repository_url?: string;
+  live_demo_url?: string;
+  notes?: string;
+}
+
 
 

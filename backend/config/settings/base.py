@@ -263,6 +263,8 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "IGNORE_EXCEPTIONS": True,  # Prevent crash if Redis cache misses or blips in dev
+            "SOCKET_CONNECT_TIMEOUT": 0.5,
+            "SOCKET_TIMEOUT": 0.5,
         },
         "KEY_PREFIX": "gqt_portal",
     }

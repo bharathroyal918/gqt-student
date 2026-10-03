@@ -33,6 +33,7 @@ api_v1_patterns = [
     path("students/tasks/", include("apps.tasks.urls")),
     path("students/projects/", include("apps.projects.urls")),
     path("students/ai/", include("apps.ai_assistant.urls")),
+    path("students/help-ai/", include("apps.ai_assistant.urls")),
     path("students/notifications/", include("apps.notifications.urls")),
     path("students/", include("apps.certificates.urls")),
     path("certificates/verify/<str:identifier>/", PublicCertificateVerifyView.as_view(), name="public_cert_verify"),

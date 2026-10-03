@@ -9,6 +9,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Sum
 
+from django.core.cache import cache
 from apps.accounts.models import AuditLog, User
 from apps.assignments.models import CodeSubmission, CodingQuestion, StudentQuestionProgress
 from apps.certificates.models import StudentBadge
@@ -58,7 +59,7 @@ class StudentAdminService:
             recipient=user,
             title="Portal Access Granted!",
             body="Your GQT Student Portal access has been verified and authorized by the administration.",
-            notification_type=Notification.NotificationType.SYSTEM,
+            notification_type=Notification.NotificationType.SYSTEM_NOTICE,
         )
 
         AuditLog.objects.create(
@@ -137,7 +138,7 @@ class StudentAdminService:
             recipient=user,
             title="Account Authorized by Administrator",
             body=f"Your email ({clean_email}) has been authorized for {student.course_opted}.",
-            notification_type=Notification.NotificationType.SYSTEM,
+            notification_type=Notification.NotificationType.SYSTEM_NOTICE,
         )
 
         AuditLog.objects.create(
@@ -525,7 +526,7 @@ class StudentDashboardService:
         course_title = (
             active_enrollment.course.title
             if active_enrollment
-            else "Full-Stack Software Engineering"
+            else (profile.course_opted or "Full-Stack Software Engineering")
         )
         course_id = str(active_enrollment.course.id) if active_enrollment else None
 
@@ -555,7 +556,7 @@ class StudentDashboardService:
             "full_name": profile.full_name,
             "email": user.email,
             "avatar_url": profile.avatar_url,
-            "course": profile.course_opted or course_title,
+            "course": course_title,
             "course_id": course_id,
             "batch_code": profile.batch_code,
             "college_name": profile.college_name,
@@ -625,15 +626,20 @@ class StudentDashboardService:
         )
 
         today = timezone.now().date()
+        start_date = today - timedelta(days=6)
+        recent_events = (
+            ScoreEvent.objects.filter(
+                student=profile,
+                created_at__date__gte=start_date,
+            )
+            .values("created_at__date")
+            .annotate(total=Sum("delta"))
+        )
+        events_by_date = {event["created_at__date"]: event["total"] for event in recent_events}
         chart_history = []
         for i in range(6, -1, -1):
             day = today - timedelta(days=i)
-            day_points = (
-                ScoreEvent.objects.filter(
-                    student=profile, created_at__date=day
-                ).aggregate(total=Sum("delta"))["total"]
-                or Decimal("0.00")
-            )
+            day_points = events_by_date.get(day, Decimal("0.00")) or Decimal("0.00")
             chart_history.append(
                 {
                     "date": day.strftime("%a"),

@@ -104,7 +104,10 @@ export const StudentDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: () => toastError("Update Failed", "Could not update student status."),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || err?.response?.data?.error?.message || "Could not update student status.";
+      toastError("Update Failed", msg);
+    },
   });
 
   const grantAccessMutation = useMutation({
@@ -114,7 +117,10 @@ export const StudentDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: () => toastError("Grant Failed", "Could not grant access."),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || err?.response?.data?.error?.message || "Could not grant access.";
+      toastError("Grant Failed", msg);
+    },
   });
 
   const revokeAccessMutation = useMutation({
@@ -124,7 +130,10 @@ export const StudentDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: () => toastError("Revoke Failed", "Could not revoke access."),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || err?.response?.data?.error?.message || "Could not revoke access.";
+      toastError("Revoke Failed", msg);
+    },
   });
 
   const markAttendanceMutation = useMutation({

@@ -434,7 +434,7 @@ class ForgotPasswordView(APIView):
                 "channel": "email",
                 "otp_dispatched": True,
             },
-            message="If an account with that email exists and is active, a 6-digit OTP and reset instructions have been sent.",
+            message="If an account with that email exists and is active, a 6-digit OTP and password reset instructions have been sent.",
             status_code=status.HTTP_200_OK,
         )
 

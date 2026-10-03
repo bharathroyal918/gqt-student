@@ -12,6 +12,24 @@ const removeStorageItem = (key: string): void => {
   if (isClient) localStorage.removeItem(key);
 };
 
+const getStoredUser = (): User | null => {
+  try {
+    const raw = getStorageItem("gqt_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const getStoredProfile = (): StudentProfile | null => {
+  try {
+    const raw = getStorageItem("gqt_profile");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 interface AuthStoreState {
   user: User | null;
   studentProfile: StudentProfile | null;
@@ -21,27 +39,39 @@ interface AuthStoreState {
   setAuth: (user: User, tokens: AuthTokens, studentProfile?: StudentProfile) => void;
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
-  hydrateAuth: () => Promise<User | null>;
+  hydrateAuth: (silent?: boolean) => Promise<User | null>;
 }
 
+const initialUser = getStoredUser();
+const initialProfile = getStoredProfile();
+const hasAccessToken = !!getStorageItem("gqt_access_token");
+
 export const useAuthStore = create<AuthStoreState>((set, get) => ({
-  user: null,
-  studentProfile: null,
-  tokens: null,
-  isAuthenticated: !!getStorageItem("gqt_access_token"),
-  isLoading: true,
+  user: initialUser,
+  studentProfile: initialProfile,
+  tokens: hasAccessToken ? { access: getStorageItem("gqt_access_token") || "", refresh: getStorageItem("gqt_refresh_token") || "" } : null,
+  isAuthenticated: hasAccessToken,
+  isLoading: false,
 
   setAuth: (user, tokens, studentProfile) => {
     // Invalidate and remove any prior queries belonging to another session
     queryClient.removeQueries({ queryKey: ["student"] });
     queryClient.clear();
 
+    const profile = studentProfile || (user as any).student_profile || null;
     setStorageItem("gqt_access_token", tokens.access);
     setStorageItem("gqt_refresh_token", tokens.refresh);
+    setStorageItem("gqt_user", JSON.stringify(user));
+    if (profile) {
+      setStorageItem("gqt_profile", JSON.stringify(profile));
+    } else {
+      removeStorageItem("gqt_profile");
+    }
+
     set({
       user,
       tokens,
-      studentProfile: studentProfile || (user as any).student_profile || null,
+      studentProfile: profile,
       isAuthenticated: true,
       isLoading: false,
     });
@@ -54,6 +84,9 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
     removeStorageItem("gqt_access_token");
     removeStorageItem("gqt_refresh_token");
+    removeStorageItem("gqt_user");
+    removeStorageItem("gqt_profile");
+
     set({
       user: null,
       studentProfile: null,
@@ -65,7 +98,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
   setLoading: (isLoading) => set({ isLoading }),
 
-  hydrateAuth: async () => {
+  hydrateAuth: async (silent = true) => {
     const token = getStorageItem("gqt_access_token");
     if (!token) {
       set({ user: null, studentProfile: null, isAuthenticated: false, isLoading: false });
@@ -73,9 +106,17 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     }
 
     try {
-      set({ isLoading: true });
+      if (!silent && !get().user) {
+        set({ isLoading: true });
+      }
       const user = await authApi.getMe();
       const studentProfile = (user as any).student_profile || null;
+
+      setStorageItem("gqt_user", JSON.stringify(user));
+      if (studentProfile) {
+        setStorageItem("gqt_profile", JSON.stringify(studentProfile));
+      }
+
       set({
         user,
         studentProfile,
@@ -83,9 +124,12 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         isLoading: false,
       });
       return user;
-    } catch (err) {
-      // Token is invalid or expired
-      get().clearAuth();
+    } catch (err: any) {
+      // If 401 or network failure
+      if (err.response?.status === 401) {
+        get().clearAuth();
+      }
+      set({ isLoading: false });
       return null;
     }
   },

@@ -206,8 +206,20 @@ export const router = createBrowserRouter([
     element: withSuspense(AdminLoginPage),
   },
   {
-    path: "/auth/login",
+    path: "/auth/admin-login",
     element: withSuspense(AdminLoginPage),
+  },
+  {
+    path: "/auth/admin/login",
+    element: withSuspense(AdminLoginPage),
+  },
+  {
+    path: "/auth/login",
+    element: withSuspense(StudentLoginPage),
+  },
+  {
+    path: "/auth/student-login",
+    element: withSuspense(StudentLoginPage),
   },
 
   // Password Recovery & OTP Flows

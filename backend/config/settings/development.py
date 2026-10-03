@@ -16,11 +16,23 @@ else:
     DATABASES = {"default": env.db_url_config(f"sqlite:///{BASE_DIR / 'dev_db.sqlite3'}")}
 
 if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
-    DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=0)
+    DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=600)
     DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
     if "OPTIONS" not in DATABASES["default"]:
         DATABASES["default"]["OPTIONS"] = {}
     DATABASES["default"]["OPTIONS"].setdefault("sslmode", env("DB_SSLMODE", default="require"))
+
+# Development Cache Configuration:
+# Default to ultra-fast in-memory cache in development unless explicitly instructed to use Redis
+USE_REDIS_CACHE = env.bool("USE_REDIS_CACHE", default=False)
+if not USE_REDIS_CACHE:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "gqt-portal-dev-cache",
+            "TIMEOUT": 300,
+        }
+    }
 
 # Development Email Backend: Echoes emails to console
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

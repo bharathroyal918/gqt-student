@@ -243,6 +243,26 @@ class AuthService:
                 status_code=403,
             )
 
+        # Enforce student unapproved status
+        if (
+            user.role == User.RoleChoices.STUDENT
+            and user.onboarding_status == User.OnboardingStatusChoices.PENDING_ACTIVATION
+        ):
+            LoginActivity.objects.create(
+                user=user,
+                identifier=email,
+                login_type=LoginActivity.LoginType.EMAIL_PASSWORD,
+                status=LoginActivity.LoginStatus.LOCKED,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                failure_reason="Account unapproved",
+            )
+            raise DomainException(
+                detail="Your student account registration is pending administrative approval.",
+                code="ACCOUNT_UNAPPROVED",
+                status_code=403,
+            )
+
         # Enforce student suspended status
         if (
             user.role == User.RoleChoices.STUDENT
