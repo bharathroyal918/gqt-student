@@ -52,7 +52,7 @@ export const StudentLoginPage: React.FC = () => {
   const { theme, toggleTheme } = useThemeStore();
   const { success, error: toastError } = useToast();
 
-  const [authMethod, setAuthMethod] = useState<"otp" | "email">("otp");
+  const [authMethod, setAuthMethod] = useState<"otp" | "email">("email");
   const [otpStep, setOtpStep] = useState<"request" | "verify">("request");
   const [targetPhone, setTargetPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

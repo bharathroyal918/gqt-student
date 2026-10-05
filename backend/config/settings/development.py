@@ -43,3 +43,12 @@ CORS_ALLOWED_ORIGINS = env.list(
     default=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
 )
 CORS_ALLOW_CREDENTIALS = True
+
+# Development In-Memory Cache (avoids Redis socket timeouts during local development)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "gqt-portal-dev-cache",
+    }
+}
+
