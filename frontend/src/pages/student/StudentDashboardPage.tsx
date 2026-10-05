@@ -36,6 +36,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
+import { StreakHeatmap } from "../../components/dashboard/StreakHeatmap";
 
 export const StudentDashboardPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -446,6 +447,11 @@ export const StudentDashboardPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* =========================================================================
+          2.5 LEETCODE-STYLE STREAK & YEARLY ACTIVITY HEATMAP
+         ========================================================================= */}
+      <StreakHeatmap data={dashboardData.activity_heatmap} />
 
       {/* =========================================================================
           3. PROGRESS & ANALYTICS CHARTS

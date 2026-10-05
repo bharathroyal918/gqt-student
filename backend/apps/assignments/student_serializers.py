@@ -23,6 +23,8 @@ class StudentQuestionListSerializer(serializers.ModelSerializer):
     is_solved = serializers.BooleanField(default=False, read_only=True)
     best_score = serializers.FloatField(default=0.0, read_only=True)
     attempts_count = serializers.IntegerField(default=0, read_only=True)
+    is_module_locked = serializers.BooleanField(default=False, read_only=True)
+    module_unlock_requirement = serializers.CharField(default=None, allow_null=True, read_only=True)
 
     class Meta:
         model = CodingQuestion
@@ -40,6 +42,8 @@ class StudentQuestionListSerializer(serializers.ModelSerializer):
             "is_solved",
             "best_score",
             "attempts_count",
+            "is_module_locked",
+            "module_unlock_requirement",
         ]
 
 
@@ -55,6 +59,8 @@ class StudentQuestionDetailSerializer(serializers.ModelSerializer):
     is_solved = serializers.BooleanField(default=False, read_only=True)
     best_score = serializers.FloatField(default=0.0, read_only=True)
     attempts_count = serializers.IntegerField(default=0, read_only=True)
+    is_module_locked = serializers.BooleanField(default=False, read_only=True)
+    module_unlock_requirement = serializers.CharField(default=None, allow_null=True, read_only=True)
 
     class Meta:
         model = CodingQuestion
@@ -77,6 +83,8 @@ class StudentQuestionDetailSerializer(serializers.ModelSerializer):
             "is_solved",
             "best_score",
             "attempts_count",
+            "is_module_locked",
+            "module_unlock_requirement",
         ]
 
     def get_visible_test_cases(self, obj):

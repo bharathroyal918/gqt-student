@@ -40,7 +40,33 @@ class StudentQuestionListView(APIView):
             from apps.assignments.seeds import seed_coding_questions
             seed_coding_questions()
 
+        from apps.courses.models import Course, CourseEnrollment
+
+        # Determine target course for the student to prevent cross-course question duplicates
+        course_id = request.query_params.get("course_id")
+        target_course = None
+
+        if course_id:
+            target_course = Course.objects.filter(id=course_id, is_published=True, is_deleted=False).first()
+
+        if not target_course:
+            # Check student active enrollment
+            enrollment = (
+                CourseEnrollment.objects.filter(student=student, status="ACTIVE")
+                .select_related("course")
+                .first()
+            )
+            if enrollment and enrollment.course and enrollment.course.is_published and not enrollment.course.is_deleted:
+                target_course = enrollment.course
+
+        if not target_course:
+            # Fallback to the primary active published course
+            target_course = Course.objects.filter(is_published=True, is_deleted=False).order_by("order", "id").first()
+
         qs = CodingQuestion.objects.filter(is_active=True).select_related("module", "module__course")
+
+        if target_course:
+            qs = qs.filter(module__course=target_course)
 
         module_id = request.query_params.get("module_id")
         if module_id:
@@ -54,23 +80,51 @@ class StudentQuestionListView(APIView):
         if search:
             qs = qs.filter(title__icontains=search)
 
+        from apps.assignments.progression import StudentCurriculumProgressionService
+
+        # Calculate live sequential module progression for this student and course
+        unlock_map = (
+            StudentCurriculumProgressionService.get_course_modules_unlock_map(student, target_course)
+            if target_course
+            else {}
+        )
+
         # Prefetch student progress
         progress_map = {
             p.question_id: p
             for p in StudentQuestionProgress.objects.filter(student=student)
         }
 
+        # Deduplicate to strictly prevent any repeated questions by (module_order, title)
+        seen_keys = set()
         results = []
-        for q in qs.order_by("module__order_index", "order", "title"):
+        for q in qs.order_by("module__order_index", "order", "id"):
+            dedup_key = (q.module.order_index, q.title.strip().lower())
+            if dedup_key in seen_keys:
+                continue
+            seen_keys.add(dedup_key)
+
             prog = progress_map.get(q.id)
+            mod_status = unlock_map.get(str(q.module_id), {})
             setattr(q, "is_solved", prog.is_solved if prog else False)
             setattr(q, "best_score", float(prog.best_score) if prog else 0.0)
             setattr(q, "attempts_count", prog.attempts_count if prog else 0)
+            setattr(q, "is_module_locked", mod_status.get("is_locked", False))
+            setattr(q, "module_unlock_requirement", mod_status.get("unlock_requirement", None))
             results.append(q)
 
         serializer = StudentQuestionListSerializer(results, many=True)
         return api_success(
-            data={"questions": serializer.data},
+            data={
+                "questions": serializer.data,
+                "modules_progress": list(unlock_map.values()),
+                "target_course": {
+                    "id": str(target_course.id),
+                    "title": target_course.title,
+                }
+                if target_course
+                else None,
+            },
             message="Coding practice questions retrieved successfully.",
         )
 
@@ -104,10 +158,22 @@ class StudentQuestionDetailView(APIView):
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
+        from apps.assignments.progression import StudentCurriculumProgressionService
+        unlock_map = (
+            StudentCurriculumProgressionService.get_course_modules_unlock_map(student, question.module.course)
+            if question.module.course
+            else {}
+        )
+        mod_status = unlock_map.get(str(question.module_id), {})
+        is_locked = mod_status.get("is_locked", False)
+        unlock_req = mod_status.get("unlock_requirement", None)
+
         prog = StudentQuestionProgress.objects.filter(student=student, question=question).first()
         setattr(question, "is_solved", prog.is_solved if prog else False)
         setattr(question, "best_score", float(prog.best_score) if prog else 0.0)
         setattr(question, "attempts_count", prog.attempts_count if prog else 0)
+        setattr(question, "is_module_locked", is_locked)
+        setattr(question, "module_unlock_requirement", unlock_req)
 
         serializer = StudentQuestionDetailSerializer(question)
         return api_success(
@@ -138,6 +204,28 @@ class StudentCodeRunView(APIView):
         serializer.is_valid(raise_exception=True)
 
         student = request.user.student_profile
+        try:
+            question = CodingQuestion.objects.select_related("module", "module__course").get(
+                id=question_id, is_active=True
+            )
+        except CodingQuestion.DoesNotExist:
+            return api_error(
+                code="QUESTION_NOT_FOUND",
+                message="Coding challenge does not exist or is inactive.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        from apps.assignments.progression import StudentCurriculumProgressionService
+        if question.module.course:
+            unlock_map = StudentCurriculumProgressionService.get_course_modules_unlock_map(student, question.module.course)
+            mod_status = unlock_map.get(str(question.module_id), {})
+            if mod_status.get("is_locked", False):
+                return api_error(
+                    code="MODULE_LOCKED",
+                    message=mod_status.get("unlock_requirement") or "This module is locked. Solve all problems in the previous module to unlock.",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                )
+
         result = CodeExecutionService.run_code(
             student_profile=student,
             question_id=str(question_id),
@@ -173,6 +261,28 @@ class StudentCodeSubmitView(APIView):
         serializer.is_valid(raise_exception=True)
 
         student = request.user.student_profile
+        try:
+            question = CodingQuestion.objects.select_related("module", "module__course").get(
+                id=question_id, is_active=True
+            )
+        except CodingQuestion.DoesNotExist:
+            return api_error(
+                code="QUESTION_NOT_FOUND",
+                message="Coding challenge does not exist or is inactive.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        from apps.assignments.progression import StudentCurriculumProgressionService
+        if question.module.course:
+            unlock_map = StudentCurriculumProgressionService.get_course_modules_unlock_map(student, question.module.course)
+            mod_status = unlock_map.get(str(question.module_id), {})
+            if mod_status.get("is_locked", False):
+                return api_error(
+                    code="MODULE_LOCKED",
+                    message=mod_status.get("unlock_requirement") or "This module is locked. Solve all problems in the previous module to unlock.",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                )
+
         result = CodeExecutionService.submit_code(
             student_profile=student,
             question_id=str(question_id),

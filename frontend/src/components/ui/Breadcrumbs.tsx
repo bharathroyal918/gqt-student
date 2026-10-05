@@ -26,10 +26,15 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = "" 
     for (const segment of segments) {
       accumulatedPath += `/${segment}`;
       // Format segment name nicely (e.g. "help-ai" -> "Help AI", "assignments" -> "Assignments")
-      const formattedLabel = segment
+      let formattedLabel = segment
         .split("-")
         .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
         .join(" ");
+
+      // If segment is a UUID / hash, display friendly label
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/i.test(segment) || (segment.length > 24 && !segment.includes(" "))) {
+        formattedLabel = "Workspace";
+      }
 
       generated.push({
         label: formattedLabel,

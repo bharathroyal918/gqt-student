@@ -137,6 +137,10 @@ class ScoringService:
                 notification_type=Notification.NotificationType.SUBMISSION_GRADED,
             )
 
+        # Update streak for problem solving/assignment activity
+        if score_delta > Decimal("0.00") or (score_record and score_record.points > Decimal("0.00")):
+            locked_student.record_activity_and_update_streak()
+
         return {
             "score_record_id": str(score_record.id),
             "source_type": source_type,

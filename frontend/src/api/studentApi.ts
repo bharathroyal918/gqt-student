@@ -103,6 +103,30 @@ export interface RecentNotification {
   created_at: string;
 }
 
+export interface ActivityHeatmapRecord {
+  date: string;
+  day_name: string;
+  month_name: string;
+  month_index: number;
+  day_of_week: number;
+  count: number;
+  points: number;
+  level: number;
+  is_today: boolean;
+}
+
+export interface ActivityHeatmapData {
+  start_date: string;
+  end_date: string;
+  current_streak: number;
+  longest_streak: number;
+  total_active_days: number;
+  total_submissions_year: number;
+  solved_today: boolean;
+  last_activity_date: string | null;
+  records: ActivityHeatmapRecord[];
+}
+
 export interface StudentDashboardData {
   profile: DashboardProfile;
   leaderboard: {
@@ -116,6 +140,7 @@ export interface StudentDashboardData {
     recent_achievements: RecentAchievement[];
     notifications: RecentNotification[];
   };
+  activity_heatmap?: ActivityHeatmapData;
 }
 
 export interface StudentCourseItem {
@@ -197,6 +222,17 @@ export interface ModuleCompletionResult {
   } | null;
 }
 
+export interface ModuleProgressItem {
+  module_id: string;
+  order_index: number;
+  title: string;
+  total_questions: number;
+  solved_questions: number;
+  is_locked: boolean;
+  is_completed: boolean;
+  unlock_requirement: string | null;
+}
+
 export interface StudentQuestionItem {
   id: string;
   title: string;
@@ -211,6 +247,8 @@ export interface StudentQuestionItem {
   is_solved: boolean;
   best_score: number;
   attempts_count: number;
+  is_module_locked?: boolean;
+  module_unlock_requirement?: string | null;
 }
 
 export interface StudentTestCaseItem {
@@ -239,6 +277,8 @@ export interface StudentQuestionDetailData {
   is_solved: boolean;
   best_score: number;
   attempts_count: number;
+  is_module_locked?: boolean;
+  module_unlock_requirement?: string | null;
 }
 
 export interface TestRunResultItem {
@@ -347,6 +387,13 @@ export const studentApi = {
     return data.data;
   },
 
+  getActivityHeatmap: async (): Promise<ActivityHeatmapData> => {
+    const { data } = await apiClient.get<ApiSuccessResponse<ActivityHeatmapData>>(
+      "/students/activity-heatmap/"
+    );
+    return data.data;
+  },
+
   updateProfile: async (payload: StudentProfileUpdatePayload): Promise<any> => {
     const { data } = await apiClient.patch<ApiSuccessResponse<any>>(
       "/students/me/profile/",
@@ -414,12 +461,14 @@ export const studentApi = {
     module_id?: string;
     difficulty?: string;
     search?: string;
-  }): Promise<StudentQuestionItem[]> => {
-    const { data } = await apiClient.get<ApiSuccessResponse<{ questions: StudentQuestionItem[] }>>(
-      "/students/assignments/questions/",
-      { params }
-    );
-    return data.data.questions;
+  }): Promise<{ questions: StudentQuestionItem[]; modules_progress: ModuleProgressItem[] }> => {
+    const { data } = await apiClient.get<
+      ApiSuccessResponse<{
+        questions: StudentQuestionItem[];
+        modules_progress: ModuleProgressItem[];
+      }>
+    >("/students/assignments/questions/", { params });
+    return data.data;
   },
 
   getQuestionDetail: async (questionId: string): Promise<StudentQuestionDetailData> => {

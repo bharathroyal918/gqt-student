@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 
 from datetime import timedelta
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Count, Q, Sum
 
 from django.core.cache import cache
 from apps.accounts.models import AuditLog, User
@@ -493,7 +493,7 @@ class StudentAdminService:
             "total_students_global": total_students_global,
             "batch_rank": batch_rank,
             "total_students_batch": total_students_batch,
-            "current_streak_days": student.current_streak_days,
+            "current_streak_days": student.get_effective_streak(),
             "highest_streak_days": student.highest_streak_days,
         }
 
@@ -748,6 +748,10 @@ class StudentDashboardService:
             for notif in Notification.objects.filter(recipient=user).order_by("-created_at")[:5]
         ]
 
+        # 5. LEETCODE-STYLE STREAK & YEARLY ACTIVITY HEATMAP
+        activity_heatmap = cls.get_student_activity_heatmap_data(profile=profile)
+        profile_data["current_streak_days"] = activity_heatmap["current_streak"]
+
         return {
             "profile": profile_data,
             "leaderboard": {
@@ -761,7 +765,125 @@ class StudentDashboardService:
                 "recent_achievements": recent_achievements,
                 "notifications": notifications,
             },
+            "activity_heatmap": activity_heatmap,
         }
+
+    @classmethod
+    def get_student_activity_heatmap_data(cls, profile: StudentProfile) -> Dict[str, Any]:
+        """Calculates 365-day problem-solving activity matrix and streaks."""
+        today_date = timezone.localdate()
+        effective_streak = profile.get_effective_streak(today_date)
+
+        days_in_grid = 365
+        grid_start_date = today_date - timedelta(days=days_in_grid - 1)
+
+        # Aggregate daily accepted submissions & solved questions
+        daily_submissions = (
+            CodeSubmission.objects.filter(
+                student=profile,
+                created_at__date__gte=grid_start_date,
+            )
+            .values("created_at__date")
+            .annotate(
+                total_subs=Count("id"),
+                accepted_subs=Count("id", filter=Q(status=CodeSubmission.SubmissionStatus.ACCEPTED)),
+                points_sum=Sum("score_awarded"),
+            )
+        )
+
+        daily_score_events = (
+            ScoreEvent.objects.filter(
+                student=profile,
+                created_at__date__gte=grid_start_date,
+            )
+            .values("created_at__date")
+            .annotate(total_events=Count("id"), points_sum=Sum("delta"))
+        )
+
+        daily_map = {}
+        for row in daily_submissions:
+            d = row["created_at__date"]
+            daily_map[d] = {
+                "count": row["accepted_subs"] or row["total_subs"],
+                "points": float(row["points_sum"] or 0),
+            }
+
+        for row in daily_score_events:
+            d = row["created_at__date"]
+            if d not in daily_map:
+                daily_map[d] = {
+                    "count": row["total_events"],
+                    "points": float(row["points_sum"] or 0),
+                }
+            else:
+                daily_map[d]["points"] = max(
+                    daily_map[d]["points"], float(row["points_sum"] or 0)
+                )
+
+        heatmap_records = []
+        total_active_days = 0
+        total_submissions_year = 0
+
+        for i in range(days_in_grid):
+            current_day = grid_start_date + timedelta(days=i)
+            day_data = daily_map.get(current_day, {"count": 0, "points": 0.0})
+            cnt = day_data["count"]
+            pts = day_data["points"]
+
+            if cnt > 0 or pts > 0:
+                total_active_days += 1
+                total_submissions_year += max(cnt, 1)
+
+            # Intensity Level: 0 = empty, 1 = 1-2, 2 = 3-4, 3 = 5+
+            if cnt == 0 and pts == 0:
+                level = 0
+            elif cnt <= 2 and pts < 30:
+                level = 1
+            elif cnt <= 4 or pts < 80:
+                level = 2
+            else:
+                level = 3
+
+            heatmap_records.append(
+                {
+                    "date": str(current_day),
+                    "day_name": current_day.strftime("%a"),
+                    "month_name": current_day.strftime("%b"),
+                    "month_index": current_day.month,
+                    "day_of_week": current_day.weekday(),  # 0=Mon, 6=Sun
+                    "count": cnt,
+                    "points": pts,
+                    "level": level,
+                    "is_today": current_day == today_date,
+                }
+            )
+
+        solved_today = (
+            daily_map.get(today_date, {}).get("count", 0) > 0
+            or profile.last_activity_date == today_date
+        )
+
+        return {
+            "start_date": str(grid_start_date),
+            "end_date": str(today_date),
+            "current_streak": effective_streak,
+            "longest_streak": profile.highest_streak_days,
+            "total_active_days": total_active_days,
+            "total_submissions_year": total_submissions_year,
+            "solved_today": solved_today,
+            "last_activity_date": str(profile.last_activity_date)
+            if profile.last_activity_date
+            else None,
+            "records": heatmap_records,
+        }
+
+    @classmethod
+    def get_student_activity_heatmap(cls, user: User) -> Dict[str, Any]:
+        """Entry point for authenticated user activity heatmap."""
+        profile = StudentProfile.objects.filter(user=user).first()
+        if not profile:
+            raise DomainException("Student profile not found.", status_code=404)
+        return cls.get_student_activity_heatmap_data(profile)
 
     @classmethod
     @transaction.atomic

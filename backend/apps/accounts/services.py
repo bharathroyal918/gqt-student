@@ -858,7 +858,7 @@ class AuthService:
                 "attendance_percentage": str(p.attendance_percentage),
                 "total_classes": p.total_classes,
                 "attended_classes": p.attended_classes,
-                "current_streak_days": p.current_streak_days,
+                "current_streak_days": p.get_effective_streak(),
                 "highest_streak_days": p.highest_streak_days,
                 "total_points": str(p.total_points),
                 "avatar_url": p.avatar_url,

@@ -17,9 +17,11 @@ import {
   Moon,
   Briefcase,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { authApi } from "../../api/authApi";
+import { studentApi } from "../../api/studentApi";
 import { Badge } from "../ui/Badge";
 import { UserAvatar } from "../ui/UserAvatar";
 
@@ -32,6 +34,13 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
   const { user, studentProfile, clearAuth } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
+
+  const { data: dashboardData } = useQuery({
+    queryKey: ["student", "dashboard"],
+    queryFn: studentApi.getDashboard,
+    enabled: !!user && user.role === "STUDENT",
+    staleTime: 10000,
+  });
 
   const handleLogout = async () => {
     try {
@@ -60,7 +69,13 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
     { name: "Contact", href: "/contact", icon: Mail },
   ];
 
-  const displayName = studentProfile?.full_name || user?.email || "Student";
+  const effectiveStreak =
+    dashboardData?.profile?.current_streak_days ??
+    studentProfile?.current_streak_days ??
+    0;
+
+  const displayName = dashboardData?.profile?.full_name || studentProfile?.full_name || user?.email || "Student";
+  const avatarUrl = dashboardData?.profile?.avatar_url || studentProfile?.avatar_url;
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
@@ -93,7 +108,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
           <div className="p-4 border-b border-slate-200 dark:border-surface-800/80 bg-slate-50 dark:bg-surface-900/40">
             <div className="flex items-center gap-3">
               <UserAvatar
-                src={studentProfile?.avatar_url}
+                src={avatarUrl}
                 name={displayName}
                 initials={initials}
                 size="md"
@@ -101,17 +116,15 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-slate-900 dark:text-white text-xs truncate">{displayName}</div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {studentProfile?.batch_code && (
+                  {(dashboardData?.profile?.batch_code || studentProfile?.batch_code) && (
                     <Badge variant="indigo" size="sm">
-                      {studentProfile.batch_code}
+                      {dashboardData?.profile?.batch_code || studentProfile?.batch_code}
                     </Badge>
                   )}
-                  {studentProfile?.current_streak_days !== undefined && (
-                    <span className="flex items-center gap-0.5 text-[11px] font-bold text-rose-500 dark:text-rose-400">
-                      <Flame className="h-3 w-3" />
-                      {studentProfile.current_streak_days}d
-                    </span>
-                  )}
+                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-rose-500 dark:text-rose-400">
+                    <Flame className={`h-3 w-3 ${effectiveStreak > 0 ? "animate-pulse fill-rose-500" : ""}`} />
+                    {effectiveStreak}d
+                  </span>
                 </div>
               </div>
             </div>
