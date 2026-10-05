@@ -61,6 +61,9 @@ class StudentQuestionDetailSerializer(serializers.ModelSerializer):
     attempts_count = serializers.IntegerField(default=0, read_only=True)
     is_module_locked = serializers.BooleanField(default=False, read_only=True)
     module_unlock_requirement = serializers.CharField(default=None, allow_null=True, read_only=True)
+    last_submission_code = serializers.CharField(default=None, allow_null=True, read_only=True)
+    last_submission_language = serializers.CharField(default=None, allow_null=True, read_only=True)
+    submissions_by_language = serializers.DictField(default=dict, read_only=True)
 
     class Meta:
         model = CodingQuestion
@@ -85,6 +88,9 @@ class StudentQuestionDetailSerializer(serializers.ModelSerializer):
             "attempts_count",
             "is_module_locked",
             "module_unlock_requirement",
+            "last_submission_code",
+            "last_submission_language",
+            "submissions_by_language",
         ]
 
     def get_visible_test_cases(self, obj):

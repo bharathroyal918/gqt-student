@@ -279,6 +279,9 @@ export interface StudentQuestionDetailData {
   attempts_count: number;
   is_module_locked?: boolean;
   module_unlock_requirement?: string | null;
+  last_submission_code?: string | null;
+  last_submission_language?: string | null;
+  submissions_by_language?: Record<string, string>;
 }
 
 export interface TestRunResultItem {

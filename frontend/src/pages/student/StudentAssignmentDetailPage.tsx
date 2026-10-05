@@ -120,30 +120,35 @@ export const StudentAssignmentDetailPage: React.FC = () => {
     enabled: !!assignmentId && !!user?.id && activeLeftTab === "submissions",
   });
 
-  // Draft Code Storage Key
-  const draftKey = `gqt_draft_${assignmentId}_${selectedLanguage}`;
-
-  // Initialize or restore code when question or language changes
+  // Initialize or restore code from Supabase database when question or language changes
   useEffect(() => {
     if (!question) return;
 
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft) {
-      setSourceCode(savedDraft);
-    } else if (question.starter_code && question.starter_code[selectedLanguage]) {
+    // 1. First priority: Code persisted in Supabase database for this language
+    const dbPersistedCode = question.submissions_by_language?.[selectedLanguage];
+    if (dbPersistedCode) {
+      setSourceCode(dbPersistedCode);
+      return;
+    }
+
+    // 2. Second priority: If switching to the language of the student's latest submission
+    if (question.last_submission_language === selectedLanguage && question.last_submission_code) {
+      setSourceCode(question.last_submission_code);
+      return;
+    }
+
+    // 3. Fallback: Starter code provided by the problem curriculum
+    if (question.starter_code && question.starter_code[selectedLanguage]) {
       setSourceCode(question.starter_code[selectedLanguage]);
     } else {
       setSourceCode("");
     }
-  }, [question, selectedLanguage, draftKey]);
+  }, [question, selectedLanguage]);
 
-  // Save code changes to local draft
+  // Code editor change handler
   const handleCodeChange = (val: string | undefined) => {
     const newCode = val || "";
     setSourceCode(newCode);
-    if (assignmentId) {
-      localStorage.setItem(draftKey, newCode);
-    }
   };
 
   // Persist Layout Preferences
@@ -279,7 +284,6 @@ export const StudentAssignmentDetailPage: React.FC = () => {
   const resetToStarterCode = () => {
     if (question?.starter_code && question.starter_code[selectedLanguage]) {
       setSourceCode(question.starter_code[selectedLanguage]);
-      localStorage.removeItem(draftKey);
       toastInfo("Reset Complete", "Code reset to original starter template.");
     }
   };

@@ -175,6 +175,22 @@ class StudentQuestionDetailView(APIView):
         setattr(question, "is_module_locked", is_locked)
         setattr(question, "module_unlock_requirement", unlock_req)
 
+        # Retrieve user's previous code submissions directly from Supabase database
+        subs = CodeSubmission.objects.filter(student=student, question=question).order_by("-submitted_at")
+        submissions_by_language = {}
+        last_sub_code = None
+        last_sub_lang = None
+        for s in subs:
+            if s.language not in submissions_by_language:
+                submissions_by_language[s.language] = s.source_code
+            if last_sub_code is None:
+                last_sub_code = s.source_code
+                last_sub_lang = s.language
+
+        setattr(question, "last_submission_code", last_sub_code)
+        setattr(question, "last_submission_language", last_sub_lang)
+        setattr(question, "submissions_by_language", submissions_by_language)
+
         serializer = StudentQuestionDetailSerializer(question)
         return api_success(
             data=serializer.data,
