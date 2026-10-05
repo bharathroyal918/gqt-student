@@ -37,6 +37,8 @@ interface AuthStoreState {
   isAuthenticated: boolean;
   isLoading: boolean;
   setAuth: (user: User, tokens: AuthTokens, studentProfile?: StudentProfile) => void;
+  updateUser: (user: User) => void;
+  updateStudentProfile: (profile: StudentProfile) => void;
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
   hydrateAuth: (silent?: boolean) => Promise<User | null>;
@@ -75,6 +77,33 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       isAuthenticated: true,
       isLoading: false,
     });
+  },
+
+  updateUser: (user) => {
+    setStorageItem("gqt_user", JSON.stringify(user));
+    const studentProfile = (user as any)?.student_profile || get().studentProfile;
+    if (studentProfile) {
+      setStorageItem("gqt_profile", JSON.stringify(studentProfile));
+    }
+    set({ user, studentProfile });
+  },
+
+  updateStudentProfile: (studentProfile) => {
+    setStorageItem("gqt_profile", JSON.stringify(studentProfile));
+    const currentUser = get().user;
+    const updatedUser = currentUser
+      ? {
+          ...currentUser,
+          student_profile: {
+            ...((currentUser as any).student_profile || {}),
+            ...studentProfile,
+          },
+        }
+      : currentUser;
+    if (updatedUser) {
+      setStorageItem("gqt_user", JSON.stringify(updatedUser));
+    }
+    set({ studentProfile, user: updatedUser });
   },
 
   clearAuth: () => {

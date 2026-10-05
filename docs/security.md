@@ -1,100 +1,137 @@
-# Security Architecture & Threat Mitigation Blueprint
+# Security Architecture & Threat Mitigation Blueprint — Phase 0
 
 ## 1. Threat Model & Core Security Tenets
 
-The GQT Platform operates on a **Zero Trust** and **Least Privilege** foundation. Because students submit arbitrary source code for execution, strict boundary defenses are maintained.
+The **GQT Student Learning and Coding Assessment Platform** operates on a **Zero Trust**, **Least Privilege**, and **Defense-in-Depth** architecture. 
+
+Because students execute arbitrary code in multiple programming languages and access sensitive academic credentials, rigorous boundaries are enforced across all layers:
 
 ```mermaid
 graph TD
-    Client[Web Client] -->|HTTPS Only + Strict CORS| CDN[Cloudflare / Nginx]
-    CDN -->|Rate Limiter + WAF| API[Django REST API Gateway]
-    API -->|JWT Authentication| AuthCheck{Auth & RBAC}
-    AuthCheck -->|Admin Role| AdminServices[Admin Domain Services]
-    AuthCheck -->|Student Role| StudentServices[Student Domain Services]
-    StudentServices -->|Async Job| Queue[Redis Broker]
-    Queue -->|Isolated Job| Worker[Celery Worker]
+    Client[Client Browser / Single Page App] -->|HTTPS + TLS 1.3 / Strict CORS| Nginx[Nginx Reverse Proxy & WAF]
+    Nginx -->|Rate Limiter / Security Headers| API[Django REST Framework Gateway]
+    API -->|JWT Bearer Token Validation| AuthGuard{RBAC & Token Guard}
+    
+    AuthGuard -->|Role: ADMIN| AdminServices[Admin Domain Services]
+    AuthGuard -->|Role: STUDENT| StudentServices[Student Scoped Domain Services]
+    
+    StudentServices -->|Object Level Auth Check| ResourceCheck{IsOwner / IsEnrolled}
+    ResourceCheck -->|Pass| SupabaseDB[(Supabase PostgreSQL 16 DB)]
+    ResourceCheck -->|Fail| Forbidden[403 Forbidden Response]
+    
+    StudentServices -->|Async Job Dispatch| RedisBroker[(Redis 7 Queue)]
+    RedisBroker --> Worker[Celery Worker Nodes]
     Worker -->|Seccomp / cgroups / No Net| Sandbox[Sandboxed Code Judge]
-    Worker -->|Server-side Guardrails| LLM[External LLM Provider]
+    Worker -->|Socratic Guardrails| LLM[External LLM Provider]
 ```
 
 ---
 
 ## 2. Authentication & Credential Architecture
 
-### 2.1 Admin-Controlled Onboarding (Zero Public Registration)
-- Public registration endpoints (`/register` or `/signup`) are strictly prohibited and do not exist in the codebase.
-- Accounts can only be provisioned by authorized `ADMIN` users:
-  1. Admin provides student email, mobile, batch, and unique registration ID.
-  2. The system generates an account with `onboarding_status = "PENDING_PASSWORD_SET"`.
-  3. A cryptographically secure, single-use activation token is generated with a 48-hour expiration.
-  4. The student sets their password or completes initial mobile verification to transition to `"ACTIVE"`.
+### 2.1 Admin-Controlled Onboarding (Zero Public Self-Registration)
+- Public self-registration (`/register` or `/signup`) is strictly prohibited.
+- Accounts are created solely by authenticated administrators via `POST /api/v1/admin/students/onboard/`.
+- Newly provisioned accounts are initialized with:
+  - `onboarding_status = 'PENDING_ACTIVATION'`
+  - `is_active = TRUE`
+  - A cryptographically generated, single-use activation token with a 48-hour expiration window.
+- The student sets their password or completes mobile OTP verification to activate their account (`onboarding_status = 'ACTIVE'`).
 
-### 2.2 Dual Login Channels
-1. **Email & Password:**
-   - Password hashing utilizes Argon2id / PBKDF2 with SHA-256 and minimum 100,000 iterations.
-   - Enforced complexity: 10+ characters, upper, lower, digit, and special symbol.
-2. **Mobile Number & OTP:**
-   - OTPs are 6-digit cryptographically pseudo-random numbers (`secrets.SystemRandom()`).
-   - OTP hashes are stored in Redis with an exact 5-minute TTL (300 seconds).
-   - Maximum 5 attempts allowed per OTP; failure invalidates the token.
-   - Request rate limit: Max 3 OTP requests per phone number per hour.
+### 2.2 Account Status vs. Portal Access Status
+The platform cleanly separates Account Lifecycle State from Portal Access/Authorization State:
 
-### 2.3 JWT Lifecycle & Token Rotation
-- **Access Token:** Short-lived (15 minutes). Sent in the `Authorization: Bearer <token>` header. Contains `user_id`, `role`, and token jti.
+| Account Dimension | Database Field | Allowed Enums / Values | Purpose |
+|---|---|---|---|
+| **Lifecycle State** | `User.onboarding_status` | `PENDING_ACTIVATION`, `ACTIVE`, `SUSPENDED`, `REVOKED` | Tracks administrative onboarding lifecycle. |
+| **Portal Access Toggle** | `User.is_active` | `TRUE`, `FALSE` | Instant global circuit-breaker for session termination and login blocking. |
+
+When an Admin suspends or revokes a student:
+1. `User.is_active` is set to `FALSE`.
+2. Existing JWT refresh tokens are immediately blacklisted in Redis.
+3. Active WebSocket / API sessions are terminated with `401 Unauthorized` on the subsequent request.
+
+### 2.3 JWT Lifecycle, Token Rotation & Multi-User Isolation
+- **Access Token:** Short-lived (15 minutes). Contains `user_id`, `role`, and token `jti`.
 - **Refresh Token:** Long-lived (7 days). Exchanged via `/api/v1/auth/refresh/`.
-- **Token Rotation:** Every refresh request issues a new refresh token and immediately blacklists the old refresh token (`rest_framework_simplejwt.token_blacklist`).
-- **Logout:** Explicitly blacklists the current refresh token in the Redis blacklist table.
+- **Automatic Token Rotation:** Every refresh invocation issues a new access/refresh pair and immediately revokes the consumed refresh token (`rest_framework_simplejwt.token_blacklist`).
+- **Logout:** Explicitly invalidates the active refresh token in Redis.
+- **Multi-User Refresh Safety:** The client application clears all in-memory query caches (TanStack Query) on logout to guarantee that switching between Student A and Student B never leaks cached state.
 
 ---
 
-## 3. Authorization & Role-Based Access Control (RBAC)
+## 3. Authorization & Insecure Direct Object Reference (IDOR) Defense
 
-The system supports two core roles:
-- `ADMIN`: Full access to curriculum management, student onboarding, project grading, override unlocking, analytics, and platform logs.
-- `STUDENT`: Scoped access strictly to assigned courses, unlocked modules, their own submissions, daily tasks, and their own AI conversations.
+### 3.1 Object-Level Authorization Rules
+All data retrieval and mutation endpoints validate ownership at the query level:
+- **Student Profile:** Students can query and update only their own profile (`user_id = request.user.id`).
+- **Code Submissions & Results:** Queries filter on `student_id = request.user.student_profile.id`. Attempting to access another student's submission ID returns `404 Not Found` or `403 Forbidden`.
+- **Module & Curriculum Gating:** Access to Module $K$ requires verifying that Module $K-1$ was completed with passing criteria or has an active administrative override in `StudentModuleProgress`.
+- **Support Inquiries:** Support ticket creation automatically binds `student_id` to `request.user.student_profile.id` on the server. Form field manipulation cannot impersonate other students.
 
-### Object-Level Authorization:
-- Students can never query, read, or modify submissions, progress, or profile information belonging to another student (`IsOwnerOrAdmin` permission class).
-- Module access is validated before returning problem statements or executing submissions; accessing module $K$ when module $K-1$ is not completed returns `403 Forbidden`.
+### 3.2 Role-Based Access Control (RBAC) Matrix
+
+| Domain / Action | Anonymous | Student | Admin |
+|---|---|---|---|
+| Email / Mobile Login & OTP | Allowed | Allowed | Allowed |
+| View Own Dashboard, Points & Streak | Denied | Allowed | Allowed (via Student Dossier) |
+| View 17-Topic Sequential Roadmap | Denied | Scoped (Lock Rules) | Full (Audit View) |
+| Submit Code to Coding Question | Denied | Allowed (Unlocked Topics) | Preview Mode |
+| View Hidden Testcases | Denied | **Denied** | Allowed |
+| Manual Module Unlock Override | Denied | **Denied** | Allowed |
+| View Cohort Leaderboard | Denied | Allowed | Allowed |
+| Submit Support Inquiry | Denied | Allowed (Bound to Self) | N/A |
+| Manage Support Tickets | Denied | **Denied** | Full Access |
+| Provision New Student | Denied | **Denied** | Full Access |
+| Toggle Student Access / Suspend | Denied | **Denied** | Full Access |
+| Generate Batch Reports (CSV/PDF) | Denied | **Denied** | Full Access |
+| Public Certificate Verification | Allowed (SHA hash) | Allowed | Allowed |
 
 ---
 
 ## 4. Sandboxed Code Execution Isolation
 
-Untrusted code submitted by students can execute malicious syscalls, fork bombs, or network exfiltration if not isolated.
+Untrusted user-submitted code in Python, Java, C, C++, and JavaScript is isolated to prevent denial-of-service, escape, or data exfiltration:
 
-### Sandbox Isolation Enforcements:
-1. **No Backend Execution:** The Django server never forks or executes student binaries.
-2. **Containerized Worker Isolation:** Execution occurs in an isolated worker runtime (e.g., Judge0 or custom runner container).
-3. **Linux Kernel Sandboxing:**
-   - **cgroups:** Strict memory ceiling (128 MB RAM), CPU quota (1 core, 50% CPU slice).
-   - **pids cgroup:** Max process limit (30 processes) to completely neutralize fork bombs.
-   - **Namespaces:** Isolated network namespace (`--net=none`) with zero external internet access.
-   - **Seccomp Filters:** Whitelist only benign syscalls (`read`, `write`, `exit`, `mmap`, etc.); blocks `socket`, `ptrace`, `kill`, `chroot`.
-   - **Ephemeral Read-Only Root:** Container filesystems are mounted read-only with a temporary 10MB tmpfs for compilation artifacts that are purged immediately.
-4. **Execution Limits:** Hard wall-clock timeout of 5.0 seconds per testcase.
-
----
-
-## 5. External AI Provider & LLM Security
-
-- **Server-Side API Key Storage:** LLM API keys (OpenAI / Anthropic) exist **exclusively** in backend environment variables. No client-side exposure.
-- **Prompt Injection Defense:** Student inputs are wrapped in system instructions and delimited in markdown blocks to prevent overriding grading rules or leaking prompt templates.
-- **Quota & Cost Protection:**
-  - Rate limited to 30 requests per student per hour via Redis token bucket.
-  - Maximum context window constrained to 1,024 tokens.
-  - Solution-giving guardrail: The system prompt instructs the AI to behave as a **Socratic Tutor**, providing hints and debugging pointers rather than full copy-paste solutions.
+1. **Decoupled Execution:** The Django web server **never** executes or compiles user code directly. Code is queued via Redis and dispatched to isolated execution sandbox nodes.
+2. **Linux Container & Kernel Sandboxing:**
+   - **Network Isolation:** Sandbox containers run with `--net=none` (zero inbound/outbound socket creation).
+   - **cgroups Memory Ceiling:** Strict hard limit of 128 MB RAM per execution job.
+   - **cgroups CPU Ceiling:** Limited to 1 CPU core with a 50% CPU quota.
+   - **pids cgroup Limit:** Maximum 30 concurrent processes to neutralize fork-bomb vulnerabilities.
+   - **Seccomp System Call Whitelisting:** Whitelist restricts calls to basic IO/memory (`read`, `write`, `mmap`, `brk`, `exit`). Calls to `socket`, `ptrace`, `kill`, `chroot`, `mount` trigger immediate termination.
+   - **Read-Only Root Filesystem:** Root filesystem is mounted read-only with a temporary 10 MB `tmpfs` for compiler artifacts, purged immediately upon completion.
+   - **Execution Wall-Clock Timeout:** Hard timeout of 2.0 to 5.0 seconds per testcase.
 
 ---
 
-## 6. Web Security & Injection Mitigations
+## 5. Public Certificate Verification & Cryptographic Integrity
 
-| Vulnerability | Mitigation Strategy |
+1. **Unique Cryptographic Verification Hash:**
+   - Every issued certificate generates a deterministic SHA-256 hash derived from:
+     $$\text{hash} = \text{HMAC-SHA256}(\text{SECRET\_KEY}, \text{student\_id} + \text{course\_id} + \text{issue\_date})$$
+2. **PII-Safe Public Verification Endpoint (`GET /api/v1/certificates/verify/{hash}/`):**
+   - Does not require authentication.
+   - Returns only public verification attributes: Course title, completion date, sanitized student name (`Rahul S.****`), and verification validity.
+   - Exposes zero private student emails, phone numbers, or administrative notes.
+
+---
+
+## 6. Notification Deep Linking & Safe Navigation
+
+1. **Whitelisted Internal Route Schemas:**
+   - In-app notification action targets (`action_route`) are strictly constrained to whitelisted client routes (e.g. `/assignments/:id`, `/tasks/:id`, `/projects/:id`).
+   - Storing arbitrary URLs or external domain redirects is prohibited to eliminate Open Redirect and Server-Side Request Forgery (SSRF) vectors.
+
+---
+
+## 7. Web Application Defense & Hardening
+
+| Attack Vector | Mitigation Technique |
 |---|---|
-| **SQL Injection (SQLi)** | 100% parameterization via Django ORM. Raw SQL is strictly banned. |
-| **Cross-Site Scripting (XSS)** | React JSX auto-escaping; markdown content in problem descriptions rendered through DOMPurify sanitization. |
-| **Cross-Site Request Forgery (CSRF)** | Bearer JWT headers on API endpoints; CSRF token validation enabled on session-authenticated admin endpoints. |
-| **Brute Force Attacks** | Redis rate-limiting (Django Ratelimit) on login and OTP verification endpoints; account lock after 5 consecutive failures. |
-| **Malicious File Uploads** | Project uploads restricted to `.zip`, `.pdf`, `.png`, `.jpg`. Validated via file signature (magic bytes) + file size ceiling (25 MB max). |
-| **Security Headers** | Nginx / Django `SecurityMiddleware` configures `HSTS`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and strict `Content-Security-Policy`. |
-| **Secrets Management** | Zero credentials in Git. Injected via `.env` in local development and encrypted secrets managers in production. |
+| **SQL Injection (SQLi)** | 100% parameterized queries via Django ORM & Supabase PostgreSQL engine. Raw SQL queries are banned in code reviews. |
+| **Cross-Site Scripting (XSS)** | React automatic JSX escaping; Markdown in problem statements, lectures, and announcements sanitized via DOMPurify with strict HTML whitelisting. |
+| **Cross-Site Request Forgery (CSRF)** | Stateless Bearer JWT authorization for REST APIs; CSRF tokens enforced on any session-authenticated views. |
+| **Brute-Force & Credential Stuffing** | Redis-backed token bucket rate limiting on `/login/` and `/otp/send/` endpoints; automatic temporary lockouts after 5 failed attempts. |
+| **File Upload Exploits** | Project ZIP/PDF attachments checked against magic bytes (file signature verification) + 25 MB max upload ceiling; stored in isolated Supabase Storage buckets with non-executable permissions. |
+| **Clickjacking & Security Headers** | Nginx / Django `SecurityMiddleware` injects `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and Content Security Policy (CSP). |

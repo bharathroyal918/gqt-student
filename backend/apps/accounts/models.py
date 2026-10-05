@@ -107,12 +107,17 @@ class AdminProfile(BaseModel):
     """Profile extension for staff and institutional administrators."""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="admin_profile")
+    full_name = models.CharField(max_length=150, blank=True, default="Administrator")
+    designation = models.CharField(max_length=100, blank=True, default="Portal Administrator")
     department = models.CharField(max_length=100, default="Academic Operations")
+    phone_number = models.CharField(max_length=30, blank=True, default="")
+    bio = models.TextField(blank=True, default="")
+    avatar_url = models.CharField(max_length=500, blank=True, default="")
     can_review_projects = models.BooleanField(default=True)
     can_manage_curriculum = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"AdminProfile: {self.user}"
+        return f"AdminProfile: {self.full_name or self.user.email}"
 
 
 class LoginActivity(UUIDModel, TimeStampedModel):

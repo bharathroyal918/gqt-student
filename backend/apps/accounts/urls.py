@@ -4,6 +4,9 @@ from django.urls import path
 
 from apps.accounts.views import (
     AdminLoginView,
+    AdminProfileView,
+    AvatarUploadView,
+    ChangePasswordView,
     EmailLoginView,
     ForgotPasswordOTPRequestView,
     ForgotPasswordOTPVerifyView,
@@ -43,6 +46,9 @@ urlpatterns = [
     ),
     path("password/forgot/", ForgotPasswordView.as_view(), name="password_forgot"),
     path("password/reset/", ResetPasswordView.as_view(), name="password_reset"),
-    # User Profile
+    path("password/change/", ChangePasswordView.as_view(), name="password_change"),
+    # User Profile & Admin Settings
     path("me/", MeView.as_view(), name="me"),
+    path("avatar/upload/", AvatarUploadView.as_view(), name="avatar_upload"),
+    path("admin/profile/", AdminProfileView.as_view(), name="admin_profile"),
 ]

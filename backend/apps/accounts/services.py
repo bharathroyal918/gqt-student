@@ -867,7 +867,12 @@ class AuthService:
             ap = user.admin_profile
             data["admin_profile"] = {
                 "id": str(ap.id),
+                "full_name": ap.full_name,
+                "designation": ap.designation,
                 "department": ap.department,
+                "phone_number": ap.phone_number,
+                "bio": ap.bio,
+                "avatar_url": ap.avatar_url,
                 "can_review_projects": ap.can_review_projects,
                 "can_manage_curriculum": ap.can_manage_curriculum,
             }

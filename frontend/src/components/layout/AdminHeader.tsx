@@ -1,9 +1,10 @@
 import React from "react";
-import { Menu, Sun, Moon, LogOut, User } from "lucide-react";
+import { Menu, Sun, Moon, LogOut } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { authApi } from "../../api/authApi";
 import { useNavigate } from "react-router-dom";
+import { UserAvatar } from "../ui/UserAvatar";
 
 interface AdminHeaderProps {
   onToggleMobileSidebar: () => void;
@@ -58,16 +59,37 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
           {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
         </button>
 
-        {/* User profile info */}
-        <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/80 px-3 py-1.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-400">
-            <User className="h-4 w-4" />
-          </div>
-          <div className="hidden sm:block text-left text-xs">
-            <p className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px]">{user?.email || "Admin User"}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Administrator</p>
-          </div>
-        </div>
+        {/* User profile link */}
+        {(() => {
+          const adminProfile = (user as any)?.admin_profile;
+          const adminName = adminProfile?.full_name || user?.email || "Admin User";
+          const adminAvatar = adminProfile?.avatar_url;
+          const adminInitials = adminName.slice(0, 2).toUpperCase();
+
+          return (
+            <button
+              onClick={() => navigate("/admin/profile")}
+              className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/80 p-1.5 sm:px-3 sm:py-1.5 hover:bg-slate-100 dark:hover:bg-surface-800 hover:border-brand-500/30 transition-all text-left group"
+              title="View & Edit Admin Profile"
+            >
+              <UserAvatar
+                src={adminAvatar}
+                name={adminName}
+                initials={adminInitials}
+                size="sm"
+                className="group-hover:scale-105 transition-transform"
+              />
+              <div className="hidden sm:block text-left text-xs">
+                <p className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px]">
+                  {adminName}
+                </p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[140px]">
+                  {adminProfile?.designation || "Administrator"}
+                </p>
+              </div>
+            </button>
+          );
+        })()}
 
         {/* Logout button */}
         <button

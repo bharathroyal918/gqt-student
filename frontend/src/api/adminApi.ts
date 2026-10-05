@@ -587,7 +587,100 @@ export const adminApi = {
     );
     return data.data;
   },
+
+  // ==========================================
+  // 11. ADMIN PROFILE & CREDENTIALS
+  // ==========================================
+  getAdminProfile: async (): Promise<AdminProfileData> => {
+    const { data } = await apiClient.get<ApiSuccessResponse<AdminProfileData>>("/auth/admin/profile/");
+    return data.data;
+  },
+
+  updateAdminProfile: async (payload: AdminProfileUpdatePayload): Promise<{ user: any; profile: any }> => {
+    const { data } = await apiClient.patch<ApiSuccessResponse<{ user: any; profile: any }>>(
+      "/auth/admin/profile/",
+      payload
+    );
+    return data.data;
+  },
+
+  uploadAvatar: async (file: File): Promise<{ avatar_url: string; relative_url?: string; user?: any; student_profile?: any }> => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<{ avatar_url: string; relative_url?: string; user?: any; student_profile?: any }>
+    >("/auth/avatar/upload/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return data.data;
+  },
+
+  changePassword: async (payload: ChangePasswordPayload): Promise<void> => {
+    await apiClient.post("/auth/password/change/", payload);
+  },
 };
+
+export interface AdminProfileData {
+  user: {
+    id: string;
+    email: string;
+    mobile_number: string;
+    role: string;
+    is_active: boolean;
+    onboarding_status: string;
+    admin_profile: {
+      id: string;
+      full_name: string;
+      designation: string;
+      department: string;
+      phone_number: string;
+      bio: string;
+      avatar_url: string;
+      can_review_projects: boolean;
+      can_manage_curriculum: boolean;
+    };
+  };
+  profile: {
+    id: string;
+    full_name: string;
+    designation: string;
+    department: string;
+    phone_number: string;
+    bio: string;
+    avatar_url: string;
+    can_review_projects: boolean;
+    can_manage_curriculum: boolean;
+  };
+  recent_logins: AdminLoginActivityItem[];
+}
+
+export interface AdminProfileUpdatePayload {
+  full_name?: string;
+  designation?: string;
+  department?: string;
+  mobile_number?: string;
+  phone_number?: string;
+  bio?: string;
+  avatar_url?: string;
+  can_review_projects?: boolean;
+  can_manage_curriculum?: boolean;
+}
+
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+}
+
+export interface AdminLoginActivityItem {
+  id: string;
+  login_type: string;
+  status: string;
+  ip_address: string | null;
+  user_agent: string;
+  created_at: string;
+}
 
 export interface AdminContactInquiryItem {
   id: string;

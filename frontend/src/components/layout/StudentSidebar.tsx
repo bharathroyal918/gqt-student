@@ -15,11 +15,13 @@ import {
   Flame,
   Sun,
   Moon,
+  Briefcase,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { authApi } from "../../api/authApi";
 import { Badge } from "../ui/Badge";
+import { UserAvatar } from "../ui/UserAvatar";
 
 interface StudentSidebarProps {
   isOpen: boolean;
@@ -47,6 +49,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Placement Drives", href: "/placements", icon: Briefcase },
     { name: "Courses", href: "/courses", icon: BookOpen },
     { name: "Assignments", href: "/assignments", icon: Code2 },
     { name: "Daily Tasks", href: "/tasks", icon: CalendarCheck },
@@ -89,9 +92,12 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
         {user && (
           <div className="p-4 border-b border-slate-200 dark:border-surface-800/80 bg-slate-50 dark:bg-surface-900/40">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600/20 to-indigo-600/20 text-brand-600 dark:text-brand-300 font-bold border border-brand-500/20 text-sm">
-                {initials}
-              </div>
+              <UserAvatar
+                src={studentProfile?.avatar_url}
+                name={displayName}
+                initials={initials}
+                size="md"
+              />
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-slate-900 dark:text-white text-xs truncate">{displayName}</div>
                 <div className="flex items-center gap-2 mt-0.5">

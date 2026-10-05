@@ -1,13 +1,22 @@
-"""Views for authentication, password lifecycle, user identity, and student provisioning."""
-
 import logging
+import os
+import time
+import uuid
+from django.conf import settings
+from django.core.files.storage import default_storage
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
+from apps.accounts.models import AdminProfile, LoginActivity, User
+from apps.students.models import StudentProfile
 from apps.accounts.serializers import (
     AdminLoginSerializer,
+    AdminProfileNestedSerializer,
+    AdminProfileUpdateSerializer,
+    ChangePasswordSerializer,
     EmailLoginSerializer,
     ForgotPasswordOTPRequestSerializer,
     ForgotPasswordOTPVerifySerializer,
@@ -26,7 +35,7 @@ from apps.accounts.serializers import (
 )
 from apps.accounts.services import AuthService, StudentProvisioningService
 from apps.common.permissions import IsAdmin
-from apps.common.responses import api_success
+from apps.common.responses import api_error, api_success
 from apps.common.utils import get_client_ip, mask_email, mask_phone
 
 logger = logging.getLogger(__name__)
@@ -494,6 +503,205 @@ class MeView(APIView):
             data={"user": user_data},
             message="User profile retrieved successfully.",
             status_code=status.HTTP_200_OK,
+        )
+
+
+class AdminProfileView(APIView):
+    """View and update authenticated admin's profile and system preferences."""
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        admin_profile, _ = AdminProfile.objects.get_or_create(user=request.user)
+        user_data = AuthService.get_user_profile_data(request.user)
+
+        recent_logins = [
+            {
+                "id": str(act.id),
+                "login_type": act.login_type,
+                "status": act.status,
+                "ip_address": act.ip_address,
+                "user_agent": act.user_agent,
+                "created_at": act.created_at,
+            }
+            for act in LoginActivity.objects.filter(user=request.user).order_by("-created_at")[:10]
+        ]
+
+        return api_success(
+            data={
+                "user": user_data,
+                "profile": AdminProfileNestedSerializer(admin_profile).data,
+                "recent_logins": recent_logins,
+            },
+            message="Admin profile retrieved successfully.",
+        )
+
+    def patch(self, request):
+        serializer = AdminProfileUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        admin_profile, _ = AdminProfile.objects.get_or_create(user=request.user)
+
+        if "full_name" in data:
+            admin_profile.full_name = data["full_name"].strip()
+        if "designation" in data:
+            admin_profile.designation = data["designation"].strip()
+        if "department" in data:
+            admin_profile.department = data["department"].strip()
+        if "phone_number" in data:
+            admin_profile.phone_number = data["phone_number"].strip()
+        if "bio" in data:
+            admin_profile.bio = data["bio"].strip()
+        if "avatar_url" in data:
+            admin_profile.avatar_url = data["avatar_url"].strip()
+        if "can_review_projects" in data:
+            admin_profile.can_review_projects = data["can_review_projects"]
+        if "can_manage_curriculum" in data:
+            admin_profile.can_manage_curriculum = data["can_manage_curriculum"]
+
+        admin_profile.save()
+
+        if "mobile_number" in data and data["mobile_number"].strip():
+            mob = data["mobile_number"].strip()
+            if User.objects.filter(mobile_number=mob).exclude(id=request.user.id).exists():
+                return api_error(
+                    code="MOBILE_EXISTS",
+                    message="This mobile number is already in use by another account.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+            request.user.mobile_number = mob
+            request.user.save(update_fields=["mobile_number"])
+
+        user_data = AuthService.get_user_profile_data(request.user)
+        return api_success(
+            data={
+                "user": user_data,
+                "profile": AdminProfileNestedSerializer(admin_profile).data,
+            },
+            message="Admin profile updated successfully.",
+        )
+
+
+class AvatarUploadView(APIView):
+    """Secure endpoint for students and admins to upload profile photos/avatars."""
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    @extend_schema(
+        summary="Upload Profile Avatar Image",
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        avatar_file = (
+            request.FILES.get("avatar")
+            or request.FILES.get("image")
+            or request.FILES.get("file")
+        )
+
+        if not avatar_file:
+            return api_error(
+                code="NO_FILE_PROVIDED",
+                message="Please select an image file to upload.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate file size (max 5 MB)
+        max_size = 5 * 1024 * 1024
+        if avatar_file.size > max_size:
+            return api_error(
+                code="FILE_TOO_LARGE",
+                message="Avatar image size cannot exceed 5 MB.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate extension & content type
+        allowed_extensions = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"}
+        ext = os.path.splitext(avatar_file.name)[1].lower()
+        if ext not in allowed_extensions:
+            return api_error(
+                code="INVALID_FILE_TYPE",
+                message="Allowed image formats: JPG, JPEG, PNG, WEBP, GIF, SVG.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Generate unique sanitized path
+        timestamp = int(time.time())
+        unique_id = uuid.uuid4().hex[:8]
+        filename = f"avatars/{request.user.id}_{timestamp}_{unique_id}{ext}"
+        saved_path = default_storage.save(filename, avatar_file)
+
+        # Build absolute or relative URL
+        avatar_url = f"{settings.MEDIA_URL.rstrip('/')}/{saved_path.lstrip('/')}"
+        full_avatar_url = request.build_absolute_uri(avatar_url)
+
+        student_profile_data = None
+        # If user is a student or has student_profile
+        student_profile = getattr(request.user, "student_profile", None)
+        if not student_profile:
+            student_profile = StudentProfile.objects.filter(user=request.user).first()
+
+        if student_profile:
+            student_profile.avatar_url = full_avatar_url
+            student_profile.save(update_fields=["avatar_url", "updated_at"])
+            student_profile_data = StudentProfileNestedSerializer(student_profile).data
+
+        # If user is admin/staff or has admin_profile
+        admin_profile = getattr(request.user, "admin_profile", None)
+        if not admin_profile:
+            admin_profile = AdminProfile.objects.filter(user=request.user).first()
+
+        if admin_profile:
+            admin_profile.avatar_url = full_avatar_url
+            admin_profile.save(update_fields=["avatar_url", "updated_at"])
+
+        user_data = AuthService.get_user_profile_data(request.user)
+
+        return api_success(
+            data={
+                "avatar_url": full_avatar_url,
+                "relative_url": avatar_url,
+                "user": user_data,
+                "student_profile": student_profile_data,
+            },
+            message="Profile image uploaded successfully.",
+            status_code=status.HTTP_200_OK,
+        )
+
+
+class ChangePasswordView(APIView):
+    """Secure endpoint for authenticated users to change their account password."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        current_password = serializer.validated_data["current_password"]
+        new_password = serializer.validated_data["new_password"]
+
+        if not request.user.check_password(current_password):
+            return api_error(
+                code="INVALID_CURRENT_PASSWORD",
+                message="The current password you provided is incorrect.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if current_password == new_password:
+            return api_error(
+                code="SAME_PASSWORD",
+                message="The new password must be different from your current password.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=["password"])
+
+        return api_success(
+            data={},
+            message="Password changed successfully. Please keep your new credentials secure.",
         )
 
 

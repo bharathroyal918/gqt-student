@@ -100,7 +100,12 @@ class AdminProfileNestedSerializer(serializers.ModelSerializer):
         model = AdminProfile
         fields = [
             "id",
+            "full_name",
+            "designation",
             "department",
+            "phone_number",
+            "bio",
+            "avatar_url",
             "can_review_projects",
             "can_manage_curriculum",
         ]
@@ -143,4 +148,22 @@ class StudentStatusUpdateSerializer(serializers.Serializer):
     onboarding_status = serializers.ChoiceField(
         choices=User.OnboardingStatusChoices.choices, required=False, allow_null=True
     )
+
+
+class AdminProfileUpdateSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    designation = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    department = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    mobile_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    phone_number = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    bio = serializers.CharField(required=False, allow_blank=True)
+    avatar_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    can_review_projects = serializers.BooleanField(required=False)
+    can_manage_curriculum = serializers.BooleanField(required=False)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, min_length=8, required=True)
+
     reason = serializers.CharField(max_length=255, required=False, default="")

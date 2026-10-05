@@ -16,6 +16,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { authApi } from "../../api/authApi";
 import { studentApi } from "../../api/studentApi";
+import { UserAvatar } from "../ui/UserAvatar";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 interface StudentHeaderProps {
@@ -119,14 +120,18 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-1.5 pr-3 text-left hover:bg-slate-100 dark:hover:bg-surface-800/80 transition-colors"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-1.5 pr-3 text-left hover:bg-slate-100 dark:hover:bg-surface-800/80 transition-colors group"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 text-xs font-bold text-white shadow-sm">
-                {initials}
-              </div>
+              <UserAvatar
+                src={studentProfile?.avatar_url}
+                name={displayName}
+                initials={initials}
+                size="sm"
+                className="group-hover:scale-105 transition-transform"
+              />
               <div className="hidden md:block">
-                <div className="text-xs font-semibold text-slate-900 dark:text-white leading-none">{displayName}</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{studentProfile?.student_id_number || "Student"}</div>
+                <div className="text-xs font-semibold text-slate-900 dark:text-white leading-none truncate max-w-[130px]">{displayName}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[130px]">{studentProfile?.student_id_number || "Student"}</div>
               </div>
               <ChevronDown className="h-3 w-3 text-slate-400 ml-1" />
             </button>

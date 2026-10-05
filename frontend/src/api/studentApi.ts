@@ -355,6 +355,19 @@ export const studentApi = {
     return data.data;
   },
 
+  uploadAvatar: async (file: File): Promise<{ avatar_url: string; relative_url?: string; user?: any; student_profile?: any }> => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<{ avatar_url: string; relative_url?: string; user?: any; student_profile?: any }>
+    >("/auth/avatar/upload/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return data.data;
+  },
+
   getLeaderboard: async (): Promise<{ top_10: LeaderboardEntry[]; current_student: LeaderboardEntry }> => {
     const { data } = await apiClient.get<
       ApiSuccessResponse<{ top_10: LeaderboardEntry[]; current_student: LeaderboardEntry }>

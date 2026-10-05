@@ -768,14 +768,7 @@ class StudentDashboardService:
     def update_student_profile(
         cls,
         user: User,
-        dob=None,
-        branch: Optional[str] = None,
-        college_name: Optional[str] = None,
-        graduation_year: Optional[int] = None,
-        avatar_url: Optional[str] = None,
-        bio: Optional[str] = None,
-        github_url: Optional[str] = None,
-        linkedin_url: Optional[str] = None,
+        **kwargs,
     ) -> StudentProfile:
         """Student updates their own permitted profile fields (DOB, branch, college, avatar, bio, URLs).
         
@@ -787,40 +780,49 @@ class StudentDashboardService:
 
         updated_fields = ["updated_at"]
 
-        if dob is not None:
-            profile.dob = dob
+        if "dob" in kwargs:
+            profile.dob = kwargs["dob"]
             updated_fields.append("dob")
 
-        if branch is not None:
-            profile.branch = branch.strip()
+        if "branch" in kwargs:
+            val = kwargs["branch"]
+            profile.branch = (val or "").strip()
             updated_fields.append("branch")
 
-        if college_name is not None:
-            profile.college_name = college_name.strip()
+        if "college_name" in kwargs:
+            val = kwargs["college_name"]
+            profile.college_name = (val or "").strip()
             updated_fields.append("college_name")
 
-        if graduation_year is not None:
-            profile.graduation_year = graduation_year
+        if "graduation_year" in kwargs:
+            val = kwargs["graduation_year"]
+            profile.graduation_year = val if val else None
             updated_fields.append("graduation_year")
 
-        if avatar_url is not None:
-            profile.avatar_url = avatar_url.strip()
+        if "avatar_url" in kwargs:
+            val = kwargs["avatar_url"]
+            profile.avatar_url = (val or "").strip()
             updated_fields.append("avatar_url")
 
-        if bio is not None:
-            profile.bio = bio.strip()
+        if "bio" in kwargs:
+            val = kwargs["bio"]
+            profile.bio = (val or "").strip()
             updated_fields.append("bio")
 
-        if github_url is not None:
-            profile.github_url = github_url.strip()
+        if "github_url" in kwargs:
+            val = kwargs["github_url"]
+            profile.github_url = (val or "").strip()
             updated_fields.append("github_url")
 
-        if linkedin_url is not None:
-            profile.linkedin_url = linkedin_url.strip()
+        if "linkedin_url" in kwargs:
+            val = kwargs["linkedin_url"]
+            profile.linkedin_url = (val or "").strip()
             updated_fields.append("linkedin_url")
 
         if len(updated_fields) > 1:
             profile.save(update_fields=updated_fields)
+        else:
+            profile.save()
 
         return profile
 

@@ -440,7 +440,7 @@ class SecurityHardeningTests(TestCase):
         )
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token_a}")
 
-        response = self.client.get(f"/api/v1/students/help-ai/conversations/{conv_b.id}/")
+        response = self.client.get(f"/api/v1/students/ai/conversations/{conv_b.id}/")
         self.assertIn(response.status_code, [403, 404], "Access to foreign conversation must be denied")
 
     def test_inactive_account_login_blocked(self):

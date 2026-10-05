@@ -25,6 +25,7 @@ api_v1_patterns = [
     path("admin/announcements/", include("apps.notifications.admin_urls")),
     path("admin/certificates/", include("apps.certificates.admin_urls")),
     path("admin/contact/", include("apps.contact.admin_urls")),
+    path("admin/placements/", include("apps.placements.admin_urls")),
     path("admin/leaderboard/", include("apps.leaderboard.admin_urls")),
     path("admin/", include("apps.analytics.admin_urls")),
     path("leaderboard/", include("apps.leaderboard.urls")),
@@ -32,8 +33,8 @@ api_v1_patterns = [
     path("students/assignments/", include("apps.assignments.student_urls")),
     path("students/tasks/", include("apps.tasks.urls")),
     path("students/projects/", include("apps.projects.urls")),
+    path("students/placements/", include("apps.placements.student_urls")),
     path("students/ai/", include("apps.ai_assistant.urls")),
-    path("students/help-ai/", include("apps.ai_assistant.urls")),
     path("students/notifications/", include("apps.notifications.urls")),
     path("students/", include("apps.certificates.urls")),
     path("certificates/verify/<str:identifier>/", PublicCertificateVerifyView.as_view(), name="public_cert_verify"),
@@ -41,11 +42,20 @@ api_v1_patterns = [
     path("students/", include("apps.students.urls")),
 ]
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("health/", include("apps.common.urls")),
+    path("certificates/verify/<str:identifier>/", PublicCertificateVerifyView.as_view(), name="root_public_cert_verify"),
     path("api/v1/", include((api_v1_patterns, "api_v1"))),
     # OpenAPI 3 Schema & Interactive API Explorers
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-] 
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

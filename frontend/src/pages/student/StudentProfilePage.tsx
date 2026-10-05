@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
@@ -21,6 +21,9 @@ import {
   Calendar,
   Save,
   BookOpen,
+  Camera,
+  UploadCloud,
+  Trash2,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import {
@@ -36,11 +39,13 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Form";
 import { useToast } from "../../context/ToastContext";
+import { UserAvatar } from "../../components/ui/UserAvatar";
 
 export const StudentProfilePage: React.FC = () => {
-  const { user, studentProfile, setAuth } = useAuthStore();
+  const { user, studentProfile, updateStudentProfile, updateUser } = useAuthStore();
   const queryClient = useQueryClient();
   const { success, error: toastError } = useToast();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<"profile" | "attendance" | "achievements" | "certificates" | "verify">("profile");
 
@@ -83,8 +88,8 @@ export const StudentProfilePage: React.FC = () => {
     mutationFn: (payload: StudentProfileUpdatePayload) => studentApi.updateProfile(payload),
     onSuccess: (updatedProfile) => {
       success("Profile Updated", "Your editable profile details have been saved successfully.");
-      if (user) {
-        setAuth(user, { ...studentProfile, ...updatedProfile });
+      if (studentProfile) {
+        updateStudentProfile({ ...studentProfile, ...updatedProfile });
       }
       queryClient.invalidateQueries({ queryKey: ["student"] });
     },
@@ -94,9 +99,82 @@ export const StudentProfilePage: React.FC = () => {
     },
   });
 
+  // Upload Avatar Mutation
+  const uploadAvatarMutation = useMutation({
+    mutationFn: (file: File) => studentApi.uploadAvatar(file),
+    onSuccess: (data) => {
+      success("Profile Photo Updated", "Your profile photo is now live across the portal and header.");
+      setFormData((prev) => ({ ...prev, avatar_url: data.avatar_url }));
+      if (data.student_profile) {
+        updateStudentProfile(data.student_profile);
+      } else if (studentProfile) {
+        updateStudentProfile({ ...studentProfile, avatar_url: data.avatar_url });
+      }
+      if (data.user) {
+        updateUser(data.user);
+      }
+      queryClient.invalidateQueries({ queryKey: ["student"] });
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.error?.message || err?.message || "Failed to upload photo.";
+      toastError("Upload Failed", msg);
+    },
+  });
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toastError("Invalid File", "Please select a valid image file (PNG, JPG, JPEG, WEBP).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toastError("File Too Large", "Profile photo size must be less than 5 MB.");
+      return;
+    }
+
+    uploadAvatarMutation.mutate(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setFormData((prev) => ({ ...prev, avatar_url: "" }));
+    updateProfileMutation.mutate({ ...formData, avatar_url: "" });
+  };
+
+  useEffect(() => {
+    if (studentProfile) {
+      setFormData({
+        dob: (studentProfile as any)?.dob || "",
+        avatar_url: studentProfile?.avatar_url || "",
+        branch: (studentProfile as any)?.branch || "",
+        college_name: studentProfile?.college_name || "",
+        graduation_year: studentProfile?.graduation_year || 2026,
+        bio: (studentProfile as any)?.bio || "",
+        github_url: (studentProfile as any)?.github_url || "",
+        linkedin_url: (studentProfile as any)?.linkedin_url || "",
+      });
+    }
+  }, [studentProfile]);
+
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileMutation.mutate(formData);
+    const payload: StudentProfileUpdatePayload = {
+      ...formData,
+      dob: formData.dob ? formData.dob : undefined,
+      graduation_year: formData.graduation_year ? Number(formData.graduation_year) : undefined,
+      branch: formData.branch || "",
+      college_name: formData.college_name || "",
+      bio: formData.bio || "",
+      github_url: formData.github_url || "",
+      linkedin_url: formData.linkedin_url || "",
+      avatar_url: formData.avatar_url || "",
+    };
+    updateProfileMutation.mutate(payload);
   };
 
   const handleVerifyLookup = async (e: React.FormEvent) => {
@@ -142,19 +220,38 @@ export const StudentProfilePage: React.FC = () => {
       <Card className="p-6 sm:p-8 bg-white dark:bg-gradient-to-br dark:from-surface-900 dark:via-surface-900 dark:to-surface-950 border-slate-200 dark:border-surface-800 shadow-sm">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 dark:border-surface-800/80 pb-6">
           <div className="flex items-center gap-4">
-            {studentProfile?.avatar_url || formData.avatar_url ? (
-              <img
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleAvatarFileChange}
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              className="hidden"
+            />
+            <div
+              className="relative group cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              title="Click to upload profile photo"
+            >
+              <UserAvatar
                 src={formData.avatar_url || studentProfile?.avatar_url}
-                alt={displayName}
-                className="h-16 w-16 rounded-2xl object-cover ring-2 ring-brand-500/20 shadow-md"
+                name={displayName}
+                size="xl"
+                className="!h-20 !w-20 ring-4 ring-brand-500/20 shadow-md group-hover:opacity-80 transition-opacity"
               />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 text-2xl font-black text-white shadow-xl shadow-brand-500/20">
-                {displayName.slice(0, 2).toUpperCase()}
+              <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-bold">
+                {uploadAvatarMutation.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-white" />
+                ) : (
+                  <>
+                    <Camera className="h-5 w-5 text-white mb-0.5" />
+                    <span>Change</span>
+                  </>
+                )}
               </div>
-            )}
+            </div>
+
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">{displayName}</h2>
                 <Badge
                   variant={
@@ -174,6 +271,37 @@ export const StudentProfilePage: React.FC = () => {
                 <Badge variant="indigo" size="sm">
                   {studentProfile?.batch_code || "General Cohort"}
                 </Badge>
+              </div>
+
+              {/* Avatar Quick Action Buttons */}
+              <div className="mt-2.5 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadAvatarMutation.isPending}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-7 text-[11px] px-2.5 flex items-center gap-1.5"
+                >
+                  {uploadAvatarMutation.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <UploadCloud className="h-3.5 w-3.5 text-brand-500" />
+                  )}
+                  <span>{uploadAvatarMutation.isPending ? "Uploading..." : "Upload Photo"}</span>
+                </Button>
+                {(formData.avatar_url || studentProfile?.avatar_url) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveAvatar}
+                    className="h-7 text-[11px] px-2 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>Remove</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -409,17 +537,66 @@ export const StudentProfilePage: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">
-                    Profile Avatar URL
-                  </label>
-                  <Input
-                    type="url"
-                    placeholder="https://images.unsplash.com/..."
-                    value={formData.avatar_url || ""}
-                    onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                    className="text-xs"
-                  />
+                <div className="sm:col-span-2 rounded-2xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/40 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <Camera className="h-4 w-4 text-brand-500" />
+                        Profile Photo & Avatar Image
+                      </label>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Upload an image file (PNG, JPG, WEBP, max 5MB) or enter an external image URL.
+                      </p>
+                    </div>
+                    {formData.avatar_url && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveAvatar}
+                        className="text-[11px] font-semibold text-rose-500 hover:text-rose-600 flex items-center gap-1 transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Remove Photo
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <UserAvatar
+                      src={formData.avatar_url}
+                      name={displayName}
+                      size="lg"
+                      className="ring-2 ring-brand-500/20 shadow"
+                    />
+
+                    <div className="flex-1 w-full space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={uploadAvatarMutation.isPending}
+                          onClick={() => fileInputRef.current?.click()}
+                          className="text-xs font-semibold flex items-center gap-2"
+                        >
+                          {uploadAvatarMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
+                          ) : (
+                            <UploadCloud className="h-4 w-4 text-brand-500" />
+                          )}
+                          <span>{uploadAvatarMutation.isPending ? "Uploading File..." : "Upload Photo File"}</span>
+                        </Button>
+                        <span className="text-xs text-slate-400 font-medium">or paste direct image URL:</span>
+                      </div>
+
+                      <Input
+                        type="url"
+                        placeholder="https://images.unsplash.com/photo-..."
+                        value={formData.avatar_url || ""}
+                        onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                        className="text-xs"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>

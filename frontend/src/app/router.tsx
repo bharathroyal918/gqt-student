@@ -99,10 +99,25 @@ const StudentProfilePage = lazy(() =>
 const StudentContactPage = lazy(() =>
   import("../pages/student/StudentContactPage").then((m) => ({ default: m.StudentContactPage }))
 );
+const StudentPlacementsPage = lazy(() =>
+  import("../pages/student/StudentPlacementsPage").then((m) => ({
+    default: m.StudentPlacementsPage,
+  }))
+);
 
 // Admin Portal Pages (Lazy)
 const DashboardPage = lazy(() =>
   import("../pages/admin/DashboardPage").then((m) => ({ default: m.DashboardPage }))
+);
+const PlacementDrivesPage = lazy(() =>
+  import("../pages/admin/PlacementDrivesPage").then((m) => ({
+    default: m.PlacementDrivesPage,
+  }))
+);
+const PlacementApplicantsPage = lazy(() =>
+  import("../pages/admin/PlacementApplicantsPage").then((m) => ({
+    default: m.PlacementApplicantsPage,
+  }))
 );
 const StudentsPage = lazy(() =>
   import("../pages/admin/StudentsPage").then((m) => ({ default: m.StudentsPage }))
@@ -145,6 +160,9 @@ const AnalyticsPage = lazy(() =>
 );
 const ReportsPage = lazy(() =>
   import("../pages/admin/ReportsPage").then((m) => ({ default: m.ReportsPage }))
+);
+const AdminProfilePage = lazy(() =>
+  import("../pages/admin/AdminProfilePage").then((m) => ({ default: m.AdminProfilePage }))
 );
 
 // Admin Role Guard
@@ -303,6 +321,10 @@ export const router = createBrowserRouter([
                 element: withSuspense(StudentProfilePage),
               },
               {
+                path: "/placements",
+                element: withSuspense(StudentPlacementsPage),
+              },
+              {
                 path: "/contact",
                 element: withSuspense(StudentContactPage),
               },
@@ -327,6 +349,18 @@ export const router = createBrowserRouter([
               {
                 path: "dashboard",
                 element: withSuspense(DashboardPage),
+              },
+              {
+                path: "placements",
+                element: withSuspense(PlacementDrivesPage),
+              },
+              {
+                path: "placements/applicants",
+                element: withSuspense(PlacementApplicantsPage),
+              },
+              {
+                path: "placements/:id/applicants",
+                element: withSuspense(PlacementApplicantsPage),
               },
               {
                 path: "students",
@@ -373,7 +407,27 @@ export const router = createBrowserRouter([
                 element: withSuspense(CertificatesPage),
               },
               {
+                path: "inquiries",
+                element: withSuspense(ContactInquiriesPage),
+              },
+              {
+                path: "inquiries/:id",
+                element: withSuspense(ContactInquiriesPage),
+              },
+              {
+                path: "inquiry",
+                element: withSuspense(ContactInquiriesPage),
+              },
+              {
                 path: "contact",
+                element: withSuspense(ContactInquiriesPage),
+              },
+              {
+                path: "contact-inquiries",
+                element: withSuspense(ContactInquiriesPage),
+              },
+              {
+                path: "support",
                 element: withSuspense(ContactInquiriesPage),
               },
               {
@@ -383,6 +437,18 @@ export const router = createBrowserRouter([
               {
                 path: "reports",
                 element: withSuspense(ReportsPage),
+              },
+              {
+                path: "profile",
+                element: withSuspense(AdminProfilePage),
+              },
+              {
+                path: "settings",
+                element: withSuspense(AdminProfilePage),
+              },
+              {
+                path: "account",
+                element: withSuspense(AdminProfilePage),
               },
             ],
           },

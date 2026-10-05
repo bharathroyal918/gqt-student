@@ -11,6 +11,15 @@ class StudentProfileUpdateSerializer(serializers.ModelSerializer):
     course_opted, batch_code, total_points, or role.
     """
 
+    dob = serializers.DateField(required=False, allow_null=True)
+    branch = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    college_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    graduation_year = serializers.IntegerField(required=False, allow_null=True)
+    avatar_url = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    bio = serializers.CharField(required=False, allow_blank=True, default="")
+    github_url = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    linkedin_url = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+
     class Meta:
         model = StudentProfile
         fields = [
@@ -23,6 +32,14 @@ class StudentProfileUpdateSerializer(serializers.ModelSerializer):
             "github_url",
             "linkedin_url",
         ]
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, "copy") else dict(data)
+        if "dob" in data and (data["dob"] == "" or data["dob"] is None):
+            data["dob"] = None
+        if "graduation_year" in data and (data["graduation_year"] == "" or data["graduation_year"] is None):
+            data["graduation_year"] = None
+        return super().to_internal_value(data)
 
 
 class AttendanceRecordSerializer(serializers.ModelSerializer):
