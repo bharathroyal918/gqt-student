@@ -263,3 +263,21 @@ class StudentModuleCompleteView(APIView):
             message="Module marked as completed and next sequential module unlocked.",
             status_code=status.HTTP_200_OK,
         )
+
+
+class StudentActivityHeatmapView(APIView):
+    """Authenticated student retrieves their LeetCode-style 365-day problem-solving activity heatmap."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Retrieve Student 365-Day Problem Solving Activity Heatmap",
+        tags=["Students"],
+    )
+    def get(self, request):
+        data = StudentDashboardService.get_student_activity_heatmap(request.user)
+        return api_success(
+            data=data,
+            message="Activity heatmap matrix retrieved successfully.",
+        )
+

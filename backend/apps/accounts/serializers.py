@@ -70,6 +70,8 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 
 class StudentProfileNestedSerializer(serializers.ModelSerializer):
+    current_streak_days = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentProfile
         fields = [
@@ -93,6 +95,9 @@ class StudentProfileNestedSerializer(serializers.ModelSerializer):
             "total_points",
             "avatar_url",
         ]
+
+    def get_current_streak_days(self, obj) -> int:
+        return obj.get_effective_streak()
 
 
 class AdminProfileNestedSerializer(serializers.ModelSerializer):

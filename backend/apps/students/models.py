@@ -40,6 +40,7 @@ class StudentProfile(BaseModel):
     # Gamification & Progress
     current_streak_days = models.PositiveIntegerField(default=0)
     highest_streak_days = models.PositiveIntegerField(default=0)
+    last_activity_date = models.DateField(null=True, blank=True, help_text="Date of last solved problem for streak tracking")
     total_points = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal("0.00"), db_index=True
     )
@@ -71,6 +72,53 @@ class StudentProfile(BaseModel):
             self.attendance_percentage = min(Decimal("100.00"), max(Decimal("0.00"), round(pct, 2)))
         else:
             self.attendance_percentage = Decimal("100.00")
+
+    def record_activity_and_update_streak(self, activity_date=None):
+        """Update consecutive daily problem solving streak.
+        - If already solved today: no duplicate increment.
+        - If solved yesterday: increment streak by 1.
+        - If missed yesterday or first time: reset streak to 1.
+        - Update highest streak if current exceeds it.
+        """
+        from datetime import timedelta
+        from django.utils import timezone
+
+        if activity_date is None:
+            activity_date = timezone.localdate()
+
+        yesterday = activity_date - timedelta(days=1)
+
+        if self.last_activity_date == activity_date:
+            # Already solved today
+            return self.current_streak_days
+
+        if self.last_activity_date == yesterday:
+            self.current_streak_days += 1
+        else:
+            self.current_streak_days = 1
+
+        self.last_activity_date = activity_date
+        if self.current_streak_days > self.highest_streak_days:
+            self.highest_streak_days = self.current_streak_days
+
+        self.save(update_fields=["current_streak_days", "highest_streak_days", "last_activity_date", "updated_at"])
+        return self.current_streak_days
+
+    def get_effective_streak(self, current_date=None):
+        """Calculate effective streak. If user missed yesterday and today, returns 0."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        if current_date is None:
+            current_date = timezone.localdate()
+
+        if not self.last_activity_date:
+            return 0
+
+        yesterday = current_date - timedelta(days=1)
+        if self.last_activity_date == current_date or self.last_activity_date == yesterday:
+            return self.current_streak_days
+        return 0
 
     def clean(self):
         super().clean()

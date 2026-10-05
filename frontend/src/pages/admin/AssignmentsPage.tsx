@@ -38,7 +38,7 @@ export const AssignmentsPage: React.FC = () => {
     slug: "",
     difficulty: "EASY" as "EASY" | "MEDIUM" | "HARD",
     problem_statement: "",
-    points: 50,
+    points: 15,
     time_limit_seconds: 2,
     memory_limit_mb: 256,
     allowed_languages: ["PYTHON", "JAVASCRIPT", "JAVA", "CPP"],
@@ -95,7 +95,7 @@ export const AssignmentsPage: React.FC = () => {
       slug: "",
       difficulty: "EASY",
       problem_statement: "",
-      points: 50,
+      points: 15,
       time_limit_seconds: 2,
       memory_limit_mb: 256,
       allowed_languages: ["PYTHON", "JAVASCRIPT", "JAVA", "CPP"],
@@ -358,11 +358,15 @@ export const AssignmentsPage: React.FC = () => {
             <FormField label="Difficulty" required>
               <Select
                 value={formData.difficulty}
-                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
+                onChange={(e) => {
+                  const diff = e.target.value as "EASY" | "MEDIUM" | "HARD";
+                  const pts = diff === "EASY" ? 15 : diff === "MEDIUM" ? 25 : 30;
+                  setFormData({ ...formData, difficulty: diff, points: pts });
+                }}
               >
-                <option value="EASY">Easy</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HARD">Hard</option>
+                <option value="EASY">Easy (15 pts)</option>
+                <option value="MEDIUM">Medium (25 pts)</option>
+                <option value="HARD">Hard (30 pts)</option>
               </Select>
             </FormField>
 

@@ -384,6 +384,10 @@ class CodeExecutionService:
 
         prog.save()
 
+        # Update dynamic daily problem-solving streak
+        if is_all_passed or score_awarded > Decimal("0.00"):
+            student_profile.record_activity_and_update_streak()
+
         return {
             "submission_id": str(submission.id),
             "status": submission.status,

@@ -36,6 +36,13 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
     enabled: !!user,
   });
 
+  const { data: dashboardData } = useQuery({
+    queryKey: ["student", "dashboard"],
+    queryFn: studentApi.getDashboard,
+    enabled: !!user && user.role === "STUDENT",
+    staleTime: 10000,
+  });
+
   const handleLogout = async () => {
     try {
       const refreshToken = localStorage.getItem("gqt_refresh_token");
@@ -50,8 +57,20 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
     }
   };
 
-  const pointsFormatted = (studentProfile?.total_points || 0).toLocaleString();
-  const displayName = studentProfile?.full_name || user?.email || "Student";
+  const effectiveStreak =
+    dashboardData?.profile?.current_streak_days ??
+    studentProfile?.current_streak_days ??
+    0;
+
+  const effectivePoints =
+    dashboardData?.profile?.total_score ??
+    studentProfile?.total_points ??
+    0;
+
+  const pointsFormatted = Number(effectivePoints).toLocaleString();
+  const solvedToday = dashboardData?.activity_heatmap?.solved_today ?? false;
+  const displayName = dashboardData?.profile?.full_name || studentProfile?.full_name || user?.email || "Student";
+  const avatarUrl = dashboardData?.profile?.avatar_url || studentProfile?.avatar_url;
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
@@ -79,18 +98,41 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
       {/* Right: Telemetry (Streak, Points) & Actions */}
       <div className="flex items-center gap-2.5 sm:gap-4">
         {/* Streak Counter Pill */}
-        {studentProfile?.current_streak_days !== undefined && (
-          <div className="flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-500 dark:text-rose-400">
-            <Flame className="h-4 w-4" />
-            <span>{studentProfile.current_streak_days} days</span>
-          </div>
+        {user?.role === "STUDENT" && (
+          <Link
+            to="/dashboard"
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-all ${
+              effectiveStreak > 0
+                ? solvedToday
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 shadow-sm"
+                  : "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 shadow-sm"
+                : "border-slate-200 dark:border-surface-700 bg-slate-100 dark:bg-surface-800/60 text-slate-500 dark:text-slate-400 hover:bg-slate-200"
+            }`}
+            title={
+              effectiveStreak > 0
+                ? `${effectiveStreak} Day Streak - ${solvedToday ? "Solved today!" : "Solve a problem today to keep streak going!"}`
+                : "Start your daily problem solving streak!"
+            }
+          >
+            <Flame className={`h-4 w-4 ${effectiveStreak > 0 ? "animate-pulse fill-rose-500 text-rose-500" : "text-slate-400"}`} />
+            <span>{effectiveStreak} {effectiveStreak === 1 ? "day" : "days"}</span>
+            {solvedToday && (
+              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-950" />
+            )}
+          </Link>
         )}
 
         {/* Points Pill */}
-        <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
-          <Award className="h-4 w-4" />
-          <span>{pointsFormatted} pts</span>
-        </div>
+        {user?.role === "STUDENT" && (
+          <Link
+            to="/dashboard"
+            className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all"
+            title="Total Score Points"
+          >
+            <Award className="h-4 w-4" />
+            <span>{pointsFormatted} pts</span>
+          </Link>
+        )}
 
         {/* Theme Toggle Button */}
         <button
@@ -123,7 +165,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
               className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-1.5 pr-3 text-left hover:bg-slate-100 dark:hover:bg-surface-800/80 transition-colors group"
             >
               <UserAvatar
-                src={studentProfile?.avatar_url}
+                src={avatarUrl}
                 name={displayName}
                 initials={initials}
                 size="sm"
