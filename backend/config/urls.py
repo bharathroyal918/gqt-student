@@ -39,6 +39,7 @@ api_v1_patterns = [
     path("students/", include("apps.certificates.urls")),
     path("certificates/verify/<str:identifier>/", PublicCertificateVerifyView.as_view(), name="public_cert_verify"),
     path("projects/files/<uuid:file_id>/download/", ProjectFileDownloadView.as_view(), name="project_file_download"),
+    path("students/recorded-classes/", include("apps.courses.student_urls")),
     path("students/", include("apps.students.urls")),
 ]
 

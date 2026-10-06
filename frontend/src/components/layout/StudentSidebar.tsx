@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   Briefcase,
+  Video,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
@@ -60,6 +61,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Placement Drives", href: "/placements", icon: Briefcase },
     { name: "Courses", href: "/courses", icon: BookOpen },
+    { name: "Recorded Classes", href: "/recorded-classes", icon: Video },
     { name: "Assignments", href: "/assignments", icon: Code2 },
     { name: "Daily Tasks", href: "/tasks", icon: CalendarCheck },
     { name: "Projects", href: "/projects", icon: FolderGit2 },

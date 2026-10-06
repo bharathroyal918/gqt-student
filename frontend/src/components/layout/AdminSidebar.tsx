@@ -13,6 +13,7 @@ import {
   FileText,
   Briefcase,
   UserCog,
+  Video,
 } from "lucide-react";
 import { BrandLogo } from "../common/BrandLogo";
 import { useAuthStore } from "../../store/authStore";
@@ -35,6 +36,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
     { name: "Placement Drives", href: "/admin/placements", icon: Briefcase },
     { name: "Students", href: "/admin/students", icon: Users },
     { name: "Courses", href: "/admin/courses", icon: BookOpen },
+    { name: "Recorded Classes", href: "/admin/recorded-classes", icon: Video },
     { name: "Assignments", href: "/admin/assignments", icon: FileCheck },
     { name: "Daily Tasks", href: "/admin/tasks", icon: FolderKanban },
     { name: "Projects", href: "/admin/projects", icon: FolderKanban },

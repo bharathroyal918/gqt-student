@@ -54,6 +54,16 @@ const StudentDashboardPage = lazy(() =>
 const StudentCoursesPage = lazy(() =>
   import("../pages/student/StudentCoursesPage").then((m) => ({ default: m.StudentCoursesPage }))
 );
+const StudentRecordedClassesPage = lazy(() =>
+  import("../pages/student/StudentRecordedClassesPage").then((m) => ({
+    default: m.StudentRecordedClassesPage,
+  }))
+);
+const StudentRecordedClassWatchPage = lazy(() =>
+  import("../pages/student/StudentRecordedClassWatchPage").then((m) => ({
+    default: m.StudentRecordedClassWatchPage,
+  }))
+);
 const StudentCourseDetailPage = lazy(() =>
   import("../pages/student/StudentCourseDetailPage").then((m) => ({
     default: m.StudentCourseDetailPage,
@@ -130,6 +140,11 @@ const CoursesPage = lazy(() =>
 );
 const CourseDetailPage = lazy(() =>
   import("../pages/admin/CourseDetailPage").then((m) => ({ default: m.CourseDetailPage }))
+);
+const AdminRecordedClassesPage = lazy(() =>
+  import("../pages/admin/AdminRecordedClassesPage").then((m) => ({
+    default: m.AdminRecordedClassesPage,
+  }))
 );
 const AssignmentsPage = lazy(() =>
   import("../pages/admin/AssignmentsPage").then((m) => ({ default: m.AssignmentsPage }))
@@ -285,6 +300,18 @@ export const router = createBrowserRouter([
                 element: withSuspense(StudentCourseDetailPage),
               },
               {
+                path: "/recorded-classes",
+                element: withSuspense(StudentRecordedClassesPage),
+              },
+              {
+                path: "/recorded-classes/:courseId",
+                element: withSuspense(StudentRecordedClassWatchPage),
+              },
+              {
+                path: "/recorded-classes/:courseId/video/:videoId",
+                element: withSuspense(StudentRecordedClassWatchPage),
+              },
+              {
                 path: "/modules/:moduleId",
                 element: withSuspense(StudentModuleDetailPage),
               },
@@ -377,6 +404,14 @@ export const router = createBrowserRouter([
               {
                 path: "courses/:id",
                 element: withSuspense(CourseDetailPage),
+              },
+              {
+                path: "recorded-classes",
+                element: withSuspense(AdminRecordedClassesPage),
+              },
+              {
+                path: "courses/:id/videos",
+                element: withSuspense(AdminRecordedClassesPage),
               },
               {
                 path: "assignments",
