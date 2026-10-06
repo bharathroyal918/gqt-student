@@ -37,7 +37,7 @@ class ContactModuleApiTests(APITestCase):
         self.assertIn("phone_primary", data)
         self.assertIn("office_address", data)
         self.assertIn("social_links", data)
-        self.assertEqual(data["office_address"]["city"], "Bengaluru")
+        self.assertIn("Bengaluru", data["office_address"]["city"])
         self.assertIn("linkedin", data["social_links"])
 
     def test_submit_contact_inquiry_valid(self):

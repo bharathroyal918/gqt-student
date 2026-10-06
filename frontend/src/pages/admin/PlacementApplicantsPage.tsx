@@ -33,6 +33,7 @@ import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { LoadingState } from "../../components/ui/LoadingState";
+import { UserAvatar } from "../../components/ui/UserAvatar";
 
 export const PlacementApplicantsPage: React.FC = () => {
   const { id: rawDriveId } = useParams<{ id: string }>();
@@ -440,9 +441,12 @@ export const PlacementApplicantsPage: React.FC = () => {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   {/* Student Information */}
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/10 to-brand-500/10 border border-indigo-500/20 text-brand-600 dark:text-brand-300 font-bold text-base">
-                      {app.student_name.slice(0, 2).toUpperCase()}
-                    </div>
+                    <UserAvatar
+                      src={app.student_avatar_url}
+                      name={app.student_name}
+                      size="lg"
+                      className="!h-12 !w-12 rounded-2xl border border-indigo-500/20 shrink-0 shadow-sm"
+                    />
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">

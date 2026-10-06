@@ -29,6 +29,7 @@ import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useToast } from "../../context/ToastContext";
+import { UserAvatar } from "../../components/ui/UserAvatar";
 
 export const StudentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -201,9 +202,12 @@ export const StudentDetailPage: React.FC = () => {
       <Card className="p-6">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 text-2xl font-black text-white shadow-xl shadow-brand-500/20">
-              {student.full_name.slice(0, 2).toUpperCase()}
-            </div>
+            <UserAvatar
+              src={student.avatar_url}
+              name={student.full_name}
+              size="xl"
+              className="!h-16 !w-16 rounded-2xl shadow-xl shadow-brand-500/20 ring-2 ring-brand-500/20 shrink-0"
+            />
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{student.full_name}</h1>

@@ -73,6 +73,7 @@ class StudentAdminUpdateSerializer(serializers.Serializer):
     dob = serializers.DateField(required=False, allow_null=True)
     branch = serializers.CharField(max_length=100, required=False, allow_blank=True)
     course_opted = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    avatar_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_null=True)
     mobile_number = serializers.CharField(max_length=20, required=False, allow_null=True)
     is_active = serializers.BooleanField(required=False)

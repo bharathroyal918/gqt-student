@@ -234,6 +234,7 @@ class StudentAdminService:
         dob=None,
         branch: Optional[str] = None,
         course_opted: Optional[str] = None,
+        avatar_url: Optional[str] = None,
         email: Optional[str] = None,
         mobile_number: Optional[str] = None,
         is_active: Optional[bool] = None,
@@ -274,6 +275,10 @@ class StudentAdminService:
         if course_opted is not None:
             student.course_opted = course_opted.strip()
             updated_fields_profile.append("course_opted")
+
+        if avatar_url is not None:
+            student.avatar_url = (avatar_url or "").strip()
+            updated_fields_profile.append("avatar_url")
 
         if total_classes is not None:
             student.total_classes = total_classes

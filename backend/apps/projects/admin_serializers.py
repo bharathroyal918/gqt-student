@@ -89,6 +89,7 @@ class ProjectSubmissionAdminListSerializer(serializers.ModelSerializer):
     student_id = serializers.UUIDField(source="student.id")
     student_name = serializers.CharField(source="student.full_name")
     student_id_number = serializers.CharField(source="student.student_id_number")
+    student_avatar_url = serializers.CharField(source="student.avatar_url", read_only=True, default="")
 
     class Meta:
         model = ProjectSubmission
@@ -99,6 +100,7 @@ class ProjectSubmissionAdminListSerializer(serializers.ModelSerializer):
             "student_id",
             "student_name",
             "student_id_number",
+            "student_avatar_url",
             "status",
             "score",
             "max_score",

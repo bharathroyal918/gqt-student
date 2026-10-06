@@ -37,6 +37,7 @@ import { Button } from "../../components/ui/Button";
 import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { StreakHeatmap } from "../../components/dashboard/StreakHeatmap";
+import { UserAvatar } from "../../components/ui/UserAvatar";
 
 export const StudentDashboardPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -318,17 +319,12 @@ export const StudentDashboardPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        {student.avatar_url ? (
-                          <img
-                            src={student.avatar_url}
-                            alt={student.full_name}
-                            className="h-12 w-12 rounded-xl object-cover ring-2 ring-slate-200 dark:ring-surface-700"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-200 dark:bg-surface-800 text-sm font-bold text-slate-700 dark:text-slate-200">
-                            {student.full_name.slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
+                        <UserAvatar
+                          src={student.avatar_url}
+                          name={student.full_name}
+                          size="lg"
+                          className="!h-12 !w-12 rounded-xl ring-2 ring-slate-200 dark:ring-surface-700 shadow-sm shrink-0"
+                        />
 
                         <div className="overflow-hidden">
                           <p className="font-bold text-slate-900 dark:text-white truncate">
@@ -378,17 +374,12 @@ export const StudentDashboardPage: React.FC = () => {
                         #{item.rank}
                       </td>
                       <td className="px-4 py-3 flex items-center gap-2.5">
-                        {item.avatar_url ? (
-                          <img
-                            src={item.avatar_url}
-                            alt={item.full_name}
-                            className="h-7 w-7 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-200 dark:bg-surface-800 text-xs font-bold">
-                            {item.full_name.slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
+                        <UserAvatar
+                          src={item.avatar_url}
+                          name={item.full_name}
+                          size="sm"
+                          className="!h-7 !w-7 rounded-lg shadow-sm shrink-0"
+                        />
                         <span className="text-slate-900 dark:text-white">
                           {item.full_name}
                           {item.is_current_student && (

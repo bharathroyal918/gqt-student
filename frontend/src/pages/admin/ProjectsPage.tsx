@@ -15,6 +15,7 @@ import { DataTable, Column } from "../../components/ui/DataTable";
 import { Modal } from "../../components/ui/Modal";
 import { FormField, Input, Textarea, Select, Checkbox } from "../../components/ui/Form";
 import { useToast } from "../../context/ToastContext";
+import { UserAvatar } from "../../components/ui/UserAvatar";
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -116,10 +117,18 @@ export const ProjectsPage: React.FC = () => {
       key: "student",
       header: "Student & ID",
       cell: (row) => (
-        <div>
-          <div className="font-semibold text-slate-900 dark:text-white">{row.student_name}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            <span className="font-mono text-slate-600 dark:text-slate-300">{row.student_id_number}</span>
+        <div className="flex items-center gap-2.5">
+          <UserAvatar
+            src={row.student_avatar_url}
+            name={row.student_name}
+            size="sm"
+            className="!h-8 !w-8 rounded-lg ring-1 ring-brand-500/20 shrink-0"
+          />
+          <div className="min-w-0">
+            <div className="font-semibold text-slate-900 dark:text-white truncate">{row.student_name}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-mono text-slate-600 dark:text-slate-300">{row.student_id_number}</span>
+            </div>
           </div>
         </div>
       ),

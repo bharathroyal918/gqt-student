@@ -44,11 +44,12 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       : "U");
 
   const sizeClass = sizeClasses[size] || sizeClasses.sm;
+  const cleanSrc = (src || "").trim();
 
-  if (src && !hasError) {
+  if (cleanSrc && !hasError) {
     return (
       <img
-        src={src}
+        src={cleanSrc}
         alt={name}
         className={`shrink-0 rounded-xl object-cover shadow-sm ring-1 ring-brand-500/20 ${sizeClass} ${imgClassName} ${className}`}
         onError={() => setHasError(true)}

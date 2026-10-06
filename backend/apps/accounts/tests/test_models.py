@@ -52,7 +52,7 @@ class UserModelTests(TestCase):
             can_manage_curriculum=True,
         )
         self.assertEqual(profile.user, admin_user)
-        self.assertEqual(str(profile), f"AdminProfile: {admin_user}")
+        self.assertEqual(str(profile), f"AdminProfile: {profile.full_name or admin_user}")
 
     def test_audit_log(self):
         user = User.objects.create_user(email="actor@gqt.local")

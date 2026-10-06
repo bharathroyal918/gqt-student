@@ -138,6 +138,7 @@ class PlacementApplicationSerializer(serializers.ModelSerializer):
     drive_details = serializers.SerializerMethodField()
     has_resume_file = serializers.SerializerMethodField()
     resume_download_url = serializers.SerializerMethodField()
+    student_avatar_url = serializers.CharField(source="student.avatar_url", read_only=True, default="")
 
     class Meta:
         model = PlacementApplication
@@ -153,6 +154,7 @@ class PlacementApplicationSerializer(serializers.ModelSerializer):
             "rejection_reason",
             "student_name",
             "student_id_number",
+            "student_avatar_url",
             "email",
             "phone_number",
             "college_name",

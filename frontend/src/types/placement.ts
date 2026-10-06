@@ -62,6 +62,7 @@ export interface PlacementApplication {
   rejection_reason: string;
   student_name: string;
   student_id_number: string;
+  student_avatar_url?: string;
   email: string;
   phone_number: string;
   college_name: string;

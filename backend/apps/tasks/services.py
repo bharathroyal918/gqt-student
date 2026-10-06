@@ -217,6 +217,7 @@ class TaskAdminService:
                 "student_id": str(c.student.id),
                 "student_id_number": c.student.student_id_number,
                 "full_name": c.student.full_name,
+                "avatar_url": c.student.avatar_url or "",
                 "email": c.student.user.email,
                 "batch_code": c.student.batch_code,
                 "is_completed": c.is_completed,

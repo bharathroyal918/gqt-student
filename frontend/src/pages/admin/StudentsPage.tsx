@@ -23,6 +23,7 @@ import { Modal } from "../../components/ui/Modal";
 import { FormField, Input, Select } from "../../components/ui/Form";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../context/ToastContext";
+import { UserAvatar } from "../../components/ui/UserAvatar";
 
 export const StudentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ export const StudentsPage: React.FC = () => {
     college_name: "",
     graduation_year: new Date().getFullYear(),
     password: "",
+    avatar_url: "",
   });
 
   // Authorize by Email Form State
@@ -158,6 +160,7 @@ export const StudentsPage: React.FC = () => {
       college_name: "",
       graduation_year: new Date().getFullYear(),
       password: "",
+      avatar_url: "",
     });
   };
 
@@ -177,6 +180,7 @@ export const StudentsPage: React.FC = () => {
       college_name: student.college_name || "",
       graduation_year: student.graduation_year || new Date().getFullYear(),
       password: "",
+      avatar_url: student.avatar_url || "",
     });
   };
 
@@ -204,9 +208,12 @@ export const StudentsPage: React.FC = () => {
       header: "Student",
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600/30 to-indigo-600/30 text-brand-300 font-bold border border-brand-500/20 text-sm">
-            {row.full_name.slice(0, 2).toUpperCase()}
-          </div>
+          <UserAvatar
+            src={row.avatar_url}
+            name={row.full_name}
+            size="md"
+            className="!h-10 !w-10 rounded-xl ring-2 ring-brand-500/20 shadow-sm shrink-0"
+          />
           <div className="min-w-0">
             <button
               onClick={() => navigate(`/admin/students/${row.id}`)}
@@ -669,11 +676,32 @@ export const StudentsPage: React.FC = () => {
                 mobile_number: formData.mobile_number || null,
                 college_name: formData.college_name,
                 graduation_year: Number(formData.graduation_year) || null,
+                avatar_url: formData.avatar_url || "",
               } as any,
             });
           }}
           className="space-y-4"
         >
+          {/* Avatar Preview & URL */}
+          <div className="flex items-center gap-4 p-3 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/40">
+            <UserAvatar
+              src={formData.avatar_url}
+              name={formData.full_name}
+              size="lg"
+              className="ring-2 ring-brand-500/20 shadow-sm shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <FormField label="Profile Photo Image URL (Optional)">
+                <Input
+                  type="url"
+                  placeholder="https://..."
+                  value={formData.avatar_url}
+                  onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                />
+              </FormField>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Full Name" required>
               <Input

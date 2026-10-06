@@ -19,6 +19,7 @@ import { FormField, Input, Textarea, Select } from "../../components/ui/Form";
 import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { useToast } from "../../context/ToastContext";
+import { UserAvatar } from "../../components/ui/UserAvatar";
 
 export const ProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -120,8 +121,16 @@ export const ProjectDetailPage: React.FC = () => {
               </Badge>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-slate-800 dark:text-slate-200">Student: {submission.student_name}</span>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2">
+                <UserAvatar
+                  src={submission.student_avatar_url}
+                  name={submission.student_name}
+                  size="sm"
+                  className="!h-6 !w-6 rounded-lg ring-1 ring-brand-500/20"
+                />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{submission.student_name}</span>
+              </div>
               <span>•</span>
               <span className="font-mono text-slate-700 dark:text-slate-300">ID: {submission.student_id_number}</span>
               <span>•</span>

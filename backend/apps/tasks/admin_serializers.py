@@ -75,6 +75,7 @@ class TaskCompletionAdminSerializer(serializers.Serializer):
     student_id = serializers.CharField()
     student_id_number = serializers.CharField()
     full_name = serializers.CharField()
+    avatar_url = serializers.CharField(allow_blank=True, default="")
     email = serializers.EmailField()
     batch_code = serializers.CharField(allow_blank=True)
     is_completed = serializers.BooleanField()

@@ -14,6 +14,7 @@ export interface StudentListItem {
   is_active: boolean;
   onboarding_status: "ACTIVE" | "PENDING_ACTIVATION" | "SUSPENDED";
   enrolled_courses_count: number;
+  avatar_url?: string;
   created_at: string;
 }
 
@@ -228,6 +229,7 @@ export interface ProjectSubmissionItem {
   student_id: string;
   student_name: string;
   student_id_number: string;
+  student_avatar_url?: string;
   status: "SUBMITTED" | "UNDER_REVIEW" | "CHANGES_REQUESTED" | "APPROVED" | "REJECTED";
   score: string | null;
   max_score: string;
