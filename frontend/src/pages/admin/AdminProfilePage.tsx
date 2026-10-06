@@ -456,7 +456,7 @@ export const AdminProfilePage: React.FC = () => {
                   Office Phone Extension / Direct Line
                 </label>
                 <Input
-                  placeholder="+91 80 4567 8900"
+                  placeholder="+91 9448403469"
                   value={profileForm.phone_number || ""}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setProfileForm((prev) => ({ ...prev, phone_number: e.target.value }))
