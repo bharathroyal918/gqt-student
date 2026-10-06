@@ -21,11 +21,14 @@ if (BASE_DIR / ".env").exists():
 elif (BASE_DIR.parent / ".env").exists():
     environ.Env.read_env(str(BASE_DIR.parent / ".env"), overwrite=True)
 
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+SECRET_KEY = env("DJANGO_SECRET_KEY", default=env("SECRET_KEY", default="django-insecure-change-in-production-stage-32-chars-min"))
 DEBUG = env("DEBUG")
 ENVIRONMENT = env("ENVIRONMENT")
 
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "backend"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "backend", "*"]))
+render_hostname = env("RENDER_EXTERNAL_HOSTNAME", default="").strip()
+if render_hostname and render_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_hostname)
 
 # ------------------------------------------------------------------------------
 # APPLICATION DEFINITION
@@ -219,15 +222,29 @@ SIMPLE_JWT = {
 }
 
 # ------------------------------------------------------------------------------
-# CORS CONFIGURATION
+# CORS & CSRF CONFIGURATION
 # ------------------------------------------------------------------------------
+CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=False)
+
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
     default=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
 )
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.vercel\.app$",
+    r"^https:\/\/.*\.onrender\.com$",
+]
+
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS",
-    default=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+    default=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "https://*.vercel.app",
+        "https://*.onrender.com",
+    ],
 )
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [

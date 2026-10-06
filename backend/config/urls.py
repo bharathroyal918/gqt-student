@@ -44,8 +44,23 @@ api_v1_patterns = [
 
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+
+
+def root_status_view(request):
+    return JsonResponse(
+        {
+            "status": "online",
+            "name": "Global Quality Technologies (GQT) Student Portal API",
+            "version": "v1",
+            "docs": "/api/docs/",
+            "health": "/api/v1/health/",
+        }
+    )
+
 
 urlpatterns = [
+    path("", root_status_view, name="root_status"),
     path("admin/", admin.site.urls),
     path("health/", include("apps.common.urls")),
     path("certificates/verify/<str:identifier>/", PublicCertificateVerifyView.as_view(), name="root_public_cert_verify"),
