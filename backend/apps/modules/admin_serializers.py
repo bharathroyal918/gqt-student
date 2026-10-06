@@ -35,6 +35,7 @@ class ModuleAdminSerializer(serializers.ModelSerializer):
             "passing_percentage",
             "is_published",
             "questions_count",
+            "videos_count",
             "prerequisites",
             "created_at",
             "updated_at",
@@ -42,6 +43,9 @@ class ModuleAdminSerializer(serializers.ModelSerializer):
 
     def get_questions_count(self, obj) -> int:
         return obj.questions.count()
+
+    def get_videos_count(self, obj) -> int:
+        return obj.recorded_classes.count()
 
 
 class ModuleAdminCreateSerializer(serializers.Serializer):

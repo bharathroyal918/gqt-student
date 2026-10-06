@@ -99,6 +99,23 @@ export interface CourseEnrollmentItem {
   completed_at: string | null;
 }
 
+export interface CourseModuleItem {
+  id: string;
+  course_id: string;
+  course_title: string;
+  title: string;
+  slug: string;
+  order_index: number;
+  summary: string;
+  lecture_content: string;
+  passing_percentage: string;
+  is_published: boolean;
+  videos_count?: number;
+  questions_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AdminRecordedClassPayload {
   title: string;
   slug?: string;

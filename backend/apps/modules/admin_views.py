@@ -130,6 +130,21 @@ class ModuleAdminDetailUpdateView(APIView):
             message="Module updated successfully.",
         )
 
+    @extend_schema(
+        summary="Admin Delete Curriculum Module",
+        tags=["Admin Module Management"],
+    )
+    def delete(self, request, pk):
+        ip_address = get_client_ip(request)
+        ModuleAdminService.delete_module(
+            module_id=str(pk),
+            admin_user=request.user,
+            ip_address=ip_address,
+        )
+        return api_success(
+            message="Curriculum module deleted successfully.",
+        )
+
 
 class ModuleAdminReorderView(APIView):
     """Admin endpoint to atomically reorder learning modules within a course."""

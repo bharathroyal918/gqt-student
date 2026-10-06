@@ -216,6 +216,10 @@ export const adminApi = {
     return data.data;
   },
 
+  deleteModule: async (id: string): Promise<void> => {
+    await apiClient.delete(`/admin/modules/${id}/`);
+  },
+
   // ==========================================
   // 4. ASSIGNMENTS & TEST CASES
   // ==========================================

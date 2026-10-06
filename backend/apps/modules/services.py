@@ -45,7 +45,7 @@ class ModuleAdminService:
     ) -> Module:
         course = get_object_or_404(Course, id=course_id, is_deleted=False)
 
-        if order_index is None:
+        if order_index is None or order_index <= 0:
             max_order = (
                 Module.objects.filter(course=course).aggregate(max_order=models.Max("order_index"))[
                     "max_order"
@@ -54,13 +54,20 @@ class ModuleAdminService:
             )
             order_index = max_order + 1
         elif Module.objects.filter(course=course, order_index=order_index).exists():
-            raise DomainException(
-                f"A module with order index {order_index} already exists in this course."
+            max_order = (
+                Module.objects.filter(course=course).aggregate(max_order=models.Max("order_index"))[
+                    "max_order"
+                ]
+                or 0
             )
+            order_index = max_order + 1
 
-        module_slug = slug.strip().lower() if slug else slugify(title)
-        if Module.objects.filter(course=course, slug=module_slug).exists():
-            raise DomainException("A module with this slug already exists in this course.")
+        module_slug = slug.strip().lower() if slug else slugify(f"{course.slug}-{order_index}-{title[:40]}")
+        base_slug = module_slug
+        counter = 1
+        while Module.objects.filter(course=course, slug=module_slug).exists():
+            module_slug = f"{base_slug}-{counter}"
+            counter += 1
 
         module = Module.objects.create(
             course=course,
@@ -89,6 +96,26 @@ class ModuleAdminService:
             },
         )
         return module
+
+    @classmethod
+    @transaction.atomic
+    def delete_module(
+        cls, module_id: str, admin_user: User, ip_address: Optional[str] = None
+    ) -> None:
+        module = cls.get_module(module_id)
+        module_id_str = str(module.id)
+        title = module.title
+        course_id = str(module.course_id)
+        module.delete()
+
+        AuditLog.objects.create(
+            actor=admin_user,
+            action="MODULE_DELETED",
+            target_model="Module",
+            target_id=module_id_str,
+            ip_address=ip_address,
+            payload={"title": title, "course_id": course_id},
+        )
 
     @classmethod
     @transaction.atomic

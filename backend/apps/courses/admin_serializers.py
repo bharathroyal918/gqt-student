@@ -111,7 +111,7 @@ class RecordedClassAdminCreateUpdateSerializer(serializers.Serializer):
     video_file = serializers.FileField(required=False, allow_null=True)
     video_url = serializers.URLField(max_length=1000, required=False, allow_blank=True, default="")
     duration_seconds = serializers.IntegerField(required=False, default=0, min_value=0)
-    duration_formatted = serializers.CharField(max_length=20, required=False, allow_blank=True, default="00:00")
+    duration_formatted = serializers.CharField(max_length=20, required=False, allow_blank=True, default="")
     thumbnail_url = serializers.URLField(max_length=500, required=False, allow_blank=True, default="")
     is_preview = serializers.BooleanField(required=False, default=False)
     is_published = serializers.BooleanField(required=False, default=True)

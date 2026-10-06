@@ -18,8 +18,12 @@ import {
   Search,
   BookOpen,
   Volume2,
+  Folder,
+  FolderOpen,
+  ChevronDown,
 } from "lucide-react";
 import { recordedClassesApi } from "../../api/recordedClassesApi";
+import { RecordedClassItem } from "../../types/recordedClasses";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -35,6 +39,7 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
 
   const [searchPlaylist, setSearchPlaylist] = useState("");
   const [activeTab, setActiveTab] = useState<"NOTES" | "RESOURCES" | "CURRICULUM">("NOTES");
+  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
 
   // Fetch Course Playlist
   const {
@@ -49,7 +54,7 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
     enabled: Boolean(courseId),
   });
 
-  const videos = playlistData?.videos || [];
+  const videos: RecordedClassItem[] = playlistData?.videos || [];
   const course = playlistData?.course;
 
   // Determine active video: either from URL params or default to first video
@@ -68,6 +73,13 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
       navigate(`/recorded-classes/${courseId}/video/${activeVideo.id}`, { replace: true });
     }
   }, [courseId, activeVideo, videoId, navigate]);
+
+  // Ensure active video's folder is expanded
+  useEffect(() => {
+    if (activeVideo?.module_id) {
+      setCollapsedFolders((prev) => ({ ...prev, [activeVideo.module_id!]: false }));
+    }
+  }, [activeVideo?.module_id]);
 
   // Mark Completed / Progress Mutation
   const progressMutation = useMutation({
@@ -92,10 +104,53 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
 
   const filteredPlaylist = React.useMemo(() => {
     if (!searchPlaylist.trim()) return videos;
-    return videos.filter((v) =>
-      v.title.toLowerCase().includes(searchPlaylist.toLowerCase())
+    const q = searchPlaylist.toLowerCase();
+    return videos.filter(
+      (v) =>
+        v.title.toLowerCase().includes(q) ||
+        v.module_title?.toLowerCase().includes(q)
     );
   }, [videos, searchPlaylist]);
+
+  // Group playlist by folder / module
+  const playlistGroups = React.useMemo(() => {
+    const groups: Array<{
+      key: string;
+      title: string;
+      videos: RecordedClassItem[];
+      completedCount: number;
+    }> = [];
+
+    const map = new Map<string, { title: string; videos: RecordedClassItem[] }>();
+
+    filteredPlaylist.forEach((v) => {
+      const groupKey = v.module_id || "__root__";
+      const groupTitle = v.module_title || "General Sessions";
+      if (!map.has(groupKey)) {
+        map.set(groupKey, { title: groupTitle, videos: [] });
+      }
+      map.get(groupKey)!.videos.push(v);
+    });
+
+    map.forEach((val, key) => {
+      const completed = val.videos.filter((item) => item.is_completed).length;
+      groups.push({
+        key,
+        title: val.title,
+        videos: val.videos,
+        completedCount: completed,
+      });
+    });
+
+    return groups;
+  }, [filteredPlaylist]);
+
+  const toggleFolderCollapse = (key: string) => {
+    setCollapsedFolders((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   if (isPlaylistLoading) {
     return (
@@ -233,7 +288,7 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
                 <Video className="h-12 w-12 mx-auto opacity-50" />
                 <p className="text-sm font-semibold text-white">Video Stream Initializing</p>
                 <p className="text-xs text-slate-500">
-                  The admin has not uploaded the media file or provided an embed link for this class yet.
+                  The instructor has not uploaded the media file or provided an embed link for this class yet.
                 </p>
               </div>
             )}
@@ -245,6 +300,11 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
+                    {activeVideo.module_title && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        📁 {activeVideo.module_title}
+                      </span>
+                    )}
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-brand-500/10 text-brand-600 dark:text-brand-400">
                       Lesson #{activeVideo.order_index}
                     </span>
@@ -439,7 +499,7 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Right: Interactive Playlist Drawer (4 Cols) */}
+        {/* Right: Interactive Grouped Playlist Drawer (4 Cols) */}
         <div className="lg:col-span-4 space-y-4">
           <Card className="p-4 flex flex-col h-[700px]">
             {/* Playlist Header */}
@@ -447,7 +507,7 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-sm">
                   <Layers className="h-4 w-4 text-brand-500" />
-                  <span>Course Playlist</span>
+                  <span>Course Curriculum Folders</span>
                 </div>
                 <span className="text-xs font-mono text-slate-400">
                   {videos.length} Sessions
@@ -459,7 +519,7 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Filter lessons..."
+                  placeholder="Filter lessons or folders..."
                   value={searchPlaylist}
                   onChange={(e) => setSearchPlaylist(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900 py-1.5 pl-8 pr-3 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
@@ -467,83 +527,134 @@ export const StudentRecordedClassWatchPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Scrollable Playlist Item List */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 py-3 pr-1">
-              {filteredPlaylist.map((v) => {
-                const isSelected = activeVideo?.id === v.id;
+            {/* Scrollable Grouped Playlist Tree */}
+            <div className="flex-1 overflow-y-auto space-y-3 py-3 pr-1">
+              {playlistGroups.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-400">No lessons matching search.</div>
+              ) : (
+                playlistGroups.map((group) => {
+                  const isCollapsed = collapsedFolders[group.key] ?? false;
 
-                return (
-                  <button
-                    key={v.id}
-                    onClick={() => navigate(`/recorded-classes/${courseId}/video/${v.id}`)}
-                    className={`w-full text-left rounded-2xl p-3 transition-all flex items-start gap-3 border ${
-                      isSelected
-                        ? "bg-brand-500/10 border-brand-500/40 shadow-sm"
-                        : "bg-white dark:bg-surface-900/50 border-slate-100 dark:border-surface-800/60 hover:bg-slate-50 dark:hover:bg-surface-800/80"
-                    }`}
-                  >
-                    {/* Index or lock badge */}
+                  return (
                     <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
-                        isSelected
-                          ? "bg-brand-600 text-white shadow-md shadow-brand-500/30"
-                          : v.is_completed
-                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                          : v.is_locked
-                          ? "bg-slate-200 dark:bg-surface-800 text-slate-400"
-                          : "bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-slate-300"
-                      }`}
+                      key={group.key}
+                      className="rounded-2xl border border-slate-200 dark:border-surface-800 bg-slate-50/50 dark:bg-surface-900/40 overflow-hidden"
                     >
-                      {v.is_completed ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      ) : v.is_locked ? (
-                        <Lock className="h-3.5 w-3.5 text-slate-400" />
-                      ) : (
-                        <span>{String(v.order_index).padStart(2, "0")}</span>
-                      )}
-                    </div>
-
-                    {/* Content Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <div className="flex items-center gap-1.5">
-                          {v.is_preview ? (
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                              Free Preview
-                            </span>
+                      {/* Folder / Group Header */}
+                      <button
+                        type="button"
+                        onClick={() => toggleFolderCollapse(group.key)}
+                        className="w-full flex items-center justify-between p-2.5 px-3 text-left hover:bg-slate-100/80 dark:hover:bg-surface-800/80 transition-colors border-b border-slate-100 dark:border-surface-800/60"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isCollapsed ? (
+                            <Folder className="h-4 w-4 text-amber-500 shrink-0" />
                           ) : (
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                              Lesson #{v.order_index}
-                            </span>
+                            <FolderOpen className="h-4 w-4 text-amber-500 shrink-0" />
+                          )}
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {group.title}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {group.completedCount}/{group.videos.length}
+                          </span>
+                          {isCollapsed ? (
+                            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
                           )}
                         </div>
-                        {v.duration_formatted && (
-                          <span className="text-[11px] text-slate-400 font-mono">
-                            {v.duration_formatted}
-                          </span>
-                        )}
-                      </div>
+                      </button>
 
-                      <div
-                        className={`text-xs font-semibold line-clamp-2 ${
-                          isSelected
-                            ? "text-brand-600 dark:text-brand-400"
-                            : "text-slate-800 dark:text-slate-200"
-                        }`}
-                      >
-                        {v.title}
-                      </div>
+                      {/* Sub-Videos Under This Folder */}
+                      {!isCollapsed && (
+                        <div className="p-1.5 space-y-1">
+                          {group.videos.map((v, subIdx) => {
+                            const isSelected = activeVideo?.id === v.id;
 
-                      {isSelected && (
-                        <div className="mt-1 flex items-center gap-1 text-[11px] font-bold text-brand-500">
-                          <Volume2 className="h-3 w-3 animate-pulse" />
-                          <span>Now Playing</span>
+                            return (
+                              <button
+                                key={v.id}
+                                onClick={() => navigate(`/recorded-classes/${courseId}/video/${v.id}`)}
+                                className={`w-full text-left rounded-xl p-2.5 transition-all flex items-start gap-2.5 border ${
+                                  isSelected
+                                    ? "bg-brand-500/10 border-brand-500/40 shadow-sm"
+                                    : "bg-white dark:bg-surface-900 border-transparent hover:border-slate-200 dark:hover:border-surface-700"
+                                }`}
+                              >
+                                {/* Index or lock badge */}
+                                <div
+                                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                                    isSelected
+                                      ? "bg-brand-600 text-white shadow-md shadow-brand-500/30"
+                                      : v.is_completed
+                                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                                      : v.is_locked
+                                      ? "bg-slate-200 dark:bg-surface-800 text-slate-400"
+                                      : "bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-slate-300"
+                                  }`}
+                                >
+                                  {v.is_completed ? (
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                  ) : v.is_locked ? (
+                                    <Lock className="h-3 w-3 text-slate-400" />
+                                  ) : (
+                                    <span className="text-[11px] font-mono">
+                                      {String(subIdx + 1).padStart(2, "0")}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Content Details */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                                    <div className="flex items-center gap-1.5">
+                                      {v.is_preview ? (
+                                        <span className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                          Free Preview
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
+                                          Lec-{subIdx + 1}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {v.duration_formatted && (
+                                      <span className="text-[10px] text-slate-400 font-mono">
+                                        {v.duration_formatted}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div
+                                    className={`text-xs font-semibold line-clamp-1 ${
+                                      isSelected
+                                        ? "text-brand-600 dark:text-brand-400"
+                                        : "text-slate-800 dark:text-slate-200"
+                                    }`}
+                                  >
+                                    {v.title}
+                                  </div>
+
+                                  {isSelected && (
+                                    <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-brand-500">
+                                      <Volume2 className="h-3 w-3 animate-pulse" />
+                                      <span>Now Playing</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
-                  </button>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </Card>
         </div>

@@ -126,4 +126,47 @@ export const recordedClassesApi = {
   revokeCourseEnrollment: async (courseId: string, studentId: string): Promise<void> => {
     await apiClient.post(`/admin/courses/${courseId}/enrollments/${studentId}/revoke/`);
   },
+
+  // ---------------------------------------------------------------------------
+  // MODULE / FOLDER MANAGEMENT (CUSTOM FOLDERS & COMPONENTS)
+  // ---------------------------------------------------------------------------
+
+  /** Admin list all folders / modules for a course */
+  getCourseModules: async (courseId: string): Promise<any[]> => {
+    const res = await apiClient.get<any>("/admin/modules/", {
+      params: { course_id: courseId, page_size: 100 },
+    });
+    if (res.data?.results) return res.data.results;
+    if (res.data?.data) {
+      if (Array.isArray(res.data.data)) return res.data.data;
+      if (res.data.data.results) return res.data.data.results;
+    }
+    if (Array.isArray(res.data)) return res.data;
+    return [];
+  },
+
+  /** Admin create a new custom folder / module component */
+  createCourseModule: async (payload: {
+    course_id: string;
+    title: string;
+    summary?: string;
+    order_index?: number;
+  }): Promise<any> => {
+    const res = await apiClient.post<any>("/admin/modules/", payload);
+    return res.data?.data || res.data;
+  },
+
+  /** Admin update / rename folder module component */
+  updateCourseModule: async (
+    moduleId: string,
+    payload: { title?: string; summary?: string; order_index?: number }
+  ): Promise<any> => {
+    const res = await apiClient.patch<any>(`/admin/modules/${moduleId}/`, payload);
+    return res.data?.data || res.data;
+  },
+
+  /** Admin delete a folder module component */
+  deleteCourseModule: async (moduleId: string): Promise<void> => {
+    await apiClient.delete(`/admin/modules/${moduleId}/`);
+  },
 };
