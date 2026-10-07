@@ -279,20 +279,20 @@ export const StudentAttendancePage: React.FC = () => {
               </div>
 
               <div className="flex justify-between text-xs pt-1 border-t border-slate-200/60 dark:border-surface-800/60">
-                <span className="text-slate-500">Student ID / USN:</span>
+                <span className="text-slate-500 dark:text-slate-400">Student ID / USN:</span>
                 <span className="font-mono font-bold text-brand-600 dark:text-brand-400">{studentId}</span>
               </div>
 
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Course Opted:</span>
+                <span className="text-slate-500 dark:text-slate-400">Course Opted:</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
                   {courseName}
                 </span>
               </div>
 
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">College / Center:</span>
-                <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">{collegeName}</span>
+                <span className="text-slate-500 dark:text-slate-400">College / Center:</span>
+                <span className="text-slate-600 dark:text-slate-300 truncate max-w-[180px]">{collegeName}</span>
               </div>
             </div>
 

@@ -29,16 +29,16 @@ export default {
           cyan: "#38bdf8",     // Accent Divider Lines
           charcoal: "#333a42", // 'T' & 'TECHNOLOGIES'
           steel: "#475569",    // 'TRAINING | INNOVATION | PLACEMENT'
-          midnight: "#040812", // Deep Portal Canvas
+          midnight: "#000000", // Pure Black Portal Canvas
         },
         surface: {
           50: "#f8fafc",
           100: "#f1f5f9",
-          700: "#1b283d",
-          800: "#0f1c30",
-          850: "#0b1525",
-          900: "#070e1b",
-          950: "#040812", // GQT ultra dark midnight canvas
+          700: "#242f44",
+          800: "#182030",
+          850: "#101622",
+          900: "#0a0e17",
+          950: "#000000", // Pure black darkmode canvas
         },
         accent: {
           emerald: "#10b981",
@@ -53,8 +53,8 @@ export default {
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
       boxShadow: {
-        "gqt-glow": "0 0 25px -5px rgba(0, 132, 255, 0.25)",
-        "gqt-card": "0 8px 32px 0 rgba(0, 33, 77, 0.37)",
+        "gqt-glow": "0 0 25px -5px rgba(0, 132, 255, 0.3)",
+        "gqt-card": "0 8px 32px 0 rgba(0, 0, 0, 0.7)",
       }
     },
   },

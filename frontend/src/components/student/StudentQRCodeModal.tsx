@@ -138,11 +138,11 @@ export const StudentQRCodeModal: React.FC<StudentQRCodeModalProps> = ({
 
             <div className="rounded-xl bg-white/80 dark:bg-surface-900/80 p-3.5 border border-rose-200 dark:border-rose-900/50 text-xs space-y-1 text-slate-700 dark:text-slate-300">
               <div className="flex justify-between">
-                <span className="text-slate-500">Student Name:</span>
+                <span className="text-slate-500 dark:text-slate-400">Student Name:</span>
                 <span className="font-semibold">{fullName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Student ID / USN:</span>
+                <span className="text-slate-500 dark:text-slate-400">Student ID / USN:</span>
                 <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{studentId}</span>
               </div>
             </div>
@@ -193,12 +193,12 @@ export const StudentQRCodeModal: React.FC<StudentQRCodeModalProps> = ({
               </div>
 
               <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-surface-800/60 text-[11px]">
-                <span className="text-slate-500">Student ID / USN:</span>
+                <span className="text-slate-500 dark:text-slate-400">Student ID / USN:</span>
                 <span className="font-mono font-bold text-brand-600 dark:text-brand-400">{studentId}</span>
               </div>
 
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">Enrolled Course:</span>
+                <span className="text-slate-500 dark:text-slate-400">Enrolled Course:</span>
                 <span className="font-medium text-slate-900 dark:text-slate-200 truncate max-w-[200px]">
                   {courseName}
                 </span>

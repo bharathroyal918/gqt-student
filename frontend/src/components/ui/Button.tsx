@@ -28,13 +28,13 @@ export const Button: React.FC<ButtonProps> = ({
     primary:
       "bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-500/25 focus:ring-brand-500 focus:ring-offset-white dark:focus:ring-offset-surface-950",
     secondary:
-      "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 dark:bg-surface-800 dark:hover:bg-surface-700 dark:text-slate-200 dark:border-surface-700/60 focus:ring-slate-400 dark:focus:ring-surface-700 focus:ring-offset-white dark:focus:ring-offset-surface-950",
+      "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 dark:bg-surface-800 dark:hover:bg-surface-700 dark:text-slate-100 dark:border-surface-700 focus:ring-slate-400 dark:focus:ring-surface-700 focus:ring-offset-white dark:focus:ring-offset-surface-950",
     danger:
       "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/20 focus:ring-rose-500 focus:ring-offset-white dark:focus:ring-offset-surface-950",
     ghost:
       "bg-transparent hover:bg-slate-100 dark:hover:bg-surface-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white focus:ring-slate-400",
     outline:
-      "bg-transparent border border-slate-300 dark:border-surface-700 hover:border-slate-400 dark:hover:border-surface-600 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-surface-800/50 focus:ring-brand-500",
+      "bg-transparent border border-slate-300 dark:border-surface-700 hover:border-slate-400 dark:hover:border-surface-600 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-surface-800/60 focus:ring-brand-500",
   };
 
   const sizes: Record<ButtonSize, string> = {
@@ -58,4 +58,3 @@ export const Button: React.FC<ButtonProps> = ({
     </button>
   );
 };
-

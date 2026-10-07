@@ -48,10 +48,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       }
     >
       <div className="flex items-start gap-4 py-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-400">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500 dark:text-rose-400">
           <AlertTriangle className="h-5 w-5" />
         </div>
-        <p className="text-sm text-slate-300 leading-relaxed">{message}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{message}</p>
       </div>
     </Modal>
   );

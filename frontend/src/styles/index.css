@@ -14,9 +14,9 @@
 
   :root.dark,
   html.dark {
-    --color-bg: #040812;
-    --color-surface: #070e1b;
-    --color-border: #0f1c30;
+    --color-bg: #000000;
+    --color-surface: #0a0e17;
+    --color-border: #182030;
     --color-text: #f8fafc;
     --color-text-muted: #94a3b8;
     color-scheme: dark;
@@ -43,14 +43,14 @@ body {
 /* Dark mode ambient GQT Brand Background */
 .dark body,
 html.dark body {
-  background-color: #040812;
+  background-color: #000000;
   color: #f8fafc;
 }
 
 .dark .gqt-ambient-bg {
   background: radial-gradient(circle at 50% 0%, rgba(0, 102, 255, 0.12) 0%, rgba(0, 33, 77, 0.05) 45%, transparent 70%),
               radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
-              #040812;
+              #000000;
 }
 
 .gqt-ambient-bg {
@@ -69,7 +69,7 @@ html.dark body {
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #070e1b;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -78,17 +78,17 @@ html.dark body {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #1b283d;
+  background: #182030;
   border-radius: 9999px;
-  border: 1px solid rgba(0, 132, 255, 0.15);
+  border: 1px solid rgba(0, 132, 255, 0.2);
 }
 
-::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #0066ff;
 }
 
 /* Text Selection in GQT Electric Blue */
 ::selection {
-  background-color: rgba(0, 132, 255, 0.35);
+  background-color: rgba(0, 102, 255, 0.35);
   color: #ffffff;
 }

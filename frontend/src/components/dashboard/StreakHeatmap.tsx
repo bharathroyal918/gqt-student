@@ -158,7 +158,7 @@ export const StreakHeatmap: React.FC<StreakHeatmapProps> = ({ data, isLoading = 
         <div className="overflow-x-auto pb-2 scrollbar-thin">
           <div className="inline-block min-w-full">
             {/* Month Labels */}
-            <div className="flex text-[11px] font-medium text-slate-400 dark:text-slate-500 pl-8 mb-1.5 gap-1 select-none">
+            <div className="flex text-[11px] font-medium text-slate-500 dark:text-slate-400 pl-8 mb-1.5 gap-1 select-none">
               {monthHeaders.map((m, idx) => (
                 <div
                   key={`${m.name}-${idx}`}
@@ -173,7 +173,7 @@ export const StreakHeatmap: React.FC<StreakHeatmapProps> = ({ data, isLoading = 
             {/* Grid Container: Weekday labels on left + 52 Week Columns */}
             <div className="flex gap-2 items-start">
               {/* Day Labels (Mon, Wed, Fri) */}
-              <div className="flex flex-col justify-between text-[10px] font-semibold text-slate-400 dark:text-slate-500 pt-0.5 h-[108px] w-6 select-none shrink-0">
+              <div className="flex flex-col justify-between text-[10px] font-semibold text-slate-500 dark:text-slate-400 pt-0.5 h-[108px] w-6 select-none shrink-0">
                 <span>Mon</span>
                 <span>Wed</span>
                 <span>Fri</span>
@@ -223,13 +223,13 @@ export const StreakHeatmap: React.FC<StreakHeatmapProps> = ({ data, isLoading = 
                     {hoveredDay.count} {hoveredDay.count === 1 ? "problem" : "problems"} solved ({hoveredDay.points} pts)
                   </span>
                 ) : (
-                  <span className="text-slate-400 dark:text-slate-500">
+                  <span className="text-slate-500 dark:text-slate-400">
                     No problem submissions recorded on this day.
                   </span>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-[11px]">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
                 <Info className="h-3.5 w-3.5" />
                 <span>Hover over any box to inspect daily problem-solving submissions.</span>
               </div>
@@ -238,14 +238,14 @@ export const StreakHeatmap: React.FC<StreakHeatmapProps> = ({ data, isLoading = 
 
           {/* Color Scale Legend */}
           <div className="flex items-center gap-2 text-[11px] self-end sm:self-center">
-            <span className="text-slate-400 dark:text-slate-500">Less</span>
+            <span className="text-slate-500 dark:text-slate-400">Less</span>
             <div className="flex items-center gap-1">
               <div className="h-2.5 w-2.5 rounded-[2px] bg-slate-100 dark:bg-surface-900 border border-slate-200/60 dark:border-surface-800" title="0 submissions" />
               <div className="h-2.5 w-2.5 rounded-[2px] bg-emerald-300 dark:bg-emerald-600/70 border border-emerald-400" title="1-2 submissions" />
               <div className="h-2.5 w-2.5 rounded-[2px] bg-emerald-500 border border-emerald-600" title="3-4 submissions" />
               <div className="h-2.5 w-2.5 rounded-[2px] bg-emerald-600 dark:bg-emerald-400 border border-emerald-700" title="5+ submissions" />
             </div>
-            <span className="text-slate-400 dark:text-slate-500">More</span>
+            <span className="text-slate-500 dark:text-slate-400">More</span>
           </div>
         </div>
       </div>
