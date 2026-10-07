@@ -4,7 +4,9 @@ from django.urls import path
 
 from apps.accounts.views import AdminStudentProvisionView, AdminStudentStatusView
 from apps.students.admin_views import (
+    StudentAdminAttendanceOverviewView,
     StudentAdminAttendanceView,
+    StudentAdminBulkAttendanceView,
     StudentAdminCoursesView,
     StudentAdminDetailUpdateView,
     StudentAdminGrantAccessByEmailView,
@@ -13,6 +15,7 @@ from apps.students.admin_views import (
     StudentAdminProgressView,
     StudentAdminRankView,
     StudentAdminRevokeAccessView,
+    StudentAdminScanQRView,
     StudentAdminScoresView,
 )
 
@@ -22,6 +25,9 @@ urlpatterns = [
     path("", StudentAdminListCreateView.as_view(), name="list_create"),
     path("provision/", AdminStudentProvisionView.as_view(), name="provision"),
     path("grant-access-by-email/", StudentAdminGrantAccessByEmailView.as_view(), name="grant_access_by_email"),
+    path("attendance/overview/", StudentAdminAttendanceOverviewView.as_view(), name="attendance_overview"),
+    path("attendance/scan-qr/", StudentAdminScanQRView.as_view(), name="attendance_scan_qr"),
+    path("attendance/bulk-mark/", StudentAdminBulkAttendanceView.as_view(), name="attendance_bulk_mark"),
     path("<uuid:pk>/", StudentAdminDetailUpdateView.as_view(), name="detail_update"),
     path("<uuid:pk>/status/", AdminStudentStatusView.as_view(), name="status"),
     path("<uuid:pk>/grant-access/", StudentAdminGrantAccessView.as_view(), name="grant_access"),

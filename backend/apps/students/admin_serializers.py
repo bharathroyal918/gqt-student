@@ -101,5 +101,25 @@ class GrantAccessByEmailSerializer(serializers.Serializer):
 class MarkAttendanceSerializer(serializers.Serializer):
     date = serializers.DateField(required=True)
     status = serializers.ChoiceField(choices=AttendanceRecord.AttendanceStatus.choices, default=AttendanceRecord.AttendanceStatus.PRESENT)
+    technology = serializers.CharField(max_length=100, required=False, default="Full Stack Development")
     session_title = serializers.CharField(max_length=200, required=False, default="Daily Training & Coding Lab")
     remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+
+
+class AdminScanStudentQRSerializer(serializers.Serializer):
+    qr_data = serializers.CharField(required=True, help_text="Raw or parsed student attendance QR data")
+    technology = serializers.CharField(max_length=100, required=False, default="Full Stack Development")
+    session_title = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    date = serializers.DateField(required=False, allow_null=True)
+    status = serializers.ChoiceField(choices=AttendanceRecord.AttendanceStatus.choices, default=AttendanceRecord.AttendanceStatus.PRESENT)
+    remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+
+
+class BulkMarkAttendanceSerializer(serializers.Serializer):
+    batch_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    student_ids = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)
+    date = serializers.DateField(required=False, allow_null=True)
+    technology = serializers.CharField(max_length=100, required=False, default="Full Stack Development")
+    session_title = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    status = serializers.ChoiceField(choices=AttendanceRecord.AttendanceStatus.choices, default=AttendanceRecord.AttendanceStatus.PRESENT)
+    remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, default="Bulk recorded by Admin")

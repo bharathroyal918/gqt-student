@@ -740,6 +740,15 @@ export const studentApi = {
   },
 };
 
+export interface TechnologyAttendanceSummary {
+  technology: string;
+  total_sessions: number;
+  present_count: number;
+  absent_count: number;
+  late_count: number;
+  attendance_percentage: number;
+}
+
 export interface StudentAttendanceData {
   student: {
     full_name: string;
@@ -756,9 +765,12 @@ export interface StudentAttendanceData {
   attended_classes: number;
   missed_classes: number;
   current_streak_days: number;
+  technologies?: string[];
+  technologies_summary?: TechnologyAttendanceSummary[];
   records: {
     id: string;
     date: string;
+    technology?: string;
     session_title: string;
     status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | string;
     remarks: string;
@@ -902,19 +914,19 @@ export interface StudentNotificationItem {
   title: string;
   body: string;
   notification_type:
-    | "TASK_DEADLINE"
-    | "PROJECT_MARKED"
-    | "RANK_CHANGE"
-    | "ADMIN_ANNOUNCEMENT"
-    | "ACHIEVEMENT"
-    | "CERTIFICATE"
-    | "SUBMISSION_GRADED"
-    | "MODULE_UNLOCKED"
-    | "PROJECT_FEEDBACK"
-    | "STREAK_ALERT"
-    | "DEADLINE_REMINDER"
-    | "TASK_COMPLETED"
-    | "SYSTEM_NOTICE";
+  | "TASK_DEADLINE"
+  | "PROJECT_MARKED"
+  | "RANK_CHANGE"
+  | "ADMIN_ANNOUNCEMENT"
+  | "ACHIEVEMENT"
+  | "CERTIFICATE"
+  | "SUBMISSION_GRADED"
+  | "MODULE_UNLOCKED"
+  | "PROJECT_FEEDBACK"
+  | "STREAK_ALERT"
+  | "DEADLINE_REMINDER"
+  | "TASK_COMPLETED"
+  | "SYSTEM_NOTICE";
   notification_type_display: string;
   is_read: boolean;
   read_at: string | null;
@@ -953,7 +965,7 @@ export interface StudentTaskItem {
   submission_notes: string;
 }
 
-export interface StudentTaskDetail extends StudentTaskItem {}
+export interface StudentTaskDetail extends StudentTaskItem { }
 
 export interface StudentTaskCompletionResponse {
   id: string;

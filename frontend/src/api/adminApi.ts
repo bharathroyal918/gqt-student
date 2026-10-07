@@ -81,6 +81,51 @@ export const adminApi = {
     return data.data;
   },
 
+  getAttendanceOverview: async (params?: {
+    batch_code?: string;
+    technology?: string;
+    date?: string;
+    status?: string;
+    search?: string;
+  }): Promise<AdminAttendanceOverviewData> => {
+    const { data } = await apiClient.get<ApiSuccessResponse<AdminAttendanceOverviewData>>(
+      "/admin/students/attendance/overview/",
+      { params }
+    );
+    return data.data;
+  },
+
+  scanAttendanceQR: async (payload: {
+    qr_data: string;
+    technology?: string;
+    session_title?: string;
+    date?: string;
+    status?: string;
+    remarks?: string;
+  }): Promise<AdminScanQRResponse> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<AdminScanQRResponse>>(
+      "/admin/students/attendance/scan-qr/",
+      payload
+    );
+    return data.data;
+  },
+
+  bulkMarkAttendance: async (payload: {
+    batch_code?: string;
+    student_ids?: string[];
+    date?: string;
+    technology?: string;
+    session_title?: string;
+    status?: string;
+    remarks?: string;
+  }): Promise<{ success: boolean; marked_count: number; message: string }> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<{ success: boolean; marked_count: number; message: string }>>(
+      "/admin/students/attendance/bulk-mark/",
+      payload
+    );
+    return data.data;
+  },
+
   getStudentAttendance: async (id: string): Promise<any> => {
     const { data } = await apiClient.get<ApiSuccessResponse<any>>(`/admin/students/${id}/attendance/`);
     return data.data;
@@ -90,7 +135,8 @@ export const adminApi = {
     id: string,
     payload: {
       date: string;
-      status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+      status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | string;
+      technology?: string;
       session_title?: string;
       remarks?: string;
     }
@@ -727,5 +773,61 @@ export interface AdminCertificateItem {
   issued_at: string;
   is_revoked: boolean;
   metadata: Record<string, any>;
+}
+
+export interface AdminAttendanceRecordItem {
+  id: string;
+  student_id: string;
+  student_id_number: string;
+  student_name: string;
+  student_email: string;
+  batch_code: string;
+  college_name: string;
+  course_opted: string;
+  date: string;
+  technology: string;
+  session_title: string;
+  status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | string;
+  remarks: string;
+  overall_attendance_pct: number;
+  created_at: string;
+}
+
+export interface AdminAttendanceOverviewData {
+  stats: {
+    total_students: number;
+    total_records: number;
+    present_count: number;
+    absent_count: number;
+    late_count: number;
+    attendance_rate: number;
+    target_date: string;
+  };
+  batches: string[];
+  technologies: string[];
+  records: AdminAttendanceRecordItem[];
+}
+
+export interface AdminScanQRResponse {
+  success: boolean;
+  message: string;
+  record: {
+    id: string;
+    date: string;
+    technology: string;
+    session_title: string;
+    status: string;
+    remarks: string;
+  };
+  student: {
+    id: string;
+    student_id_number: string;
+    full_name: string;
+    batch_code: string;
+    college_name: string;
+    course_name: string;
+    attendance_percentage: number;
+    current_streak_days: number;
+  };
 }
 

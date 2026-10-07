@@ -153,6 +153,7 @@ class AttendanceRecord(UUIDModel, TimeStampedModel):
     )
     date = models.DateField(db_index=True)
     session_title = models.CharField(max_length=200, default="Daily Training & Coding Lab")
+    technology = models.CharField(max_length=100, blank=True, default="Full Stack Development", db_index=True)
     status = models.CharField(
         max_length=20, choices=AttendanceStatus.choices, default=AttendanceStatus.PRESENT
     )

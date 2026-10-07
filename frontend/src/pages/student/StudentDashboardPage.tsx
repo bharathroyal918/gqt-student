@@ -39,10 +39,13 @@ import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { StreakHeatmap } from "../../components/dashboard/StreakHeatmap";
 import { UserAvatar } from "../../components/ui/UserAvatar";
+import { StudentAttendanceSection } from "../../components/student/StudentAttendanceSection";
+import { StudentQRCodeModal } from "../../components/student/StudentQRCodeModal";
 
 export const StudentDashboardPage: React.FC = () => {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<"submissions" | "tasks" | "achievements" | "notifications">("submissions");
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   // User-aware query key ensures zero crosstalk between student sessions
   const {
@@ -186,12 +189,15 @@ export const StudentDashboardPage: React.FC = () => {
               <span>{isFetching ? "Refetching..." : "Live Sync"}</span>
             </Button>
 
-            <Link to="/attendance">
-              <Button variant="outline" size="sm" className="flex items-center gap-1.5 border-brand-500/30 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30">
-                <QrCode className="h-3.5 w-3.5" />
-                <span>QR Attendance</span>
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsQRModalOpen(true)}
+              className="flex items-center gap-1.5 border-brand-500/30 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 shadow-sm"
+            >
+              <QrCode className="h-3.5 w-3.5" />
+              <span>My Attendance QR</span>
+            </Button>
 
             <Link to="/courses">
               <Button size="sm" className="flex items-center gap-1.5">
@@ -868,6 +874,17 @@ export const StudentDashboardPage: React.FC = () => {
           )}
         </AnimatePresence>
       </Card>
+
+      {/* =========================================================================
+          5. DAILY ATTENDANCE & TECHNOLOGY BREAKDOWN MODULE
+         ========================================================================= */}
+      <StudentAttendanceSection />
+
+      {/* Global QR Code Modal */}
+      <StudentQRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+      />
     </div>
   );
 };

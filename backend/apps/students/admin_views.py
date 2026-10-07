@@ -12,7 +12,9 @@ from apps.common.permissions import IsAdmin
 from apps.common.responses import api_success
 from apps.common.utils import get_client_ip
 from apps.students.admin_serializers import (
+    AdminScanStudentQRSerializer,
     AssignCoursesSerializer,
+    BulkMarkAttendanceSerializer,
     GrantAccessByEmailSerializer,
     MarkAttendanceSerializer,
     StudentAdminDetailSerializer,
@@ -307,6 +309,7 @@ class StudentAdminAttendanceView(APIView):
             student_id=str(pk),
             date=serializer.validated_data["date"],
             status=serializer.validated_data["status"],
+            technology=serializer.validated_data.get("technology", "Full Stack Development"),
             session_title=serializer.validated_data.get("session_title", "Daily Training & Coding Lab"),
             remarks=serializer.validated_data.get("remarks", ""),
             admin_user=request.user,
@@ -316,9 +319,104 @@ class StudentAdminAttendanceView(APIView):
             data={
                 "id": str(record.id),
                 "date": str(record.date),
+                "technology": record.technology,
                 "status": record.status,
                 "session_title": record.session_title,
             },
             message="Attendance recorded successfully.",
             status_code=status.HTTP_201_CREATED,
+        )
+
+
+class StudentAdminAttendanceOverviewView(APIView):
+    """Admin endpoint to inspect attendance across all students with multi-dimensional filtering."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        summary="Admin View Attendance Overview",
+        tags=["Admin Student Management"],
+    )
+    def get(self, request):
+        batch_code = request.query_params.get("batch_code")
+        technology = request.query_params.get("technology")
+        date_str = request.query_params.get("date")
+        status_filter = request.query_params.get("status")
+        search = request.query_params.get("search")
+
+        overview_data = StudentAdminService.get_attendance_overview(
+            batch_code=batch_code,
+            technology=technology,
+            date_str=date_str,
+            status_filter=status_filter,
+            search=search,
+        )
+        return api_success(
+            data=overview_data,
+            message="Attendance overview retrieved successfully.",
+        )
+
+
+class StudentAdminScanQRView(APIView):
+    """Admin scans student attendance QR code to record attendance instantly."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        request=AdminScanStudentQRSerializer,
+        summary="Admin Scan Student Attendance QR",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request):
+        serializer = AdminScanStudentQRSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip_address = get_client_ip(request)
+
+        result = StudentAdminService.scan_student_qr(
+            qr_data=serializer.validated_data["qr_data"],
+            session_title=serializer.validated_data.get("session_title"),
+            technology=serializer.validated_data.get("technology", "Full Stack Development"),
+            date=serializer.validated_data.get("date"),
+            status=serializer.validated_data.get("status", "PRESENT"),
+            remarks=serializer.validated_data.get("remarks"),
+            admin_user=request.user,
+            ip_address=ip_address,
+        )
+        return api_success(
+            data=result,
+            message=result["message"],
+            status_code=status.HTTP_200_OK,
+        )
+
+
+class StudentAdminBulkAttendanceView(APIView):
+    """Admin bulk marks attendance for a whole batch or multiple students."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        request=BulkMarkAttendanceSerializer,
+        summary="Admin Bulk Mark Batch Attendance",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request):
+        serializer = BulkMarkAttendanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip_address = get_client_ip(request)
+
+        result = StudentAdminService.bulk_mark_attendance(
+            batch_code=serializer.validated_data.get("batch_code"),
+            student_ids=serializer.validated_data.get("student_ids"),
+            date=serializer.validated_data.get("date"),
+            technology=serializer.validated_data.get("technology", "Full Stack Development"),
+            session_title=serializer.validated_data.get("session_title"),
+            status=serializer.validated_data.get("status", "PRESENT"),
+            remarks=serializer.validated_data.get("remarks"),
+            admin_user=request.user,
+            ip_address=ip_address,
+        )
+        return api_success(
+            data=result,
+            message=result["message"],
+            status_code=status.HTTP_200_OK,
         )

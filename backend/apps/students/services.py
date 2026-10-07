@@ -161,6 +161,7 @@ class StudentAdminService:
         session_title: str,
         remarks: str,
         admin_user: User,
+        technology: Optional[str] = None,
         ip_address: Optional[str] = None,
     ) -> AttendanceRecord:
         """Admin records daily session attendance for a student."""
@@ -169,9 +170,10 @@ class StudentAdminService:
         record, _ = AttendanceRecord.objects.update_or_create(
             student_profile=student,
             date=date,
+            session_title=session_title or "Daily Training & Coding Lab",
             defaults={
                 "status": status,
-                "session_title": session_title or "Daily Training & Coding Lab",
+                "technology": technology or "Full Stack Development",
                 "remarks": remarks or "",
             },
         )
@@ -194,9 +196,330 @@ class StudentAdminService:
             target_model="AttendanceRecord",
             target_id=str(record.id),
             ip_address=ip_address,
-            payload={"student_id": str(student.id), "date": str(date), "status": status},
+            payload={"student_id": str(student.id), "date": str(date), "status": status, "technology": technology},
         )
         return record
+
+    @classmethod
+    def get_attendance_overview(
+        cls,
+        batch_code: Optional[str] = None,
+        technology: Optional[str] = None,
+        date_str: Optional[str] = None,
+        status_filter: Optional[str] = None,
+        search: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Admin inspects attendance across all students with flexible multi-dimensional filters."""
+        from django.db.models import Count, Q, Avg
+
+        today = timezone.localdate()
+        target_date = today
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except Exception:
+                target_date = today
+
+        queryset = AttendanceRecord.objects.select_related("student_profile", "student_profile__user").all()
+
+        if batch_code and batch_code != "ALL":
+            queryset = queryset.filter(student_profile__batch_code__iexact=batch_code)
+
+        if technology and technology != "ALL":
+            queryset = queryset.filter(Q(technology__iexact=technology) | Q(session_title__icontains=technology))
+
+        if date_str:
+            queryset = queryset.filter(date=target_date)
+
+        if status_filter and status_filter != "ALL":
+            queryset = queryset.filter(status=status_filter.upper())
+
+        if search:
+            queryset = queryset.filter(
+                Q(student_profile__full_name__icontains=search)
+                | Q(student_profile__student_id_number__icontains=search)
+                | Q(student_profile__user__email__icontains=search)
+                | Q(student_profile__college_name__icontains=search)
+            )
+
+        # Retrieve distinct batches and technologies for filter dropdowns
+        all_batches = list(
+            StudentProfile.objects.values_list("batch_code", flat=True)
+            .distinct()
+            .order_by("batch_code")
+        )
+        all_technologies = [
+            "Full Stack Development",
+            "Python Full Stack",
+            "Java Core & Advanced",
+            "React & Frontend",
+            "SQL & Database Engineering",
+            "Data Structures & Algorithms",
+            "Core Aptitude & Soft Skills",
+        ]
+
+        # Calculate metrics for target date or overall selection
+        records_subset = queryset[:300]
+        total_students_in_batch = StudentProfile.objects.filter(
+            batch_code__iexact=batch_code
+        ).count() if (batch_code and batch_code != "ALL") else StudentProfile.objects.count()
+
+        present_count = queryset.filter(status=AttendanceRecord.AttendanceStatus.PRESENT).count()
+        absent_count = queryset.filter(status=AttendanceRecord.AttendanceStatus.ABSENT).count()
+        late_count = queryset.filter(status=AttendanceRecord.AttendanceStatus.LATE).count()
+        total_marked = queryset.count()
+        avg_percentage = (
+            round((present_count + late_count) / max(1, total_marked) * 100.0, 1)
+            if total_marked > 0
+            else 100.0
+        )
+
+        return {
+            "stats": {
+                "total_students": total_students_in_batch,
+                "total_records": total_marked,
+                "present_count": present_count,
+                "absent_count": absent_count,
+                "late_count": late_count,
+                "attendance_rate": avg_percentage,
+                "target_date": str(target_date),
+            },
+            "batches": all_batches,
+            "technologies": all_technologies,
+            "records": [
+                {
+                    "id": str(r.id),
+                    "student_id": str(r.student_profile.id),
+                    "student_id_number": r.student_profile.student_id_number,
+                    "student_name": r.student_profile.full_name,
+                    "student_email": r.student_profile.user.email if r.student_profile.user else "",
+                    "batch_code": r.student_profile.batch_code,
+                    "college_name": r.student_profile.college_name,
+                    "course_opted": r.student_profile.course_opted,
+                    "date": str(r.date),
+                    "technology": r.technology or "Full Stack Development",
+                    "session_title": r.session_title,
+                    "status": r.status,
+                    "remarks": r.remarks,
+                    "overall_attendance_pct": float(r.student_profile.attendance_percentage),
+                    "created_at": r.created_at.isoformat(),
+                }
+                for r in records_subset
+            ],
+        }
+
+    @classmethod
+    @transaction.atomic
+    def scan_student_qr(
+        cls,
+        qr_data: str,
+        session_title: Optional[str] = None,
+        technology: Optional[str] = None,
+        date=None,
+        status: str = "PRESENT",
+        remarks: Optional[str] = None,
+        admin_user: Optional[User] = None,
+        ip_address: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Admin scans student attendance QR code at classroom terminal/door.
+        
+        Extracts student credentials from QR:
+        1. Validates student profile existence.
+        2. Course registration check: if not registered for any course, rejects with:
+           'Student is not registered yet for any course. Please contact administrator to enroll in the course.'
+        3. Marks attendance as PRESENT (or requested status).
+        4. Updates real-time streak and attendance telemetry.
+        """
+        import json
+        if not qr_data or not qr_data.strip():
+            raise DomainException("Invalid QR payload provided.", status_code=400)
+
+        cleaned_qr = qr_data.strip()
+        student_id_number = None
+
+        # Parse QR formats (JSON, GQT_ATTENDANCE:..., or direct ID number)
+        if cleaned_qr.startswith("{") and cleaned_qr.endswith("}"):
+            try:
+                payload = json.loads(cleaned_qr)
+                student_id_number = payload.get("student_id") or payload.get("student_id_number") or payload.get("id")
+            except Exception:
+                pass
+        elif "GQT_ATTENDANCE:" in cleaned_qr or "STUDENT_ATTENDANCE_ID" in cleaned_qr:
+            parts = cleaned_qr.split(":")
+            if len(parts) >= 2:
+                student_id_number = parts[1].strip()
+        elif ":" in cleaned_qr:
+            parts = cleaned_qr.split(":")
+            student_id_number = parts[0].strip()
+        else:
+            student_id_number = cleaned_qr
+
+        # Locate StudentProfile
+        student = None
+        if student_id_number:
+            student = StudentProfile.objects.filter(
+                Q(student_id_number__iexact=student_id_number)
+                | Q(user__email__iexact=student_id_number)
+            ).first()
+
+        if not student:
+            # Try UUID lookup
+            try:
+                student = StudentProfile.objects.filter(id=student_id_number).first()
+            except Exception:
+                pass
+
+        if not student:
+            raise DomainException(
+                f"No student matching QR identifier '{student_id_number or cleaned_qr[:30]}' found.",
+                status_code=404,
+            )
+
+        # Check course registration
+        active_enrollments = CourseEnrollment.objects.filter(
+            student=student, status=CourseEnrollment.EnrollmentStatus.ACTIVE
+        ).select_related("course")
+
+        has_active_courses = active_enrollments.exists() or bool(student.course_opted and student.course_opted.strip())
+        if not has_active_courses:
+            raise DomainException(
+                "You are not registered yet for any course. Please contact administrator to enroll in the course.",
+                status_code=400,
+            )
+
+        target_date = date or timezone.localdate()
+        target_technology = technology or "Full Stack Development"
+        target_session = session_title or f"{target_technology} Class Session"
+
+        # Update or create AttendanceRecord
+        record, created = AttendanceRecord.objects.update_or_create(
+            student_profile=student,
+            date=target_date,
+            session_title=target_session,
+            defaults={
+                "technology": target_technology,
+                "status": status,
+                "remarks": remarks or "Verified via Instructor QR Terminal",
+            },
+        )
+
+        # Recalculate totals
+        total = AttendanceRecord.objects.filter(student_profile=student).count()
+        attended = AttendanceRecord.objects.filter(
+            student_profile=student,
+            status__in=[AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE],
+        ).count()
+
+        student.total_classes = max(total, student.total_classes)
+        student.attended_classes = attended
+        student.recalculate_attendance()
+        student.save(update_fields=["total_classes", "attended_classes", "attendance_percentage", "updated_at"])
+
+        # Update learning streak if marked PRESENT/LATE
+        if status in [AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE]:
+            student.record_activity_and_update_streak(activity_date=target_date)
+
+        AuditLog.objects.create(
+            actor=admin_user,
+            action="QR_ATTENDANCE_SCANNED",
+            target_model="AttendanceRecord",
+            target_id=str(record.id),
+            ip_address=ip_address,
+            payload={
+                "student_id": str(student.id),
+                "student_name": student.full_name,
+                "date": str(target_date),
+                "status": status,
+                "technology": target_technology,
+            },
+        )
+
+        course_name = active_enrollments.first().course.title if active_enrollments.exists() else (student.course_opted or "Full Stack Track")
+
+        return {
+            "success": True,
+            "message": f"Attendance for {student.full_name} ({student.student_id_number}) recorded as {status} for {target_technology}.",
+            "record": {
+                "id": str(record.id),
+                "date": str(record.date),
+                "technology": record.technology,
+                "session_title": record.session_title,
+                "status": record.status,
+                "remarks": record.remarks,
+            },
+            "student": {
+                "id": str(student.id),
+                "student_id_number": student.student_id_number,
+                "full_name": student.full_name,
+                "batch_code": student.batch_code,
+                "college_name": student.college_name,
+                "course_name": course_name,
+                "attendance_percentage": float(student.attendance_percentage),
+                "current_streak_days": student.current_streak_days,
+            },
+        }
+
+    @classmethod
+    @transaction.atomic
+    def bulk_mark_attendance(
+        cls,
+        batch_code: Optional[str] = None,
+        student_ids: Optional[List[str]] = None,
+        date=None,
+        session_title: Optional[str] = None,
+        technology: Optional[str] = None,
+        status: str = "PRESENT",
+        remarks: Optional[str] = None,
+        admin_user: Optional[User] = None,
+        ip_address: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Bulk mark attendance for an entire batch or list of students."""
+        target_date = date or timezone.localdate()
+        target_technology = technology or "Full Stack Development"
+        target_session = session_title or f"{target_technology} Batch Session"
+
+        students_qs = StudentProfile.objects.all()
+        if batch_code and batch_code != "ALL":
+            students_qs = students_qs.filter(batch_code__iexact=batch_code)
+        elif student_ids:
+            students_qs = students_qs.filter(id__in=student_ids)
+        else:
+            raise DomainException("Please specify either a batch_code or a list of student IDs.", status_code=400)
+
+        students = list(students_qs)
+        marked_count = 0
+
+        for student in students:
+            AttendanceRecord.objects.update_or_create(
+                student_profile=student,
+                date=target_date,
+                session_title=target_session,
+                defaults={
+                    "technology": target_technology,
+                    "status": status,
+                    "remarks": remarks or "Bulk recorded by Admin",
+                },
+            )
+            # Recalculate totals
+            total = AttendanceRecord.objects.filter(student_profile=student).count()
+            attended = AttendanceRecord.objects.filter(
+                student_profile=student,
+                status__in=[AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE],
+            ).count()
+            student.total_classes = max(total, student.total_classes)
+            student.attended_classes = attended
+            student.recalculate_attendance()
+            student.save(update_fields=["total_classes", "attended_classes", "attendance_percentage", "updated_at"])
+
+            if status in [AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE]:
+                student.record_activity_and_update_streak(activity_date=target_date)
+            marked_count += 1
+
+        return {
+            "success": True,
+            "marked_count": marked_count,
+            "message": f"Successfully updated attendance for {marked_count} students as {status}.",
+        }
 
     @classmethod
     def get_student_attendance(cls, student_id: str) -> Dict[str, Any]:
@@ -212,6 +535,7 @@ class StudentAdminService:
                 {
                     "id": str(r.id),
                     "date": str(r.date),
+                    "technology": r.technology or "Full Stack Development",
                     "session_title": r.session_title,
                     "status": r.status,
                     "remarks": r.remarks,
@@ -969,7 +1293,46 @@ class StudentDashboardService:
         has_enrollments = len(enrolled_courses) > 0 or bool(profile.course_opted and profile.course_opted.strip())
         primary_course = enrolled_courses[0] if enrolled_courses else (profile.course_opted or "Not Enrolled")
 
-        records = AttendanceRecord.objects.filter(student_profile=profile).order_by("-date", "-created_at")[:50]
+        records = AttendanceRecord.objects.filter(student_profile=profile).order_by("-date", "-created_at")[:60]
+
+        # Aggregate per-technology metrics
+        tech_stats: Dict[str, Dict[str, Any]] = {}
+        all_technologies = [
+            "All Technologies",
+            "Full Stack Development",
+            "Python Full Stack",
+            "Java Core & Advanced",
+            "React & Frontend",
+            "SQL & Database Engineering",
+            "Data Structures & Algorithms",
+        ]
+
+        for r in records:
+            tech = r.technology or "Full Stack Development"
+            if tech not in tech_stats:
+                tech_stats[tech] = {"total": 0, "present": 0, "absent": 0, "late": 0}
+            tech_stats[tech]["total"] += 1
+            if r.status == AttendanceRecord.AttendanceStatus.PRESENT:
+                tech_stats[tech]["present"] += 1
+            elif r.status == AttendanceRecord.AttendanceStatus.ABSENT:
+                tech_stats[tech]["absent"] += 1
+            elif r.status == AttendanceRecord.AttendanceStatus.LATE:
+                tech_stats[tech]["late"] += 1
+
+        # Format technology summary
+        technologies_summary = []
+        for tech, s in tech_stats.items():
+            tot = s["total"]
+            pres = s["present"] + s["late"]
+            pct = round((pres / max(1, tot)) * 100.0, 1)
+            technologies_summary.append({
+                "technology": tech,
+                "total_sessions": tot,
+                "present_count": s["present"],
+                "absent_count": s["absent"],
+                "late_count": s["late"],
+                "attendance_percentage": pct,
+            })
         
         # Build student QR identification payload
         student_qr_payload = {
@@ -998,10 +1361,13 @@ class StudentDashboardService:
             "attended_classes": profile.attended_classes,
             "missed_classes": max(0, profile.total_classes - profile.attended_classes),
             "current_streak_days": profile.current_streak_days,
+            "technologies": all_technologies,
+            "technologies_summary": technologies_summary,
             "records": [
                 {
                     "id": str(r.id),
                     "date": str(r.date),
+                    "technology": r.technology or "Full Stack Development",
                     "session_title": r.session_title,
                     "status": r.status,
                     "remarks": r.remarks,
