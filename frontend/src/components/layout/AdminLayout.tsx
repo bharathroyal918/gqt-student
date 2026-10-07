@@ -7,7 +7,7 @@ export const AdminLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-surface-950 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-surface-950 font-sans text-slate-900 dark:text-slate-100">
       {/* Sidebar */}
       <AdminSidebar
         isOpen={isMobileSidebarOpen}

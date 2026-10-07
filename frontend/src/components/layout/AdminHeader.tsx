@@ -29,7 +29,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/90 px-4 sm:px-6 backdrop-blur-md transition-colors duration-200">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/90 px-4 sm:px-6 backdrop-blur-md">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMobileSidebar}

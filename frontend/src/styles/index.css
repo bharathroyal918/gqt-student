@@ -39,6 +39,39 @@
   }
 }
 
+/* ==========================================================================
+   Coordinated Theme Transition System
+   - Smooth, unified 250ms transition for all theme-dependent visual properties
+   - Animates background-color, border-color, color, fill, stroke, box-shadow
+   - Excludes layout and geometry properties (width, height, margin, padding, transform)
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, text-decoration-color;
+  transition-duration: 250ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Keep raster images, video, and canvas visually stable */
+img,
+picture,
+video,
+canvas {
+  transition-property: none;
+}
+
+/* Accessibility: Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 /* Light mode default ambient background */
 body {
   background-color: #f8fafc;

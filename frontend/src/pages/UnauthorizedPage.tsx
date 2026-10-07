@@ -19,7 +19,7 @@ export const UnauthorizedPage: React.FC = () => {
   const isAdmin = user?.role === "ADMIN";
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 text-center font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 text-center font-sans text-slate-900 dark:text-slate-100">
       {/* Background ambient glow */}
       <div className="pointer-events-none fixed inset-0 flex items-center justify-center">
         <div className="h-[450px] w-[450px] rounded-full bg-rose-500/10 blur-[130px]" />

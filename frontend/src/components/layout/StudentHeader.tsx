@@ -74,7 +74,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/90 px-4 sm:px-6 lg:px-8 backdrop-blur-md z-30 transition-colors duration-200">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/90 px-4 sm:px-6 lg:px-8 backdrop-blur-md z-30">
       {/* Left: Mobile Toggle & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button

@@ -186,7 +186,7 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 py-12 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 py-12 font-sans text-slate-900 dark:text-slate-100">
       {/* Background glow */}
       <div className="pointer-events-none fixed inset-0 flex items-center justify-center">
         <div className="h-[500px] w-[500px] rounded-full bg-brand-500/10 blur-[130px]" />

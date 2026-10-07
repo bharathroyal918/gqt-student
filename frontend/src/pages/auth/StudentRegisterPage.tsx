@@ -129,7 +129,7 @@ export const StudentRegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 py-12 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 py-12 font-sans text-slate-900 dark:text-slate-100">
       {/* Ambient background glow */}
       <div className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden">
         <div className="h-[600px] w-[600px] rounded-full bg-brand-500/10 blur-[140px]" />
