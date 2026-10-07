@@ -211,7 +211,7 @@ export const StudentLoginPage: React.FC = () => {
         {authMethod === "otp" && (
           <>
             {otpStep === "request" ? (
-              <form onSubmit={handleSubmitPhone(onSendOtp)} className="space-y-4">
+              <form onSubmit={handleSubmitPhone(onSendOtp)} className="space-y-4" method="POST">
                 <FormField
                   label="Registered Mobile Number"
                   error={phoneErrors.mobile_number?.message}
@@ -222,6 +222,7 @@ export const StudentLoginPage: React.FC = () => {
                     <Input
                       {...registerPhone("mobile_number")}
                       type="tel"
+                      autoComplete="tel"
                       placeholder="+91 98765 43210"
                       className="pl-10"
                     />
@@ -238,7 +239,7 @@ export const StudentLoginPage: React.FC = () => {
                 </Button>
               </form>
             ) : (
-              <form onSubmit={handleSubmitOtp(onVerifyOtp)} className="space-y-4">
+              <form onSubmit={handleSubmitOtp(onVerifyOtp)} className="space-y-4" method="POST">
                 <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-950/60 p-3 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
                   <span>Code sent to: <span className="font-mono font-semibold text-brand-600 dark:text-brand-400">{targetPhone}</span></span>
                   <button
@@ -260,6 +261,7 @@ export const StudentLoginPage: React.FC = () => {
                     <Input
                       {...registerOtp("otp")}
                       type="text"
+                      autoComplete="one-time-code"
                       maxLength={6}
                       placeholder="••••••"
                       className="pl-10 text-center tracking-[0.4em] font-mono font-bold text-lg"
@@ -279,7 +281,7 @@ export const StudentLoginPage: React.FC = () => {
 
         {/* Option 2: Email & Password */}
         {authMethod === "email" && (
-          <form onSubmit={handleSubmitEmail(onEmailLogin)} className="space-y-4">
+          <form onSubmit={handleSubmitEmail(onEmailLogin)} className="space-y-4" method="POST">
             <FormField
               label="Student Email"
               error={emailErrors.email?.message}
@@ -290,7 +292,8 @@ export const StudentLoginPage: React.FC = () => {
                 <Input
                   {...registerEmail("email")}
                   type="email"
-                  placeholder="student@gqt.edu"
+                  autoComplete="username"
+                  placeholder="student@example.com"
                   className="pl-10"
                 />
               </div>
@@ -306,7 +309,8 @@ export const StudentLoginPage: React.FC = () => {
                 <Input
                   {...registerEmail("password")}
                   type="password"
-                  placeholder="••••••••••••"
+                  autoComplete="current-password"
+                  placeholder="Enter your account password"
                   className="pl-10"
                 />
               </div>
@@ -329,17 +333,11 @@ export const StudentLoginPage: React.FC = () => {
         )}
 
         {/* Footer Notice & Registration Link */}
-        <div className="mt-8 border-t border-slate-200 dark:border-surface-800 pt-5 space-y-3 text-center">
+        <div className="mt-8 border-t border-slate-200 dark:border-surface-800 pt-5 text-center">
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            Don't have an account?{" "}
+            New to GQT Student Portal?{" "}
             <Link to="/register" className="text-brand-600 dark:text-brand-400 hover:underline font-semibold">
               Register as a Student &rarr;
-            </Link>
-          </p>
-          <p className="text-xs text-slate-500">
-            Staff or Faculty Member?{" "}
-            <Link to="/admin/login" className="text-slate-700 dark:text-slate-300 hover:underline font-medium">
-              Admin Login Portal
             </Link>
           </p>
         </div>

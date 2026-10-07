@@ -3,9 +3,9 @@ import { Outlet, NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   BookOpen,
-  Code2,
   CalendarCheck,
   Sparkles,
+  QrCode,
 } from "lucide-react";
 import { StudentSidebar } from "./StudentSidebar";
 import { StudentHeader } from "./StudentHeader";
@@ -16,8 +16,8 @@ export const StudentLayout: React.FC = () => {
   // Quick mobile bottom bar items for high-frequency student tasks
   const mobileBarItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "QR Scan", href: "/attendance", icon: QrCode },
     { name: "Courses", href: "/courses", icon: BookOpen },
-    { name: "Assignments", href: "/assignments", icon: Code2 },
     { name: "Tasks", href: "/tasks", icon: CalendarCheck },
     { name: "Help AI", href: "/help-ai", icon: Sparkles },
   ];

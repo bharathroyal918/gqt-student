@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Clock,
   Star,
+  QrCode,
 } from "lucide-react";
 import {
   AreaChart,
@@ -184,6 +185,13 @@ export const StudentDashboardPage: React.FC = () => {
               <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin text-brand-500" : ""}`} />
               <span>{isFetching ? "Refetching..." : "Live Sync"}</span>
             </Button>
+
+            <Link to="/attendance">
+              <Button variant="outline" size="sm" className="flex items-center gap-1.5 border-brand-500/30 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30">
+                <QrCode className="h-3.5 w-3.5" />
+                <span>QR Attendance</span>
+              </Button>
+            </Link>
 
             <Link to="/courses">
               <Button size="sm" className="flex items-center gap-1.5">

@@ -253,7 +253,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmitStep1(handleRequestOtp)} className="space-y-4">
+              <form onSubmit={handleSubmitStep1(handleRequestOtp)} className="space-y-4" method="POST">
                 <FormField
                   label="Registered Email or Mobile"
                   error={errorsStep1.identifier?.message}
@@ -263,7 +263,8 @@ export const ForgotPasswordPage: React.FC = () => {
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                     <Input
                       {...registerStep1("identifier")}
-                      placeholder="student@gqt.edu or +91 98765..."
+                      autoComplete="username"
+                      placeholder="e.g. your-email@domain.com or +91 98765..."
                       className="pl-10"
                       error={!!errorsStep1.identifier}
                       disabled={isLoading}
@@ -295,7 +296,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmitStep2(handleVerifyOtp)} className="space-y-4">
+              <form onSubmit={handleSubmitStep2(handleVerifyOtp)} className="space-y-4" method="POST">
                 <FormField
                   label="One-Time Password (OTP)"
                   error={errorsStep2.otp?.message}
@@ -305,6 +306,7 @@ export const ForgotPasswordPage: React.FC = () => {
                     <Input
                       {...registerStep2("otp")}
                       type="text"
+                      autoComplete="one-time-code"
                       maxLength={6}
                       placeholder="••••••"
                       className="text-center tracking-[0.4em] font-mono font-bold text-xl h-12"
@@ -362,7 +364,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmitStep3(handleResetPassword)} className="space-y-4">
+              <form onSubmit={handleSubmitStep3(handleResetPassword)} className="space-y-4" method="POST">
                 <FormField
                   label="New Password"
                   error={errorsStep3.new_password?.message}
@@ -373,6 +375,7 @@ export const ForgotPasswordPage: React.FC = () => {
                     <Input
                       {...registerStep3("new_password")}
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••••••"
                       className="pl-10"
                       error={!!errorsStep3.new_password}
@@ -391,6 +394,7 @@ export const ForgotPasswordPage: React.FC = () => {
                     <Input
                       {...registerStep3("confirm_password")}
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••••••"
                       className="pl-10"
                       error={!!errorsStep3.confirm_password}
@@ -420,16 +424,10 @@ export const ForgotPasswordPage: React.FC = () => {
                 Your credentials have been securely updated in the database. You can now log in to the portal with your new password.
               </p>
 
-              <div className="mt-8 space-y-3">
+              <div className="mt-8">
                 <Link to="/login" className="block">
                   <Button className="w-full py-2.5">
                     Sign In to Student Portal
-                  </Button>
-                </Link>
-
-                <Link to="/admin/login" className="block">
-                  <Button variant="secondary" className="w-full py-2.5">
-                    Sign In to Admin Portal
                   </Button>
                 </Link>
               </div>

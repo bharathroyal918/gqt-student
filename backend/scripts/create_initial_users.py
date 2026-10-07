@@ -20,9 +20,9 @@ def create_credentials():
     print("Connecting to Supabase PostgreSQL database...", flush=True)
 
     # 1. Admin Account
-    admin_email = "admin@gqt.edu"
-    admin_pass = "AdminPassword@123"
-    admin_mobile = "+919876543210"
+    admin_email = os.environ.get("INITIAL_ADMIN_EMAIL", "admin@gqt.edu")
+    admin_pass = os.environ.get("INITIAL_ADMIN_PASSWORD")
+    admin_mobile = os.environ.get("INITIAL_ADMIN_MOBILE", "+919876543210")
 
     print("Creating/updating admin user...", flush=True)
     admin_user, created = User.objects.get_or_create(
@@ -36,7 +36,8 @@ def create_credentials():
             "is_superuser": True,
         }
     )
-    admin_user.set_password(admin_pass)
+    if admin_pass:
+        admin_user.set_password(admin_pass)
     admin_user.role = User.RoleChoices.ADMIN
     admin_user.is_active = True
     admin_user.is_staff = True
@@ -56,16 +57,12 @@ def create_credentials():
     admin_profile.can_manage_curriculum = True
     admin_profile.save()
 
-    print(f"[{'CREATED' if created else 'UPDATED'}] Admin Credentials:", flush=True)
-    print(f"   Email:    {admin_email}", flush=True)
-    print(f"   Password: {admin_pass}", flush=True)
-    print(f"   Role:     ADMIN (Superuser & Staff)", flush=True)
-    print(f"   Mobile:   {admin_mobile}\n", flush=True)
+    print(f"[{'CREATED' if created else 'UPDATED'}] Admin User: {admin_email}", flush=True)
 
     # 2. Student Account
-    student_email = "student@gqt.edu"
-    student_pass = "StudentPassword@123"
-    student_mobile = "+919876543211"
+    student_email = os.environ.get("INITIAL_STUDENT_EMAIL", "student@gqt.edu")
+    student_pass = os.environ.get("INITIAL_STUDENT_PASSWORD")
+    student_mobile = os.environ.get("INITIAL_STUDENT_MOBILE", "+919876543211")
 
     print("Creating/updating student user...", flush=True)
     student_user, created_student = User.objects.get_or_create(
@@ -79,7 +76,8 @@ def create_credentials():
             "is_superuser": False,
         }
     )
-    student_user.set_password(student_pass)
+    if student_pass:
+        student_user.set_password(student_pass)
     student_user.role = User.RoleChoices.STUDENT
     student_user.is_active = True
     student_user.onboarding_status = User.OnboardingStatusChoices.ACTIVE
@@ -102,16 +100,13 @@ def create_credentials():
     student_profile.batch_code = "BATCH-2026-A"
     student_profile.save()
 
-    print(f"[{'CREATED' if created_student else 'UPDATED'}] Student Credentials:", flush=True)
-    print(f"   Email:      {student_email}", flush=True)
-    print(f"   Password:   {student_pass}", flush=True)
-    print(f"   Role:       STUDENT", flush=True)
+    print(f"[{'CREATED' if created_student else 'UPDATED'}] Student User: {student_email}", flush=True)
     print(f"   Student ID: {student_profile.student_id_number}", flush=True)
     print(f"   Full Name:  {student_profile.full_name}", flush=True)
     print(f"   Batch:      {student_profile.batch_code}", flush=True)
     print(f"   Mobile:     {student_mobile}\n", flush=True)
 
-    print(">>> All credentials successfully stored in Supabase PostgreSQL database! <<<", flush=True)
+    print(">>> Accounts provisioned successfully in database! <<<", flush=True)
 
 if __name__ == "__main__":
     create_credentials()

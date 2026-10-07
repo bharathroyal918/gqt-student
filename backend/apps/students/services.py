@@ -955,17 +955,49 @@ class StudentDashboardService:
 
     @classmethod
     def get_student_attendance(cls, user: User) -> Dict[str, Any]:
-        """Retrieve authenticated student's attendance records and percentage."""
+        """Retrieve authenticated student's attendance records, profile details, and personal QR token."""
+        import json
         profile = StudentProfile.objects.filter(user=user).first()
         if not profile:
             raise DomainException("Student profile not found.", status_code=404)
 
-        records = AttendanceRecord.objects.filter(student_profile=profile).order_by("-date")[:50]
+        active_enrollments = CourseEnrollment.objects.filter(
+            student=profile, status=CourseEnrollment.EnrollmentStatus.ACTIVE
+        ).select_related("course")
+        
+        enrolled_courses = [e.course.title for e in active_enrollments]
+        has_enrollments = len(enrolled_courses) > 0 or bool(profile.course_opted and profile.course_opted.strip())
+        primary_course = enrolled_courses[0] if enrolled_courses else (profile.course_opted or "Not Enrolled")
+
+        records = AttendanceRecord.objects.filter(student_profile=profile).order_by("-date", "-created_at")[:50]
+        
+        # Build student QR identification payload
+        student_qr_payload = {
+            "type": "STUDENT_ATTENDANCE_ID",
+            "student_id": profile.student_id_number,
+            "full_name": profile.full_name,
+            "batch_code": profile.batch_code,
+            "course": primary_course,
+            "college": profile.college_name,
+            "email": user.email,
+        }
+
         return {
+            "student": {
+                "full_name": profile.full_name,
+                "student_id": profile.student_id_number,
+                "batch_code": profile.batch_code,
+                "course_name": primary_course,
+                "college_name": profile.college_name,
+                "has_enrollments": has_enrollments,
+                "enrolled_courses": enrolled_courses,
+            },
+            "student_qr_data": json.dumps(student_qr_payload),
             "attendance_percentage": float(profile.attendance_percentage),
             "total_classes": profile.total_classes,
             "attended_classes": profile.attended_classes,
             "missed_classes": max(0, profile.total_classes - profile.attended_classes),
+            "current_streak_days": profile.current_streak_days,
             "records": [
                 {
                     "id": str(r.id),
@@ -977,5 +1009,119 @@ class StudentDashboardService:
                 }
                 for r in records
             ],
+        }
+
+    @classmethod
+    @transaction.atomic
+    def mark_qr_attendance(
+        cls, user: User, qr_data: str, session_code: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Scan and record QR Code attendance for enrolled students.
+        
+        Validates:
+        1. Student profile existence.
+        2. Course registration: Verifies that student is registered in at least one course.
+           If NOT registered, raises:
+           'You are not registered yet for any course. Please contact administrator to enroll in the course.'
+        3. Parses QR code payload.
+        4. Marks attendance as PRESENT idempotently for the session date.
+        5. Updates real-time streak and telemetry.
+        """
+        import json
+        profile = StudentProfile.objects.filter(user=user).first()
+        if not profile:
+            raise DomainException("Student profile not found.", status_code=404)
+
+        # Check course registration
+        active_enrollments = CourseEnrollment.objects.filter(
+            student=profile, status=CourseEnrollment.EnrollmentStatus.ACTIVE
+        ).select_related("course")
+
+        has_active_courses = active_enrollments.exists() or (bool(profile.course_opted) and profile.course_opted.strip() != "")
+
+        if not has_active_courses:
+            raise DomainException(
+                "You are not registered yet for any course. Please contact administrator to enroll in the course.",
+                status_code=400,
+            )
+
+        course_name = active_enrollments.first().course.title if active_enrollments.exists() else (profile.course_opted or "General Track")
+        session_title = "Daily Training & Coding Lab"
+
+        raw_qr = (qr_data or session_code or "").strip()
+        if raw_qr:
+            try:
+                if raw_qr.startswith("{") and raw_qr.endswith("}"):
+                    parsed = json.loads(raw_qr)
+                    session_title = parsed.get("session_title") or parsed.get("title") or parsed.get("name") or session_title
+                    if "course_name" in parsed:
+                        course_name = parsed["course_name"]
+                elif ":" in raw_qr:
+                    parts = raw_qr.split(":", 1)
+                    if len(parts) == 2 and parts[1].strip():
+                        session_title = parts[1].strip()
+                else:
+                    session_title = raw_qr
+            except Exception:
+                session_title = raw_qr[:60]
+
+        today = timezone.localdate()
+        now = timezone.now()
+
+        # Check if already marked today for this specific session
+        existing = AttendanceRecord.objects.filter(
+            student_profile=profile,
+            date=today,
+            session_title=session_title,
+        ).first()
+
+        is_already_marked = False
+        if existing:
+            is_already_marked = True
+            attendance_record = existing
+            message = f"Attendance already recorded as {existing.status} for today's session."
+        else:
+            attendance_record = AttendanceRecord.objects.create(
+                student_profile=profile,
+                date=today,
+                session_title=session_title,
+                status=AttendanceRecord.AttendanceStatus.PRESENT,
+                remarks="Verified via QR Code Scanner",
+            )
+            profile.attended_classes = (profile.attended_classes or 0) + 1
+            if (profile.total_classes or 0) < profile.attended_classes:
+                profile.total_classes = profile.attended_classes
+            profile.recalculate_attendance()
+            profile.save(update_fields=["attended_classes", "total_classes", "attendance_percentage", "updated_at"])
+
+            # Increment learning activity streak
+            profile.record_activity_and_update_streak(activity_date=today)
+            message = "Attendance marked successfully! Marked as PRESENT."
+
+        return {
+            "success": True,
+            "message": message,
+            "is_already_marked": is_already_marked,
+            "attendance": {
+                "id": str(attendance_record.id),
+                "date": str(attendance_record.date),
+                "session_title": attendance_record.session_title,
+                "status": attendance_record.status,
+                "remarks": attendance_record.remarks,
+                "timestamp": now.strftime("%I:%M %p, %d %b %Y"),
+            },
+            "student": {
+                "full_name": profile.full_name,
+                "student_id": profile.student_id_number,
+                "batch_code": profile.batch_code,
+                "course_name": course_name,
+                "college_name": profile.college_name,
+            },
+            "stats": {
+                "attendance_percentage": float(profile.attendance_percentage),
+                "attended_classes": profile.attended_classes,
+                "total_classes": profile.total_classes,
+                "streak_days": profile.current_streak_days,
+            },
         }
 

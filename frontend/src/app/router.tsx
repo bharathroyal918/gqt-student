@@ -114,6 +114,11 @@ const StudentPlacementsPage = lazy(() =>
     default: m.StudentPlacementsPage,
   }))
 );
+const StudentAttendancePage = lazy(() =>
+  import("../pages/student/StudentAttendancePage").then((m) => ({
+    default: m.StudentAttendancePage,
+  }))
+);
 
 // Admin Portal Pages (Lazy)
 const DashboardPage = lazy(() =>
@@ -350,6 +355,14 @@ export const router = createBrowserRouter([
               {
                 path: "/placements",
                 element: withSuspense(StudentPlacementsPage),
+              },
+              {
+                path: "/attendance",
+                element: withSuspense(StudentAttendancePage),
+              },
+              {
+                path: "/qr-attendance",
+                element: withSuspense(StudentAttendancePage),
               },
               {
                 path: "/contact",

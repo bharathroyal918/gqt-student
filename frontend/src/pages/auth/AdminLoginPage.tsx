@@ -103,14 +103,15 @@ export const AdminLoginPage: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" method="POST">
             <FormField label="Admin Email" error={errors.email?.message} required>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
                 <Input
                   {...register("email")}
                   type="email"
-                  placeholder="admin@gqt.edu"
+                  autoComplete="username"
+                  placeholder="admin@institution.edu"
                   className="pl-10"
                   error={!!errors.email}
                   disabled={isLoading}
@@ -124,7 +125,8 @@ export const AdminLoginPage: React.FC = () => {
                 <Input
                   {...register("password")}
                   type="password"
-                  placeholder="••••••••••••"
+                  autoComplete="current-password"
+                  placeholder="Enter administrator password"
                   className="pl-10"
                   error={!!errors.password}
                   disabled={isLoading}

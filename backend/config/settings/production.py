@@ -13,7 +13,7 @@ if raw_db_url:
         "default": env.db_url_config(raw_db_url)
     }
     if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
-        DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=0)
+        DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=600)
         DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
         if "OPTIONS" not in DATABASES["default"]:
             DATABASES["default"]["OPTIONS"] = {}

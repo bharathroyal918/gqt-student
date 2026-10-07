@@ -170,14 +170,15 @@ export const StudentRegisterPage: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" method="POST">
             {/* Full Name */}
             <FormField label="Full Name" error={errors.full_name?.message} required>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                 <Input
                   {...register("full_name")}
-                  placeholder="e.g. John Doe"
+                  autoComplete="name"
+                  placeholder="e.g. Rahul Sharma"
                   className="pl-10"
                   error={!!errors.full_name}
                   disabled={isSubmitting}
@@ -193,6 +194,7 @@ export const StudentRegisterPage: React.FC = () => {
                   <Input
                     {...register("email")}
                     type="email"
+                    autoComplete="email"
                     placeholder="student@example.com"
                     className="pl-10"
                     error={!!errors.email}
@@ -207,6 +209,7 @@ export const StudentRegisterPage: React.FC = () => {
                   <Input
                     {...register("mobile_number")}
                     type="tel"
+                    autoComplete="tel"
                     placeholder="+91 98765 43210"
                     className="pl-10"
                     error={!!errors.mobile_number}
@@ -223,6 +226,7 @@ export const StudentRegisterPage: React.FC = () => {
                   <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <Input
                     {...register("college_name")}
+                    autoComplete="organization"
                     placeholder="e.g. Global Institute of Tech"
                     className="pl-10"
                     error={!!errors.college_name}
@@ -253,6 +257,7 @@ export const StudentRegisterPage: React.FC = () => {
                   <Input
                     {...register("password")}
                     type="password"
+                    autoComplete="new-password"
                     placeholder="Min 8 chars, 1 num"
                     className="pl-10"
                     error={!!errors.password}
@@ -267,6 +272,7 @@ export const StudentRegisterPage: React.FC = () => {
                   <Input
                     {...register("confirm_password")}
                     type="password"
+                    autoComplete="new-password"
                     placeholder="Re-enter password"
                     className="pl-10"
                     error={!!errors.confirm_password}
@@ -333,23 +339,14 @@ export const StudentRegisterPage: React.FC = () => {
           </form>
 
           {/* Links Footer */}
-          <div className="mt-8 border-t border-slate-200 dark:border-surface-800 pt-6 space-y-3 text-center">
+          <div className="mt-8 border-t border-slate-200 dark:border-surface-800 pt-6 text-center">
             <p className="text-xs text-slate-600 dark:text-slate-400">
               Already have an account?{" "}
               <Link
                 to="/login"
                 className="font-semibold text-brand-600 dark:text-brand-400 hover:underline"
               >
-                Sign In to Student Portal
-              </Link>
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Instructor or Administrator?{" "}
-              <Link
-                to="/admin/login"
-                className="font-medium text-slate-700 dark:text-slate-300 hover:underline"
-              >
-                Go to Admin Portal &rarr;
+                Sign In to Student Portal &rarr;
               </Link>
             </p>
           </div>

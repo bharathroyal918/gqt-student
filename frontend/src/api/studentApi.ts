@@ -696,6 +696,27 @@ export const studentApi = {
   },
 
   // --------------------------------------------------------------------------
+  // QR ATTENDANCE & TELEMETRY
+  // --------------------------------------------------------------------------
+  getAttendanceTelemetry: async (): Promise<StudentAttendanceData> => {
+    const { data } = await apiClient.get<ApiSuccessResponse<StudentAttendanceData>>(
+      "/students/me/attendance/"
+    );
+    return data.data;
+  },
+
+  scanAttendanceQR: async (payload: {
+    qr_data: string;
+    session_code?: string;
+  }): Promise<ScanAttendanceQRResponse> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<ScanAttendanceQRResponse>>(
+      "/students/attendance/scan-qr/",
+      payload
+    );
+    return data.data;
+  },
+
+  // --------------------------------------------------------------------------
   // CONTACT & INSTITUTIONAL SUPPORT
   // --------------------------------------------------------------------------
   getCompanyInfo: async (): Promise<CompanyInfoData> => {
@@ -718,6 +739,59 @@ export const studentApi = {
     return data.data;
   },
 };
+
+export interface StudentAttendanceData {
+  student: {
+    full_name: string;
+    student_id: string;
+    batch_code: string;
+    course_name: string;
+    college_name: string;
+    has_enrollments: boolean;
+    enrolled_courses: string[];
+  };
+  student_qr_data: string;
+  attendance_percentage: number;
+  total_classes: number;
+  attended_classes: number;
+  missed_classes: number;
+  current_streak_days: number;
+  records: {
+    id: string;
+    date: string;
+    session_title: string;
+    status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | string;
+    remarks: string;
+    created_at: string;
+  }[];
+}
+
+export interface ScanAttendanceQRResponse {
+  success: boolean;
+  message: string;
+  is_already_marked: boolean;
+  attendance: {
+    id: string;
+    date: string;
+    session_title: string;
+    status: string;
+    remarks: string;
+    timestamp: string;
+  };
+  student: {
+    full_name: string;
+    student_id: string;
+    batch_code: string;
+    course_name: string;
+    college_name: string;
+  };
+  stats: {
+    attendance_percentage: number;
+    attended_classes: number;
+    total_classes: number;
+    streak_days: number;
+  };
+}
 
 export interface CompanyInfoData {
   company_name: string;

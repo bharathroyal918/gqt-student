@@ -36,11 +36,18 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   if (variant === "image-card" || variant === "banner") {
     return (
       <div className={`inline-flex items-center justify-center rounded-2xl bg-white p-3.5 shadow-xl shadow-brand-500/5 dark:shadow-black/40 ring-1 ring-slate-200/80 transition-all duration-300 hover:shadow-brand-500/20 hover:ring-brand-500/30 ${className}`}>
-        <img
-          src="/gqt-logo.jpg"
-          alt="Global Quest Technologies - Training | Innovation | Placement"
-          className="h-16 w-auto max-w-[260px] object-contain select-none"
-        />
+        <picture>
+          <source srcSet="/gqt-logo.webp" type="image/webp" />
+          <img
+            src="/gqt-logo.jpg"
+            alt="Global Quest Technologies - Training | Innovation | Placement"
+            className="h-16 w-auto max-w-[260px] object-contain select-none"
+            loading="eager"
+            decoding="async"
+            width="260"
+            height="64"
+          />
+        </picture>
       </div>
     );
   }
@@ -51,11 +58,18 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       <div className={`flex items-center gap-3 ${className}`}>
         {/* Crisp White Logo Badge */}
         <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-brand-950/20 dark:shadow-brand-950/50 ring-1 ring-slate-200 dark:ring-white/30 transition-transform duration-200 hover:scale-105">
-          <img
-            src="/gqt-logo.jpg"
-            alt="GQT"
-            className="h-full w-full object-contain"
-          />
+          <picture>
+            <source srcSet="/gqt-icon.webp" type="image/webp" />
+            <img
+              src="/gqt-logo.jpg"
+              alt="GQT"
+              className="h-full w-full object-contain"
+              loading="eager"
+              decoding="async"
+              width="44"
+              height="44"
+            />
+          </picture>
         </div>
 
         {/* Brand Text Lockup */}
@@ -82,11 +96,18 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   if (variant === "icon") {
     return (
       <div className={`relative flex shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-brand-950/20 ring-1 ring-slate-200 ${iconSizes[size]} ${className}`}>
-        <img
-          src="/gqt-logo.jpg"
-          alt="GQT"
-          className="h-full w-full object-contain"
-        />
+        <picture>
+          <source srcSet="/gqt-icon.webp" type="image/webp" />
+          <img
+            src="/gqt-logo.jpg"
+            alt="GQT"
+            className="h-full w-full object-contain"
+            loading="lazy"
+            decoding="async"
+            width="44"
+            height="44"
+          />
+        </picture>
       </div>
     );
   }
@@ -95,11 +116,18 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-brand-950/20 ring-1 ring-slate-200">
-        <img
-          src="/gqt-logo.jpg"
-          alt="GQT"
-          className="h-full w-full object-contain"
-        />
+        <picture>
+          <source srcSet="/gqt-icon.webp" type="image/webp" />
+          <img
+            src="/gqt-logo.jpg"
+            alt="GQT"
+            className="h-full w-full object-contain"
+            loading="eager"
+            decoding="async"
+            width="44"
+            height="44"
+          />
+        </picture>
       </div>
       <div>
         <div className="flex items-center gap-2">

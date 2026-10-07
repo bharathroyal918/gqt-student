@@ -100,12 +100,13 @@ export const ResetPasswordPage: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" method="POST">
             <FormField label="Reset Token" error={errors.token?.message} required>
               <div className="relative">
                 <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
                 <Input
                   {...register("token")}
+                  autoComplete="one-time-code"
                   placeholder="Paste reset token here"
                   className="pl-10 font-mono text-xs"
                   error={!!errors.token}
@@ -120,7 +121,8 @@ export const ResetPasswordPage: React.FC = () => {
                 <Input
                   {...register("new_password")}
                   type="password"
-                  placeholder="At least 10 characters"
+                  autoComplete="new-password"
+                  placeholder="At least 8 characters"
                   className="pl-10"
                   error={!!errors.new_password}
                   disabled={isLoading}
@@ -134,6 +136,7 @@ export const ResetPasswordPage: React.FC = () => {
                 <Input
                   {...register("confirm_password")}
                   type="password"
+                  autoComplete="new-password"
                   placeholder="Re-enter password"
                   className="pl-10"
                   error={!!errors.confirm_password}

@@ -83,6 +83,42 @@ class StudentAttendanceSelfView(APIView):
         )
 
 
+class StudentAttendanceScanQRView(APIView):
+    """Authenticated student submits a scanned QR code to record class attendance."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Scan QR Code to Mark Daily / Session Attendance",
+        tags=["Students"],
+    )
+    def post(self, request):
+        qr_data = request.data.get("qr_data", "")
+        session_code = request.data.get("session_code", "")
+
+        try:
+            result = StudentDashboardService.mark_qr_attendance(
+                user=request.user, qr_data=qr_data, session_code=session_code
+            )
+            return api_success(
+                data=result,
+                message=result.get("message", "Attendance recorded successfully."),
+                status_code=status.HTTP_200_OK,
+            )
+        except DomainException as e:
+            return api_error(
+                code="ATTENDANCE_SCAN_ERROR",
+                message=str(e),
+                status_code=getattr(e, "status_code", status.HTTP_400_BAD_REQUEST),
+            )
+        except Exception as e:
+            return api_error(
+                code="ATTENDANCE_FAILED",
+                message=f"Failed to process attendance QR code: {str(e)}",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+
 class StudentDashboardView(APIView):
     """Aggregate real-time dashboard telemetry strictly for the authenticated student.
     

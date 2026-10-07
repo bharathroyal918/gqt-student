@@ -3,10 +3,21 @@ import json
 
 base_url = 'http://127.0.0.1:8000/api/v1/auth/login/email/'
 
-accounts = [
-    ('Admin Account', 'admin@gqt.edu', 'AdminPassword@123'),
-    ('Student Account', 'student@gqt.edu', 'StudentPassword@123'),
-]
+import os
+
+admin_email = os.environ.get('TEST_ADMIN_EMAIL', 'admin@gqt.edu')
+admin_pw = os.environ.get('TEST_ADMIN_PASSWORD', '')
+student_email = os.environ.get('TEST_STUDENT_EMAIL', 'student@gqt.edu')
+student_pw = os.environ.get('TEST_STUDENT_PASSWORD', '')
+
+accounts = []
+if admin_pw:
+    accounts.append(('Admin Account', admin_email, admin_pw))
+if student_pw:
+    accounts.append(('Student Account', student_email, student_pw))
+
+if not accounts:
+    print("Please provide TEST_ADMIN_PASSWORD or TEST_STUDENT_PASSWORD in environment to run login verification.")
 
 for name, email, pw in accounts:
     print(f"Testing {name} ({email})...", flush=True)
