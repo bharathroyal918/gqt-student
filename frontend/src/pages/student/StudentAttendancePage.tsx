@@ -264,7 +264,7 @@ export const StudentAttendancePage: React.FC = () => {
                 <div className="text-center p-4">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2" />
                   <p className="text-xs font-bold">QR Disabled</p>
-                  <p className="text-[10px] text-slate-400">Not Enrolled</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Not Enrolled</p>
                 </div>
               </div>
             )}
@@ -335,7 +335,7 @@ export const StudentAttendancePage: React.FC = () => {
                   {attendancePct}%
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Institutional requirement: 75%</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Institutional requirement: 75%</p>
             </Card>
 
             <Card className="p-4 border-slate-200 dark:border-surface-800">
@@ -346,9 +346,9 @@ export const StudentAttendancePage: React.FC = () => {
                 <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                   {attendanceData?.attended_classes || 0}
                 </span>
-                <span className="text-xs text-slate-500">Days</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Days</span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Sessions present</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Sessions present</p>
             </Card>
 
             <Card className="p-4 border-slate-200 dark:border-surface-800">
@@ -359,9 +359,9 @@ export const StudentAttendancePage: React.FC = () => {
                 <span className="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">
                   {attendanceData?.missed_classes || 0}
                 </span>
-                <span className="text-xs text-slate-500">Days</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Days</span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Absence records</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Absence records</p>
             </Card>
 
             <Card className="p-4 border-slate-200 dark:border-surface-800">
@@ -372,9 +372,9 @@ export const StudentAttendancePage: React.FC = () => {
                 <span className="text-2xl font-black text-amber-500 font-mono">
                   {attendanceData?.current_streak_days || 0}
                 </span>
-                <span className="text-xs text-slate-500">Days</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Days</span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Consecutive activity</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Consecutive activity</p>
             </Card>
           </div>
 

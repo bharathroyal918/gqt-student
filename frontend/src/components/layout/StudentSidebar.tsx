@@ -88,7 +88,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
       {isOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
         />
       )}
 
@@ -109,7 +109,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
 
         {/* Student Profile Quick Banner */}
         {user && (
-          <div className="p-4 border-b border-slate-200 dark:border-surface-800/80 bg-slate-50 dark:bg-surface-900/40">
+          <div className="p-4 border-b border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60">
             <div className="flex items-center gap-3">
               <UserAvatar
                 src={avatarUrl}
@@ -148,7 +148,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
                   `group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
                     isActive
                       ? "bg-brand-600 text-white shadow-md shadow-brand-500/25 font-semibold"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white"
                   }`
                 }
               >
@@ -164,13 +164,13 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
           {/* Quick theme toggle */}
           <button
             onClick={toggleTheme}
-            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <span className="flex items-center gap-2">
               {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
               <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
             </span>
-            <span className="text-[10px] uppercase font-mono text-slate-400 dark:text-slate-500">{theme}</span>
+            <span className="text-[10px] uppercase font-mono text-slate-400 dark:text-slate-400">{theme}</span>
           </button>
 
           {/* Logout button */}

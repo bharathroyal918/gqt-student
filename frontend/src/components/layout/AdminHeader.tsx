@@ -29,11 +29,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/80 px-4 sm:px-6 backdrop-blur-md transition-colors duration-200">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/90 px-4 sm:px-6 backdrop-blur-md transition-colors duration-200">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMobileSidebar}
-          className="rounded-lg p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-800 hover:text-slate-900 dark:hover:text-white lg:hidden transition-colors"
+          className="rounded-lg p-2 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-800 hover:text-slate-900 dark:hover:text-white lg:hidden transition-colors"
           aria-label="Toggle navigation"
         >
           <Menu className="h-5 w-5" />
@@ -53,7 +53,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
           aria-label="Toggle dark/light theme"
         >
           {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
@@ -69,7 +69,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
           return (
             <button
               onClick={() => navigate("/admin/profile")}
-              className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/80 p-1.5 sm:px-3 sm:py-1.5 hover:bg-slate-100 dark:hover:bg-surface-800 hover:border-brand-500/30 transition-all text-left group"
+              className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900 p-1.5 sm:px-3 sm:py-1.5 hover:bg-slate-100 dark:hover:bg-surface-800 hover:border-brand-500/30 transition-all text-left group"
               title="View & Edit Admin Profile"
             >
               <UserAvatar
@@ -94,7 +94,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
         {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 text-slate-600 dark:text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 text-slate-600 dark:text-slate-300 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
           title="Sign out"
           aria-label="Sign out"
         >

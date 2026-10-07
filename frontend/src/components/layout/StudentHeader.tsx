@@ -74,12 +74,12 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/80 px-4 sm:px-6 lg:px-8 backdrop-blur-md z-30 transition-colors duration-200">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-950/90 px-4 sm:px-6 lg:px-8 backdrop-blur-md z-30 transition-colors duration-200">
       {/* Left: Mobile Toggle & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMobileSidebar}
-          className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900/80 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 lg:hidden transition-colors"
+          className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 lg:hidden transition-colors"
           aria-label="Toggle navigation menu"
         >
           <Menu className="h-5 w-5" />
@@ -106,7 +106,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
                 ? solvedToday
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 shadow-sm"
                   : "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 shadow-sm"
-                : "border-slate-200 dark:border-surface-700 bg-slate-100 dark:bg-surface-800/60 text-slate-500 dark:text-slate-400 hover:bg-slate-200"
+                : "border-slate-200 dark:border-surface-700 bg-slate-100 dark:bg-surface-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
             }`}
             title={
               effectiveStreak > 0
@@ -126,7 +126,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
         {user?.role === "STUDENT" && (
           <Link
             to="/dashboard"
-            className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all"
+            className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-500/20 transition-all"
             title="Total Score Points"
           >
             <Award className="h-4 w-4" />
@@ -137,7 +137,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
-          className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900/80 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
+          className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
           title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
         >
           {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
@@ -146,7 +146,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
         {/* Notifications Icon Button */}
         <Link
           to="/notifications"
-          className="relative rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900/80 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
+          className="relative rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-100 dark:bg-surface-900 p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-surface-800 transition-colors"
           title="Notifications"
         >
           <Bell className="h-4 w-4" />
@@ -162,7 +162,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-1.5 pr-3 text-left hover:bg-slate-100 dark:hover:bg-surface-800/80 transition-colors group"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/80 p-1.5 pr-3 text-left hover:bg-slate-100 dark:hover:bg-surface-800 transition-colors group"
             >
               <UserAvatar
                 src={avatarUrl}
@@ -194,7 +194,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
                   <Link
                     to="/profile"
                     onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     <UserIcon className="h-4 w-4 text-slate-400" />
                     <span>My Profile</span>

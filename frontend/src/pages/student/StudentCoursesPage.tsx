@@ -131,7 +131,7 @@ export const StudentCoursesPage: React.FC = () => {
                           style={{ width: `${Math.min(course.progress_percentage, 100)}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 font-medium">
                         <span>{course.completed_modules} of {course.total_modules} modules completed</span>
                       </div>
                     </div>
@@ -152,7 +152,7 @@ export const StudentCoursesPage: React.FC = () => {
                       <Button size="sm" className="flex items-center gap-1.5">
                         {isCompleted ? (
                           <>
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                             <span>Review</span>
                           </>
                         ) : (

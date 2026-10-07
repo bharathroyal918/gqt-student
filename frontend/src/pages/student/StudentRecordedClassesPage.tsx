@@ -88,28 +88,28 @@ export const StudentRecordedClassesPage: React.FC = () => {
             <span>Interactive Video Lecture Library</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             Recorded Classes & Video Lectures
           </h1>
 
-          <p className="text-sm text-slate-300 leading-relaxed">
+          <p className="text-sm text-slate-200 leading-relaxed">
             Access recorded lessons from expert instructors. All registered students enjoy free preview access to the{" "}
             <span className="font-semibold text-emerald-400">first 5 classes</span> of every course module. Enrolled students receive full access to the complete video curriculum.
           </p>
 
           {/* Highlights ribbon */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-            <div className="rounded-2xl bg-white/5 p-3 backdrop-blur-sm border border-white/10">
-              <div className="text-xs text-slate-400">Available Tracks</div>
+            <div className="rounded-2xl bg-white/10 p-3 backdrop-blur-sm border border-white/15">
+              <div className="text-xs text-slate-300">Available Tracks</div>
               <div className="text-lg font-bold text-white mt-0.5">{totalCourses} Courses</div>
             </div>
-            <div className="rounded-2xl bg-white/5 p-3 backdrop-blur-sm border border-white/10">
-              <div className="text-xs text-slate-400">Total Video Lessons</div>
-              <div className="text-lg font-bold text-indigo-400 mt-0.5">{totalVideosAvailable} Lessons</div>
+            <div className="rounded-2xl bg-white/10 p-3 backdrop-blur-sm border border-white/15">
+              <div className="text-xs text-slate-300">Total Video Lessons</div>
+              <div className="text-lg font-bold text-indigo-300 mt-0.5">{totalVideosAvailable} Lessons</div>
             </div>
-            <div className="rounded-2xl bg-white/5 p-3 backdrop-blur-sm border border-white/10 col-span-2 sm:col-span-1">
-              <div className="text-xs text-slate-400">Your Full Access</div>
-              <div className="text-lg font-bold text-emerald-400 mt-0.5">{enrolledCount} Enrolled</div>
+            <div className="rounded-2xl bg-white/10 p-3 backdrop-blur-sm border border-white/15 col-span-2 sm:col-span-1">
+              <div className="text-xs text-slate-300">Your Full Access</div>
+              <div className="text-lg font-bold text-emerald-300 mt-0.5">{enrolledCount} Enrolled</div>
             </div>
           </div>
         </div>
@@ -147,8 +147,8 @@ export const StudentRecordedClassesPage: React.FC = () => {
             onClick={() => setFilterTab("ALL")}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
               filterTab === "ALL"
-                ? "bg-white dark:bg-surface-800 text-slate-900 dark:text-white shadow-sm"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-white dark:bg-surface-800 text-slate-900 dark:text-white shadow-sm font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             All Tracks ({courses.length})
@@ -157,8 +157,8 @@ export const StudentRecordedClassesPage: React.FC = () => {
             onClick={() => setFilterTab("ENROLLED")}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
               filterTab === "ENROLLED"
-                ? "bg-white dark:bg-surface-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-white dark:bg-surface-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Full Access ({enrolledCount})
@@ -167,8 +167,8 @@ export const StudentRecordedClassesPage: React.FC = () => {
             onClick={() => setFilterTab("FREE_PREVIEW")}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
               filterTab === "FREE_PREVIEW"
-                ? "bg-white dark:bg-surface-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-white dark:bg-surface-800 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Free Preview ({courses.length - enrolledCount})
@@ -219,25 +219,25 @@ export const StudentRecordedClassesPage: React.FC = () => {
                     {course.title}
                   </h3>
 
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
                     {course.description || "Comprehensive recorded masterclasses with structured lectures, YouTube streams, and coding walkthroughs."}
                   </p>
 
                   {/* Course Video Statistics */}
                   <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 dark:bg-surface-900/60 p-3 text-xs border border-slate-100 dark:border-surface-800/60">
                     <div>
-                      <div className="text-[11px] text-slate-400">Total Lessons</div>
-                      <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Total Lessons</div>
+                      <div className="font-bold text-slate-900 dark:text-slate-200 mt-0.5">
                         {course.total_videos} {course.total_videos === 1 ? "Video" : "Videos"}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-400">Access Status</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Access Status</div>
                       <div className="font-bold mt-0.5 flex items-center gap-1">
                         {course.is_enrolled ? (
-                          <span className="text-emerald-600 dark:text-emerald-400">Unlocked 100%</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Unlocked 100%</span>
                         ) : (
-                          <span className="text-amber-500 dark:text-amber-400">Preview (1–5)</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-semibold">Preview (1–5)</span>
                         )}
                       </div>
                     </div>
@@ -247,8 +247,8 @@ export const StudentRecordedClassesPage: React.FC = () => {
                   {course.is_enrolled && course.total_videos > 0 && (
                     <div className="mt-4 space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">Watch Progress</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                        <span className="text-slate-500 dark:text-slate-400">Watch Progress</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-200">
                           {course.completed_videos}/{course.total_videos} watched
                         </span>
                       </div>
@@ -264,7 +264,7 @@ export const StudentRecordedClassesPage: React.FC = () => {
 
                 {/* Footer Action */}
                 <div className="border-t border-slate-200 dark:border-surface-800/80 bg-slate-50/50 dark:bg-surface-900/40 p-4 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                     {course.is_enrolled ? (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
@@ -272,7 +272,7 @@ export const StudentRecordedClassesPage: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Lock className="h-3.5 w-3.5 text-slate-400" />
+                        <Lock className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                         <span>Lessons 6+ Locked</span>
                       </>
                     )}

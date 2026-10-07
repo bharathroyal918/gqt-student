@@ -157,7 +157,7 @@ export const StudentAttendanceSection: React.FC<StudentAttendanceSectionProps> =
               <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                 {presentClasses}
               </span>
-              <span className="text-xs text-slate-500">Days</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Days</span>
             </div>
           </div>
 
@@ -173,7 +173,7 @@ export const StudentAttendanceSection: React.FC<StudentAttendanceSectionProps> =
               <span className="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">
                 {absentClasses}
               </span>
-              <span className="text-xs text-slate-500">Days</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Days</span>
             </div>
           </div>
 
@@ -189,7 +189,7 @@ export const StudentAttendanceSection: React.FC<StudentAttendanceSectionProps> =
               <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">
                 {totalClasses}
               </span>
-              <span className="text-xs text-slate-500">Recorded</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Recorded</span>
             </div>
           </div>
 
@@ -205,7 +205,7 @@ export const StudentAttendanceSection: React.FC<StudentAttendanceSectionProps> =
               <span className="text-2xl font-black text-brand-600 dark:text-brand-400 font-mono">
                 {attendancePercentage}%
               </span>
-              <span className="text-xs text-slate-500">Average</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Average</span>
             </div>
           </div>
         </div>
@@ -278,7 +278,7 @@ export const StudentAttendanceSection: React.FC<StudentAttendanceSectionProps> =
                     <p className="font-semibold text-sm text-slate-700 dark:text-slate-300">
                       No attendance records found for {selectedTech === "ALL" ? "your account" : selectedTech}.
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Present your attendance QR code during classroom sessions to log your daily record.
                     </p>
                   </td>

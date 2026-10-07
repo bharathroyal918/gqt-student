@@ -74,7 +74,7 @@ function LectureRenderer({ content }: { content: string }) {
 
   if (sections.length === 0) {
     return (
-      <p className="text-sm text-slate-400 italic">
+      <p className="text-sm text-slate-500 dark:text-slate-400 italic">
         No lecture content available for this module yet.
       </p>
     );
@@ -104,7 +104,7 @@ function LectureRenderer({ content }: { content: string }) {
             );
           case "list":
             return (
-              <li key={idx} className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed ml-4 list-disc">
+              <li key={idx} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed ml-4 list-disc">
                 <InlineCode text={section.text} />
               </li>
             );
@@ -112,7 +112,7 @@ function LectureRenderer({ content }: { content: string }) {
             return (
               <pre
                 key={idx}
-                className="overflow-x-auto rounded-xl bg-slate-950 dark:bg-surface-950 border border-surface-800 p-4 text-sm font-mono text-emerald-300 leading-relaxed"
+                className="overflow-x-auto rounded-xl bg-slate-950 dark:bg-surface-950 border border-slate-800 dark:border-surface-800 p-4 text-sm font-mono text-emerald-400 dark:text-emerald-300 leading-relaxed shadow-sm"
               >
                 <code>{section.text}</code>
               </pre>
@@ -120,7 +120,7 @@ function LectureRenderer({ content }: { content: string }) {
           case "p":
           default:
             return (
-              <p key={idx} className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p key={idx} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                 <InlineCode text={section.text} />
               </p>
             );
@@ -139,7 +139,7 @@ function InlineCode({ text }: { text: string }) {
         part.startsWith("`") && part.endsWith("`") ? (
           <code
             key={i}
-            className="rounded bg-brand-500/10 px-1.5 py-0.5 text-[13px] font-mono text-brand-400 border border-brand-500/15"
+            className="rounded bg-brand-50 dark:bg-brand-500/10 px-1.5 py-0.5 text-[13px] font-mono text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-500/20 font-semibold"
           >
             {part.slice(1, -1)}
           </code>
@@ -255,19 +255,19 @@ export const StudentModuleDetailPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-sm text-slate-400">
-        <Link to="/courses" className="hover:text-white transition-colors">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Link to="/courses" className="hover:text-slate-900 dark:hover:text-white transition-colors">
           Courses
         </Link>
         <ChevronRight className="h-3.5 w-3.5" />
         <Link
           to={`/courses/${moduleData.course_id}`}
-          className="hover:text-white transition-colors"
+          className="hover:text-slate-900 dark:hover:text-white transition-colors"
         >
           {moduleData.course_title}
         </Link>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-slate-200 dark:text-white font-medium truncate">
+        <span className="text-slate-900 dark:text-white font-semibold truncate">
           Module {moduleData.order_index}
         </span>
       </div>
@@ -277,7 +277,7 @@ export const StudentModuleDetailPage: React.FC = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs text-brand-400 font-bold uppercase">
+              <span className="font-mono text-xs text-brand-600 dark:text-brand-400 font-bold uppercase">
                 Module {moduleData.order_index}
               </span>
               <Badge
@@ -294,7 +294,7 @@ export const StudentModuleDetailPage: React.FC = () => {
             <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
               {moduleData.title}
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-xl leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1.5 max-w-xl leading-relaxed">
               {moduleData.summary}
             </p>
 
@@ -315,7 +315,7 @@ export const StudentModuleDetailPage: React.FC = () => {
                   {moduleData.score_percentage}%
                 </span>
                 {isCompleted && moduleData.completed_at && (
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                     Completed {new Date(moduleData.completed_at).toLocaleDateString()}
                   </span>
                 )}
@@ -365,15 +365,15 @@ export const StudentModuleDetailPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <Card className="p-4 border-emerald-500/30 bg-emerald-950/20">
+            <Card className="p-4 border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/20">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                     <Trophy className="h-4.5 w-4.5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-emerald-400 text-sm">Module Completed!</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <h3 className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">Module Completed!</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                       You've mastered {moduleData.title}.
                       {completeMutation.data?.next_module
                         ? ` Next: ${completeMutation.data.next_module.title}`
@@ -400,7 +400,7 @@ export const StudentModuleDetailPage: React.FC = () => {
       {/* Lecture Content */}
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-5">
-          <FileText className="h-4.5 w-4.5 text-brand-400" />
+          <FileText className="h-4.5 w-4.5 text-brand-600 dark:text-brand-400" />
           <h2 className="text-base font-bold text-slate-900 dark:text-white">Lecture Notes & Content</h2>
         </div>
         <div className="border-t border-slate-200 dark:border-surface-800 pt-5">
