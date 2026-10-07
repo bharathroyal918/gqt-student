@@ -136,7 +136,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
         )}
 
         {/* Navigation links */}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -145,7 +145,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
                 to={item.href}
                 onClick={onCloseMobile}
                 className={({ isActive }) =>
-                  `group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
+                  `group flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-150 ${
                     isActive
                       ? "bg-brand-600 text-white shadow-md shadow-brand-500/25 font-semibold"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white"
@@ -153,30 +153,32 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
                 }
               >
                 <Icon className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
-                <span>{item.name}</span>
+                <span className="truncate">{item.name}</span>
               </NavLink>
             );
           })}
         </nav>
 
         {/* Footer with Theme toggle & Logout */}
-        <div className="border-t border-slate-200 dark:border-surface-800 p-4 space-y-2">
+        <div className="border-t border-slate-200 dark:border-surface-800 p-3 space-y-1.5 shrink-0 bg-white dark:bg-surface-950">
           {/* Quick theme toggle */}
           <button
             onClick={toggleTheme}
-            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <span className="flex items-center gap-2">
               {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
               <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
             </span>
-            <span className="text-[10px] uppercase font-mono text-slate-400 dark:text-slate-400">{theme}</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-surface-900 border border-slate-200 dark:border-surface-800 text-slate-500 dark:text-slate-400 uppercase font-semibold">
+              {theme}
+            </span>
           </button>
 
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 transition-colors"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 transition-colors"
           >
             <LogOut className="h-4 w-4" />
             <span>Sign Out</span>

@@ -11,11 +11,37 @@ interface ThemeState {
 const applyThemeToDOM = (theme: Theme) => {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
+
+  // Temporarily disable transitions during theme change to prevent asynchronous flashing / color glitch
+  const style = document.createElement("style");
+  style.appendChild(
+    document.createTextNode(
+      `*, *::before, *::after {
+        -webkit-transition: none !important;
+        -moz-transition: none !important;
+        -o-transition: none !important;
+        -ms-transition: none !important;
+        transition: none !important;
+      }`
+    )
+  );
+  document.head.appendChild(style);
+
   if (theme === "dark") {
     root.classList.add("dark");
   } else {
     root.classList.remove("dark");
   }
+
+  // Force reflow so the browser applies new colors synchronously
+  void window.getComputedStyle(document.body).backgroundColor;
+
+  // Remove temporary transition override on next frame
+  requestAnimationFrame(() => {
+    if (document.head.contains(style)) {
+      document.head.removeChild(style);
+    }
+  });
 };
 
 const getInitialTheme = (): Theme => {

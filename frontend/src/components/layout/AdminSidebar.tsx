@@ -103,7 +103,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
         )}
 
         {/* Navigation links */}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -112,7 +112,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
                 to={item.href}
                 onClick={onCloseMobile}
                 className={({ isActive }) =>
-                  `group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
+                  `group flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-150 ${
                     isActive
                       ? "bg-brand-600 text-white shadow-md shadow-brand-500/25 font-semibold"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-900 hover:text-slate-900 dark:hover:text-white"
@@ -120,20 +120,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
                 }
               >
                 <Icon className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
-                <span>{item.name}</span>
+                <span className="truncate">{item.name}</span>
               </NavLink>
             );
           })}
         </nav>
 
         {/* Environment footer */}
-        <div className="border-t border-slate-200 dark:border-surface-800 p-4">
-          <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-3 text-xs">
+        <div className="border-t border-slate-200 dark:border-surface-800 p-3 shrink-0 bg-white dark:bg-surface-950">
+          <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-2.5 text-xs">
             <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
               <span>Platform</span>
               <span className="font-semibold text-emerald-600 dark:text-emerald-400">Production</span>
             </div>
-            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-400">
+            <div className="mt-0.5 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-400">
               <span>GQT</span>
               <span>2.0</span>
             </div>
