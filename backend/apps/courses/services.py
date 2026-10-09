@@ -1,13 +1,17 @@
 """Domain services for administrative course management."""
 
-from typing import Optional
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
 
 from apps.accounts.models import AuditLog, User
 from apps.common.exceptions import DomainException
-from apps.courses.models import Course, CourseEnrollment, RecordedClass, StudentRecordedClassProgress
+from apps.courses.models import (
+    Course,
+    CourseEnrollment,
+    RecordedClass,
+    StudentRecordedClassProgress,
+)
 
 
 class CourseAdminService:
@@ -25,10 +29,10 @@ class CourseAdminService:
         title: str,
         description: str = "",
         thumbnail_url: str = "",
-        slug: Optional[str] = None,
+        slug: str | None = None,
         is_published: bool = False,
         order: int = 0,
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> Course:
         course_slug = slug.strip().lower() if slug else slugify(title)
         if Course.objects.filter(slug=course_slug).exists():
@@ -64,13 +68,13 @@ class CourseAdminService:
         cls,
         course_id: str,
         admin_user: User,
-        title: Optional[str] = None,
-        slug: Optional[str] = None,
-        description: Optional[str] = None,
-        thumbnail_url: Optional[str] = None,
-        is_published: Optional[bool] = None,
-        order: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        title: str | None = None,
+        slug: str | None = None,
+        description: str | None = None,
+        thumbnail_url: str | None = None,
+        is_published: bool | None = None,
+        order: int | None = None,
+        ip_address: str | None = None,
     ) -> Course:
         course = cls.get_course(course_id)
         update_fields = ["updated_at"]
@@ -117,7 +121,7 @@ class CourseAdminService:
     @classmethod
     @transaction.atomic
     def archive_course(
-        cls, course_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, course_id: str, admin_user: User, ip_address: str | None = None
     ) -> Course:
         """Safely archives/soft-deletes a course without destroying academic enrollments."""
         course = cls.get_course(course_id)
@@ -137,7 +141,11 @@ class CourseAdminService:
     @classmethod
     @transaction.atomic
     def set_publish_status(
-        cls, course_id: str, is_published: bool, admin_user: User, ip_address: Optional[str] = None
+        cls,
+        course_id: str,
+        is_published: bool,
+        admin_user: User,
+        ip_address: str | None = None,
     ) -> Course:
         course = cls.get_course(course_id)
         if course.is_deleted:
@@ -168,7 +176,7 @@ class CourseEnrollmentService:
         course_id: str,
         student_id: str,
         status: str = CourseEnrollment.EnrollmentStatus.ACTIVE,
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> CourseEnrollment:
         from apps.students.models import StudentProfile
 
@@ -210,9 +218,8 @@ class CourseEnrollmentService:
         admin_user: User,
         course_id: str,
         student_id: str,
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> CourseEnrollment:
-        from apps.students.models import StudentProfile
 
         enrollment = get_object_or_404(
             CourseEnrollment,
@@ -250,6 +257,7 @@ class RecordedClassAdminService:
     @classmethod
     def get_recorded_class(cls, class_id: str) -> "RecordedClass":
         from apps.courses.models import RecordedClass
+
         return get_object_or_404(RecordedClass, id=class_id)
 
     @classmethod
@@ -259,9 +267,9 @@ class RecordedClassAdminService:
         admin_user: User,
         course_id: str,
         title: str,
-        slug: Optional[str] = None,
+        slug: str | None = None,
         description: str = "",
-        order_index: Optional[int] = None,
+        order_index: int | None = None,
         video_source_type: str = "YOUTUBE",
         youtube_url: str = "",
         video_file=None,
@@ -273,10 +281,10 @@ class RecordedClassAdminService:
         is_published: bool = True,
         notes: str = "",
         resources_url: str = "",
-        module_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        module_id: str | None = None,
+        ip_address: str | None = None,
     ) -> "RecordedClass":
-        from apps.courses.models import RecordedClass, Course
+        from apps.courses.models import Course, RecordedClass
 
         course = get_object_or_404(Course, id=course_id)
 
@@ -290,7 +298,11 @@ class RecordedClassAdminService:
             )
             order_index = max_order + 1
 
-        class_slug = slug.strip().lower() if slug else slugify(f"{course.slug}-{order_index}-{title[:40]}")
+        class_slug = (
+            slug.strip().lower()
+            if slug
+            else slugify(f"{course.slug}-{order_index}-{title[:40]}")
+        )
         # Ensure slug uniqueness for course
         base_slug = class_slug
         counter = 1
@@ -340,23 +352,23 @@ class RecordedClassAdminService:
         cls,
         class_id: str,
         admin_user: User,
-        title: Optional[str] = None,
-        slug: Optional[str] = None,
-        description: Optional[str] = None,
-        order_index: Optional[int] = None,
-        video_source_type: Optional[str] = None,
-        youtube_url: Optional[str] = None,
+        title: str | None = None,
+        slug: str | None = None,
+        description: str | None = None,
+        order_index: int | None = None,
+        video_source_type: str | None = None,
+        youtube_url: str | None = None,
         video_file=None,
-        video_url: Optional[str] = None,
-        duration_seconds: Optional[int] = None,
-        duration_formatted: Optional[str] = None,
-        thumbnail_url: Optional[str] = None,
-        is_preview: Optional[bool] = None,
-        is_published: Optional[bool] = None,
-        notes: Optional[str] = None,
-        resources_url: Optional[str] = None,
-        module_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        video_url: str | None = None,
+        duration_seconds: int | None = None,
+        duration_formatted: str | None = None,
+        thumbnail_url: str | None = None,
+        is_preview: bool | None = None,
+        is_published: bool | None = None,
+        notes: str | None = None,
+        resources_url: str | None = None,
+        module_id: str | None = None,
+        ip_address: str | None = None,
     ) -> "RecordedClass":
         from apps.courses.models import RecordedClass
 
@@ -370,11 +382,15 @@ class RecordedClassAdminService:
         if slug is not None:
             class_slug = slug.strip().lower()
             if (
-                RecordedClass.objects.filter(course=recorded_class.course, slug=class_slug)
+                RecordedClass.objects.filter(
+                    course=recorded_class.course, slug=class_slug
+                )
                 .exclude(id=recorded_class.id)
                 .exists()
             ):
-                raise DomainException("A recorded class with this slug already exists in this course.")
+                raise DomainException(
+                    "A recorded class with this slug already exists in this course."
+                )
             recorded_class.slug = class_slug
             update_fields.append("slug")
 
@@ -397,7 +413,9 @@ class RecordedClassAdminService:
             recorded_class.youtube_video_id = yt_id
             update_fields.append("youtube_video_id")
             if yt_id and not thumbnail_url and not recorded_class.thumbnail_url:
-                recorded_class.thumbnail_url = f"https://img.youtube.com/vi/{yt_id}/hqdefault.jpg"
+                recorded_class.thumbnail_url = (
+                    f"https://img.youtube.com/vi/{yt_id}/hqdefault.jpg"
+                )
                 update_fields.append("thumbnail_url")
 
         if video_file is not None:
@@ -455,9 +473,8 @@ class RecordedClassAdminService:
     @classmethod
     @transaction.atomic
     def delete_recorded_class(
-        cls, class_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, class_id: str, admin_user: User, ip_address: str | None = None
     ):
-        from apps.courses.models import RecordedClass
 
         recorded_class = cls.get_recorded_class(class_id)
         class_id_str = str(recorded_class.id)
@@ -477,7 +494,11 @@ class RecordedClassAdminService:
     @classmethod
     @transaction.atomic
     def reorder_recorded_classes(
-        cls, course_id: str, order_items: list[dict], admin_user: User, ip_address: Optional[str] = None
+        cls,
+        course_id: str,
+        order_items: list[dict],
+        admin_user: User,
+        ip_address: str | None = None,
     ):
         from apps.courses.models import RecordedClass
 
@@ -518,9 +539,15 @@ class RecordedClassStudentService:
     @classmethod
     def get_all_courses_catalog(cls, student_profile):
         """Lists all published curriculum courses with recorded class stats and enrollment indicator."""
-        from apps.courses.models import Course, CourseEnrollment, RecordedClass, StudentRecordedClassProgress
+        from apps.courses.models import (
+            Course,
+            CourseEnrollment,
+            RecordedClass,
+        )
 
-        courses = Course.objects.filter(is_published=True, is_deleted=False).order_by("order", "title")
+        courses = Course.objects.filter(is_published=True, is_deleted=False).order_by(
+            "order", "title"
+        )
 
         # Get set of actively enrolled course IDs for this student
         enrolled_course_ids = set()
@@ -534,11 +561,9 @@ class RecordedClassStudentService:
 
         result = []
         for course in courses:
-            total_videos = RecordedClass.objects.filter(course=course, is_published=True).count()
-            preview_videos = RecordedClass.objects.filter(
+            total_videos = RecordedClass.objects.filter(
                 course=course, is_published=True
-            ).filter(models.Q(order_index__lte=5) | models.Q(is_preview=True)).count()
-
+            ).count()
             is_enrolled = course.id in enrolled_course_ids
 
             completed_videos = 0
@@ -576,9 +601,14 @@ class RecordedClassStudentService:
     @classmethod
     def get_course_recorded_classes_playlist(cls, student_profile, course_id: str):
         """Returns the full ordered playlist of recorded classes for a course, applying strong lock boundaries."""
-        from apps.courses.models import Course, RecordedClass, StudentRecordedClassProgress
+        from apps.courses.models import (
+            Course,
+            RecordedClass,
+        )
 
-        course = get_object_or_404(Course, id=course_id, is_published=True, is_deleted=False)
+        course = get_object_or_404(
+            Course, id=course_id, is_published=True, is_deleted=False
+        )
         is_enrolled = cls.is_student_enrolled_in_course(student_profile, course)
 
         classes_qs = (
@@ -606,7 +636,9 @@ class RecordedClassStudentService:
             # Video 6 and beyond require active course enrollment/approval.
             is_unlocked = is_enrolled or v.is_free_preview
 
-            prog_info = completed_video_map.get(v.id, {"is_completed": False, "last_position_seconds": 0})
+            prog_info = completed_video_map.get(
+                v.id, {"is_completed": False, "last_position_seconds": 0}
+            )
 
             video_data = {
                 "id": str(v.id),
@@ -640,7 +672,9 @@ class RecordedClassStudentService:
             else:
                 # Omit video streaming keys completely so unauthorized users cannot tamper
                 video_data["description"] = (
-                    (v.description[:140] + "...") if v.description else "Course enrollment required to view full lesson."
+                    (v.description[:140] + "...")
+                    if v.description
+                    else "Course enrollment required to view full lesson."
                 )
                 video_data["video_source_type"] = "LOCKED"
                 video_data["youtube_video_id"] = ""
@@ -667,7 +701,9 @@ class RecordedClassStudentService:
                 "total_videos": total_videos,
                 "preview_videos_limit": 5,
                 "completed_videos": completed_count,
-                "progress_percentage": int((completed_count / total_videos) * 100) if total_videos > 0 else 0,
+                "progress_percentage": int((completed_count / total_videos) * 100)
+                if total_videos > 0
+                else 0,
             },
             "videos": playlist,
         }
@@ -675,10 +711,17 @@ class RecordedClassStudentService:
     @classmethod
     def get_recorded_class_stream(cls, student_profile, course_id: str, video_id: str):
         """Returns the streaming details for a single video, strictly rejecting unauthorized access to locked videos."""
-        from apps.courses.models import Course, RecordedClass, StudentRecordedClassProgress
+        from apps.courses.models import (
+            Course,
+            RecordedClass,
+        )
 
-        course = get_object_or_404(Course, id=course_id, is_published=True, is_deleted=False)
-        video = get_object_or_404(RecordedClass, id=video_id, course=course, is_published=True)
+        course = get_object_or_404(
+            Course, id=course_id, is_published=True, is_deleted=False
+        )
+        video = get_object_or_404(
+            RecordedClass, id=video_id, course=course, is_published=True
+        )
 
         is_enrolled = cls.is_student_enrolled_in_course(student_profile, course)
         is_unlocked = is_enrolled or video.is_free_preview
@@ -724,11 +767,12 @@ class RecordedClassStudentService:
         student_profile,
         video_id: str,
         last_position_seconds: int = 0,
-        is_completed: Optional[bool] = None,
+        is_completed: bool | None = None,
     ):
         """Records student watch position and marks video as completed."""
         from django.utils import timezone
-        from apps.courses.models import RecordedClass, StudentRecordedClassProgress
+
+        from apps.courses.models import RecordedClass
 
         video = get_object_or_404(RecordedClass, id=video_id, is_published=True)
 
@@ -750,6 +794,7 @@ class RecordedClassStudentService:
             "video_id": str(video.id),
             "last_position_seconds": prog.last_position_seconds,
             "is_completed": prog.is_completed,
-            "completed_at": prog.completed_at.isoformat() if prog.completed_at else None,
+            "completed_at": prog.completed_at.isoformat()
+            if prog.completed_at
+            else None,
         }
-

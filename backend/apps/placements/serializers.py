@@ -1,6 +1,8 @@
 from decimal import Decimal
+
 from rest_framework import serializers
-from apps.placements.models import PlacementDrive, PlacementApplication
+
+from apps.placements.models import PlacementApplication, PlacementDrive
 
 
 class PlacementDriveSerializer(serializers.ModelSerializer):
@@ -50,13 +52,19 @@ class PlacementDriveSerializer(serializers.ModelSerializer):
         return obj.applications.count()
 
     def get_selected_count(self, obj) -> int:
-        return obj.applications.filter(status=PlacementApplication.ApplicationStatus.SELECTED).count()
+        return obj.applications.filter(
+            status=PlacementApplication.ApplicationStatus.SELECTED
+        ).count()
 
     def get_shortlisted_count(self, obj) -> int:
-        return obj.applications.filter(status=PlacementApplication.ApplicationStatus.SHORTLISTED).count()
+        return obj.applications.filter(
+            status=PlacementApplication.ApplicationStatus.SHORTLISTED
+        ).count()
 
     def get_rejected_count(self, obj) -> int:
-        return obj.applications.filter(status=PlacementApplication.ApplicationStatus.REJECTED).count()
+        return obj.applications.filter(
+            status=PlacementApplication.ApplicationStatus.REJECTED
+        ).count()
 
     def _get_student_app(self, obj):
         request = self.context.get("request")
@@ -88,13 +96,25 @@ class PlacementDriveCreateUpdateSerializer(serializers.ModelSerializer):
     """Admin create / update serializer for placement drives."""
 
     company_code = serializers.CharField(required=False, allow_blank=True, default="")
-    company_logo_url = serializers.CharField(required=False, allow_blank=True, default="")
-    bond_period = serializers.CharField(required=False, allow_blank=True, default="None")
-    eligibility_criteria = serializers.CharField(required=False, allow_blank=True, default="")
-    eligible_batches = serializers.CharField(required=False, allow_blank=True, default="All")
-    job_description = serializers.CharField(required=False, allow_blank=True, default="")
+    company_logo_url = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    bond_period = serializers.CharField(
+        required=False, allow_blank=True, default="None"
+    )
+    eligibility_criteria = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    eligible_batches = serializers.CharField(
+        required=False, allow_blank=True, default="All"
+    )
+    job_description = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
     drive_date = serializers.DateTimeField(required=False, allow_null=True)
-    min_cgpa = serializers.DecimalField(max_digits=4, decimal_places=2, required=False, default=Decimal("0.00"))
+    min_cgpa = serializers.DecimalField(
+        max_digits=4, decimal_places=2, required=False, default=Decimal("0.00")
+    )
 
     class Meta:
         model = PlacementDrive
@@ -138,7 +158,9 @@ class PlacementApplicationSerializer(serializers.ModelSerializer):
     drive_details = serializers.SerializerMethodField()
     has_resume_file = serializers.SerializerMethodField()
     resume_download_url = serializers.SerializerMethodField()
-    student_avatar_url = serializers.CharField(source="student.avatar_url", read_only=True, default="")
+    student_avatar_url = serializers.CharField(
+        source="student.avatar_url", read_only=True, default=""
+    )
 
     class Meta:
         model = PlacementApplication
@@ -174,7 +196,13 @@ class PlacementApplicationSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "submitted_at", "reviewed_at", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "submitted_at",
+            "reviewed_at",
+            "created_at",
+            "updated_at",
+        ]
 
     def get_drive_details(self, obj) -> dict:
         return {
@@ -203,15 +231,21 @@ class StudentApplyPlacementSerializer(serializers.Serializer):
     """Input payload for a student applying to a placement drive."""
 
     phone_number = serializers.CharField(max_length=30, required=True)
-    college_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    college_name = serializers.CharField(
+        max_length=255, required=False, allow_blank=True
+    )
     branch = serializers.CharField(max_length=100, required=False, allow_blank=True)
     graduation_year = serializers.IntegerField(required=False, allow_null=True)
     cgpa_or_percentage = serializers.CharField(max_length=50, required=True)
     resume_file = serializers.FileField(required=False, allow_null=True)
     resume_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
-    portfolio_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    portfolio_url = serializers.CharField(
+        max_length=500, required=False, allow_blank=True
+    )
     github_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
-    linkedin_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    linkedin_url = serializers.CharField(
+        max_length=500, required=False, allow_blank=True
+    )
     skills_summary = serializers.CharField(required=False, allow_blank=True)
     cover_note = serializers.CharField(required=False, allow_blank=True)
 
@@ -221,7 +255,10 @@ class StudentApplyPlacementSerializer(serializers.Serializer):
         elif isinstance(data, dict):
             data = data.copy()
         if isinstance(data, dict):
-            if data.get("graduation_year") == "" or data.get("graduation_year") == "null":
+            if (
+                data.get("graduation_year") == ""
+                or data.get("graduation_year") == "null"
+            ):
                 data["graduation_year"] = None
             if data.get("resume_file") == "" or data.get("resume_file") == "null":
                 data["resume_file"] = None
@@ -232,7 +269,9 @@ class StudentApplyPlacementSerializer(serializers.Serializer):
         resume_url = attrs.get("resume_url")
         if not resume_file and not resume_url:
             raise serializers.ValidationError(
-                {"resume_file": "Please upload a resume file (PDF/DOCX) or provide a resume link."}
+                {
+                    "resume_file": "Please upload a resume file (PDF/DOCX) or provide a resume link."
+                }
             )
         return attrs
 
@@ -240,6 +279,8 @@ class StudentApplyPlacementSerializer(serializers.Serializer):
 class UpdateApplicationStatusSerializer(serializers.Serializer):
     """Admin payload to update student application status and feedback."""
 
-    status = serializers.ChoiceField(choices=PlacementApplication.ApplicationStatus.choices)
+    status = serializers.ChoiceField(
+        choices=PlacementApplication.ApplicationStatus.choices
+    )
     admin_notes = serializers.CharField(required=False, allow_blank=True)
     rejection_reason = serializers.CharField(required=False, allow_blank=True)

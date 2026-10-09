@@ -34,7 +34,11 @@ class ModuleAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = ModuleAdminSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = ModuleFilter
     search_fields = ["title", "slug", "summary"]
     ordering_fields = ["order_index", "title", "created_at"]
@@ -83,6 +87,7 @@ class ModuleAdminDetailUpdateView(APIView):
     """Admin endpoint to retrieve or update an existing learning module."""
 
     permission_classes = [IsAdmin]
+    serializer_class = ModuleAdminSerializer
 
     @extend_schema(
         responses={200: ModuleAdminSerializer},
@@ -109,7 +114,9 @@ class ModuleAdminDetailUpdateView(APIView):
         ip_address = get_client_ip(request)
 
         prereqs = (
-            [str(pid) for pid in data["prerequisite_ids"]] if "prerequisite_ids" in data else None
+            [str(pid) for pid in data["prerequisite_ids"]]
+            if "prerequisite_ids" in data
+            else None
         )
 
         module = ModuleAdminService.update_module(
@@ -132,6 +139,7 @@ class ModuleAdminDetailUpdateView(APIView):
 
     @extend_schema(
         summary="Admin Delete Curriculum Module",
+        responses={200: ModuleAdminSerializer},
         tags=["Admin Module Management"],
     )
     def delete(self, request, pk):

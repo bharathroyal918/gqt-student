@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 
 def get_client_ip(request) -> str:
@@ -12,7 +12,7 @@ def get_client_ip(request) -> str:
     return request.META.get("REMOTE_ADDR", "127.0.0.1")
 
 
-def mask_email(email: Optional[str]) -> str:
+def mask_email(email: str | None) -> str:
     """Mask email for safe audit logging, e.g. a***o@example.com."""
     if not email or "@" not in email:
         return ""
@@ -24,11 +24,15 @@ def mask_email(email: Optional[str]) -> str:
     return f"{masked_name}@{domain}"
 
 
-def mask_phone(phone: Optional[str]) -> str:
+def mask_phone(phone: str | None) -> str:
     """Mask phone number for safe logging, e.g. +91*****4321."""
     if not phone or len(phone) < 4:
         return ""
-    return phone[:3] + "*" * (len(phone) - 7) + phone[-4:] if len(phone) >= 7 else phone[:2] + "***"
+    return (
+        phone[:3] + "*" * (len(phone) - 7) + phone[-4:]
+        if len(phone) >= 7
+        else phone[:2] + "***"
+    )
 
 
 def generate_secure_numeric_code(length: int = 6) -> str:
@@ -41,7 +45,7 @@ def generate_secure_token(nbytes: int = 32) -> str:
     return secrets.token_urlsafe(nbytes)
 
 
-def format_datetime_iso(dt: Optional[datetime]) -> Optional[str]:
+def format_datetime_iso(dt: datetime | None) -> str | None:
     """Format datetime object into standard ISO 8601 UTC string."""
     if not dt:
         return None

@@ -35,7 +35,10 @@ class HealthCheckTests(APITestCase):
 
     def test_database_health_check_failure(self):
         url = "/api/v1/health/database/"
-        with patch("django.db.connection.cursor", side_effect=DatabaseError("DB connection lost")):
+        with patch(
+            "django.db.connection.cursor",
+            side_effect=DatabaseError("DB connection lost"),
+        ):
             response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -58,7 +61,8 @@ class HealthCheckTests(APITestCase):
     def test_redis_health_check_failure(self):
         url = "/api/v1/health/redis/"
         with patch(
-            "django.core.cache.cache.set", side_effect=ConnectionError("Cannot connect to Redis")
+            "django.core.cache.cache.set",
+            side_effect=ConnectionError("Cannot connect to Redis"),
         ):
             response = self.client.get(url)
 

@@ -4,7 +4,28 @@ from rest_framework import serializers
 
 from apps.accounts.models import User
 from apps.courses.models import CourseEnrollment
-from apps.students.models import AttendanceRecord, StudentProfile
+from apps.students.models import AttendanceRecord, College, StudentProfile
+
+
+class CollegeAdminSerializer(serializers.ModelSerializer):
+    student_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = College
+        fields = [
+            "id",
+            "name",
+            "code",
+            "city",
+            "state",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "student_count",
+        ]
+
+    def get_student_count(self, obj):
+        return StudentProfile.objects.filter(college_name__iexact=obj.name).count()
 
 
 class StudentEnrollmentBriefSerializer(serializers.ModelSerializer):
@@ -13,14 +34,23 @@ class StudentEnrollmentBriefSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CourseEnrollment
-        fields = ["id", "course_id", "course_title", "status", "enrolled_at", "completed_at"]
+        fields = [
+            "id",
+            "course_id",
+            "course_title",
+            "status",
+            "enrolled_at",
+            "completed_at",
+        ]
 
 
 class StudentAdminListSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
     mobile_number = serializers.CharField(source="user.mobile_number", read_only=True)
     is_active = serializers.BooleanField(source="user.is_active", read_only=True)
-    onboarding_status = serializers.CharField(source="user.onboarding_status", read_only=True)
+    onboarding_status = serializers.CharField(
+        source="user.onboarding_status", read_only=True
+    )
     enrolled_courses_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -50,7 +80,9 @@ class StudentAdminListSerializer(serializers.ModelSerializer):
         ]
 
     def get_enrolled_courses_count(self, obj) -> int:
-        return obj.enrollments.filter(status=CourseEnrollment.EnrollmentStatus.ACTIVE).count()
+        return obj.enrollments.filter(
+            status=CourseEnrollment.EnrollmentStatus.ACTIVE
+        ).count()
 
 
 class StudentAdminDetailSerializer(StudentAdminListSerializer):
@@ -68,14 +100,20 @@ class StudentAdminDetailSerializer(StudentAdminListSerializer):
 class StudentAdminUpdateSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=150, required=False)
     batch_code = serializers.CharField(max_length=50, required=False)
-    college_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    college_name = serializers.CharField(
+        max_length=255, required=False, allow_blank=True
+    )
     graduation_year = serializers.IntegerField(required=False, allow_null=True)
     dob = serializers.DateField(required=False, allow_null=True)
     branch = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    course_opted = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    course_opted = serializers.CharField(
+        max_length=200, required=False, allow_blank=True
+    )
     avatar_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_null=True)
-    mobile_number = serializers.CharField(max_length=20, required=False, allow_null=True)
+    mobile_number = serializers.CharField(
+        max_length=20, required=False, allow_null=True
+    )
     is_active = serializers.BooleanField(required=False)
     onboarding_status = serializers.ChoiceField(
         choices=User.OnboardingStatusChoices.choices, required=False
@@ -93,33 +131,73 @@ class AssignCoursesSerializer(serializers.Serializer):
 
 
 class GrantAccessByEmailSerializer(serializers.Serializer):
-    email = serializers.EmailField(help_text="Student's registered institutional email to authorize")
-    course_opted = serializers.CharField(max_length=200, required=False, default="Full Stack Software & Assessment Track")
-    batch_code = serializers.CharField(max_length=50, required=False, default="BATCH-2026-A")
+    email = serializers.EmailField(
+        help_text="Student's registered institutional email to authorize"
+    )
+    course_opted = serializers.CharField(
+        max_length=200, required=False, default="Full Stack Software & Assessment Track"
+    )
+    batch_code = serializers.CharField(
+        max_length=50, required=False, default="BATCH-2026-A"
+    )
 
 
 class MarkAttendanceSerializer(serializers.Serializer):
     date = serializers.DateField(required=True)
-    status = serializers.ChoiceField(choices=AttendanceRecord.AttendanceStatus.choices, default=AttendanceRecord.AttendanceStatus.PRESENT)
-    technology = serializers.CharField(max_length=100, required=False, default="Full Stack Development")
-    session_title = serializers.CharField(max_length=200, required=False, default="Daily Training & Coding Lab")
-    remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    status = serializers.ChoiceField(
+        choices=AttendanceRecord.AttendanceStatus.choices,
+        default=AttendanceRecord.AttendanceStatus.PRESENT,
+    )
+    technology = serializers.CharField(
+        max_length=100, required=False, default="Full Stack Development"
+    )
+    session_title = serializers.CharField(
+        max_length=200, required=False, default="Daily Training & Coding Lab"
+    )
+    remarks = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default=""
+    )
 
 
 class AdminScanStudentQRSerializer(serializers.Serializer):
-    qr_data = serializers.CharField(required=True, help_text="Raw or parsed student attendance QR data")
-    technology = serializers.CharField(max_length=100, required=False, default="Full Stack Development")
-    session_title = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    qr_data = serializers.CharField(
+        required=True, help_text="Raw or parsed student attendance QR data"
+    )
+    technology = serializers.CharField(
+        max_length=100, required=False, default="Full Stack Development"
+    )
+    session_title = serializers.CharField(
+        max_length=200, required=False, allow_blank=True
+    )
     date = serializers.DateField(required=False, allow_null=True)
-    status = serializers.ChoiceField(choices=AttendanceRecord.AttendanceStatus.choices, default=AttendanceRecord.AttendanceStatus.PRESENT)
-    remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    status = serializers.ChoiceField(
+        choices=AttendanceRecord.AttendanceStatus.choices,
+        default=AttendanceRecord.AttendanceStatus.PRESENT,
+    )
+    remarks = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default=""
+    )
 
 
 class BulkMarkAttendanceSerializer(serializers.Serializer):
     batch_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
-    student_ids = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)
+    student_ids = serializers.ListField(
+        child=serializers.CharField(), required=False, allow_empty=True
+    )
     date = serializers.DateField(required=False, allow_null=True)
-    technology = serializers.CharField(max_length=100, required=False, default="Full Stack Development")
-    session_title = serializers.CharField(max_length=200, required=False, allow_blank=True)
-    status = serializers.ChoiceField(choices=AttendanceRecord.AttendanceStatus.choices, default=AttendanceRecord.AttendanceStatus.PRESENT)
-    remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, default="Bulk recorded by Admin")
+    technology = serializers.CharField(
+        max_length=100, required=False, default="Full Stack Development"
+    )
+    session_title = serializers.CharField(
+        max_length=200, required=False, allow_blank=True
+    )
+    status = serializers.ChoiceField(
+        choices=AttendanceRecord.AttendanceStatus.choices,
+        default=AttendanceRecord.AttendanceStatus.PRESENT,
+    )
+    remarks = serializers.CharField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+        default="Bulk recorded by Admin",
+    )

@@ -1,10 +1,11 @@
 """Admin views for platform analytics, executive reports, and asynchronous export jobs."""
 
-import os
 import uuid
+
 from django.core.files.storage import default_storage
-from django.http import FileResponse, Http404
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.http import FileResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.views import APIView
 
@@ -26,10 +27,26 @@ class AnalyticsDashboardView(APIView):
         summary="Admin Analytics Dashboard",
         description="Fetch top-level KPI metrics, score distribution buckets, activity timelines, and stats.",
         parameters=[
-            OpenApiParameter(name="course_id", description="Filter metrics by specific course UUID", required=False, type=str),
-            OpenApiParameter(name="batch_code", description="Filter metrics by student batch code", required=False, type=str),
-            OpenApiParameter(name="days", description="Timeline day span (default 7)", required=False, type=int),
+            OpenApiParameter(
+                name="course_id",
+                description="Filter metrics by specific course UUID",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="batch_code",
+                description="Filter metrics by student batch code",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="days",
+                description="Timeline day span (default 7)",
+                required=False,
+                type=int,
+            ),
         ],
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request):
@@ -56,10 +73,23 @@ class ReportPerformanceView(APIView):
     @extend_schema(
         summary="Admin Performance Report",
         parameters=[
-            OpenApiParameter(name="batch_code", description="Batch filter", required=False, type=str),
-            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
-            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(
+                name="batch_code", description="Batch filter", required=False, type=str
+            ),
+            OpenApiParameter(
+                name="start_date",
+                description="Start date (YYYY-MM-DD)",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="end_date",
+                description="End date (YYYY-MM-DD)",
+                required=False,
+                type=str,
+            ),
         ],
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request):
@@ -86,8 +116,14 @@ class ReportCompletionView(APIView):
     @extend_schema(
         summary="Admin Completion Report",
         parameters=[
-            OpenApiParameter(name="course_id", description="Course UUID filter", required=False, type=str),
+            OpenApiParameter(
+                name="course_id",
+                description="Course UUID filter",
+                required=False,
+                type=str,
+            ),
         ],
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request):
@@ -107,15 +143,28 @@ class ReportAssignmentView(APIView):
     @extend_schema(
         summary="Admin Assignment Statistics Report",
         parameters=[
-            OpenApiParameter(name="module_id", description="Module UUID filter", required=False, type=str),
-            OpenApiParameter(name="course_id", description="Course UUID filter", required=False, type=str),
+            OpenApiParameter(
+                name="module_id",
+                description="Module UUID filter",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="course_id",
+                description="Course UUID filter",
+                required=False,
+                type=str,
+            ),
         ],
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request):
         module_id = request.query_params.get("module_id")
         course_id = request.query_params.get("course_id")
-        data = AnalyticsAdminService.get_assignment_report(module_id=module_id, course_id=course_id)
+        data = AnalyticsAdminService.get_assignment_report(
+            module_id=module_id, course_id=course_id
+        )
         return api_success(
             data=data,
             message="Assignment statistics report generated successfully.",
@@ -130,8 +179,14 @@ class ReportProjectView(APIView):
     @extend_schema(
         summary="Admin Project Evaluation Report",
         parameters=[
-            OpenApiParameter(name="course_id", description="Course UUID filter", required=False, type=str),
+            OpenApiParameter(
+                name="course_id",
+                description="Course UUID filter",
+                required=False,
+                type=str,
+            ),
         ],
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request):
@@ -151,8 +206,14 @@ class ReportMonthlyActivityView(APIView):
     @extend_schema(
         summary="Admin Monthly Activity Trend Report",
         parameters=[
-            OpenApiParameter(name="days", description="Days analyzed (default 30)", required=False, type=int),
+            OpenApiParameter(
+                name="days",
+                description="Days analyzed (default 30)",
+                required=False,
+                type=int,
+            ),
         ],
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request):
@@ -168,6 +229,7 @@ class ReportExportCreateView(APIView):
     """Initiate an asynchronous background report export job."""
 
     permission_classes = [IsAdmin]
+    serializer_class = ExportJobCreateSerializer
 
     @extend_schema(
         summary="Create Report Export Job",
@@ -204,6 +266,7 @@ class ReportExportListView(APIView):
     """List historical report export jobs and download links."""
 
     permission_classes = [IsAdmin]
+    serializer_class = ExportJobSerializer
 
     @extend_schema(
         summary="List Report Export Jobs",
@@ -224,9 +287,11 @@ class ReportExportDetailView(APIView):
     """Retrieve status and details of a single export job."""
 
     permission_classes = [IsAdmin]
+    serializer_class = ExportJobSerializer
 
     @extend_schema(
         summary="Get Export Job Status",
+        responses={200: ExportJobSerializer},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request, job_id: uuid.UUID):
@@ -254,6 +319,7 @@ class ReportExportDownloadView(APIView):
 
     @extend_schema(
         summary="Download Report Export File",
+        responses={200: OpenApiTypes.BINARY},
         tags=["Admin Analytics & Reports"],
     )
     def get(self, request, job_id: uuid.UUID):
@@ -274,7 +340,10 @@ class ReportExportDownloadView(APIView):
             )
 
         # If not finished yet, process on demand if needed
-        if job.status in [ExportJob.JobStatus.PENDING, ExportJob.JobStatus.PROCESSING] or not job.file_path:
+        if (
+            job.status in [ExportJob.JobStatus.PENDING, ExportJob.JobStatus.PROCESSING]
+            or not job.file_path
+        ):
             _process_export_job_worker(str(job.id))
             job.refresh_from_db()
 

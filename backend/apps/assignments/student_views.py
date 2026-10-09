@@ -1,12 +1,17 @@
 """Student API Views for Coding Practice Platform."""
 
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.assignments.execution.service import CodeExecutionService
-from apps.assignments.models import CodingQuestion, CodeSubmission, StudentQuestionProgress
+from apps.assignments.models import (
+    CodeSubmission,
+    CodingQuestion,
+    StudentQuestionProgress,
+)
 from apps.assignments.student_serializers import (
     CodeRunRequestSerializer,
     CodeSubmitRequestSerializer,
@@ -22,13 +27,19 @@ class StudentQuestionListView(APIView):
     """List practice coding challenges with student mastery and progress indicators."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentQuestionListSerializer
 
     @extend_schema(
         summary="List Student Practice Questions",
+        responses={200: StudentQuestionListSerializer(many=True)},
+        operation_id="student_questions_list",
         tags=["Student Coding Platform"],
     )
     def get(self, request):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="User does not possess an active student profile.",
@@ -38,6 +49,7 @@ class StudentQuestionListView(APIView):
         student = request.user.student_profile
         if not CodingQuestion.objects.filter(is_active=True).exists():
             from apps.assignments.seeds import seed_coding_questions
+
             seed_coding_questions()
 
         from apps.courses.models import Course, CourseEnrollment
@@ -47,7 +59,9 @@ class StudentQuestionListView(APIView):
         target_course = None
 
         if course_id:
-            target_course = Course.objects.filter(id=course_id, is_published=True, is_deleted=False).first()
+            target_course = Course.objects.filter(
+                id=course_id, is_published=True, is_deleted=False
+            ).first()
 
         if not target_course:
             # Check student active enrollment
@@ -56,14 +70,25 @@ class StudentQuestionListView(APIView):
                 .select_related("course")
                 .first()
             )
-            if enrollment and enrollment.course and enrollment.course.is_published and not enrollment.course.is_deleted:
+            if (
+                enrollment
+                and enrollment.course
+                and enrollment.course.is_published
+                and not enrollment.course.is_deleted
+            ):
                 target_course = enrollment.course
 
         if not target_course:
             # Fallback to the primary active published course
-            target_course = Course.objects.filter(is_published=True, is_deleted=False).order_by("order", "id").first()
+            target_course = (
+                Course.objects.filter(is_published=True, is_deleted=False)
+                .order_by("order", "id")
+                .first()
+            )
 
-        qs = CodingQuestion.objects.filter(is_active=True).select_related("module", "module__course")
+        qs = CodingQuestion.objects.filter(is_active=True).select_related(
+            "module", "module__course"
+        )
 
         if target_course:
             qs = qs.filter(module__course=target_course)
@@ -84,7 +109,9 @@ class StudentQuestionListView(APIView):
 
         # Calculate live sequential module progression for this student and course
         unlock_map = (
-            StudentCurriculumProgressionService.get_course_modules_unlock_map(student, target_course)
+            StudentCurriculumProgressionService.get_course_modules_unlock_map(
+                student, target_course
+            )
             if target_course
             else {}
         )
@@ -106,11 +133,11 @@ class StudentQuestionListView(APIView):
 
             prog = progress_map.get(q.id)
             mod_status = unlock_map.get(str(q.module_id), {})
-            setattr(q, "is_solved", prog.is_solved if prog else False)
-            setattr(q, "best_score", float(prog.best_score) if prog else 0.0)
-            setattr(q, "attempts_count", prog.attempts_count if prog else 0)
-            setattr(q, "is_module_locked", mod_status.get("is_locked", False))
-            setattr(q, "module_unlock_requirement", mod_status.get("unlock_requirement", None))
+            q.is_solved = prog.is_solved if prog else False
+            q.best_score = float(prog.best_score) if prog else 0.0
+            q.attempts_count = prog.attempts_count if prog else 0
+            q.is_module_locked = mod_status.get("is_locked", False)
+            q.module_unlock_requirement = mod_status.get("unlock_requirement", None)
             results.append(q)
 
         serializer = StudentQuestionListSerializer(results, many=True)
@@ -133,13 +160,19 @@ class StudentQuestionDetailView(APIView):
     """Retrieve question description, constraints, input/output format, and sample testcases."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentQuestionDetailSerializer
 
     @extend_schema(
         summary="Retrieve Practice Question Detail",
+        responses={200: StudentQuestionDetailSerializer},
+        operation_id="student_question_detail",
         tags=["Student Coding Platform"],
     )
     def get(self, request, question_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="User does not possess an active student profile.",
@@ -148,9 +181,9 @@ class StudentQuestionDetailView(APIView):
 
         student = request.user.student_profile
         try:
-            question = CodingQuestion.objects.select_related("module", "module__course").get(
-                id=question_id, is_active=True
-            )
+            question = CodingQuestion.objects.select_related(
+                "module", "module__course"
+            ).get(id=question_id, is_active=True)
         except CodingQuestion.DoesNotExist:
             return api_error(
                 code="QUESTION_NOT_FOUND",
@@ -159,8 +192,11 @@ class StudentQuestionDetailView(APIView):
             )
 
         from apps.assignments.progression import StudentCurriculumProgressionService
+
         unlock_map = (
-            StudentCurriculumProgressionService.get_course_modules_unlock_map(student, question.module.course)
+            StudentCurriculumProgressionService.get_course_modules_unlock_map(
+                student, question.module.course
+            )
             if question.module.course
             else {}
         )
@@ -168,15 +204,19 @@ class StudentQuestionDetailView(APIView):
         is_locked = mod_status.get("is_locked", False)
         unlock_req = mod_status.get("unlock_requirement", None)
 
-        prog = StudentQuestionProgress.objects.filter(student=student, question=question).first()
-        setattr(question, "is_solved", prog.is_solved if prog else False)
-        setattr(question, "best_score", float(prog.best_score) if prog else 0.0)
-        setattr(question, "attempts_count", prog.attempts_count if prog else 0)
-        setattr(question, "is_module_locked", is_locked)
-        setattr(question, "module_unlock_requirement", unlock_req)
+        prog = StudentQuestionProgress.objects.filter(
+            student=student, question=question
+        ).first()
+        question.is_solved = prog.is_solved if prog else False
+        question.best_score = float(prog.best_score) if prog else 0.0
+        question.attempts_count = prog.attempts_count if prog else 0
+        question.is_module_locked = is_locked
+        question.module_unlock_requirement = unlock_req
 
         # Retrieve user's previous code submissions directly from Supabase database
-        subs = CodeSubmission.objects.filter(student=student, question=question).order_by("-submitted_at")
+        subs = CodeSubmission.objects.filter(
+            student=student, question=question
+        ).order_by("-submitted_at")
         submissions_by_language = {}
         last_sub_code = None
         last_sub_lang = None
@@ -187,9 +227,9 @@ class StudentQuestionDetailView(APIView):
                 last_sub_code = s.source_code
                 last_sub_lang = s.language
 
-        setattr(question, "last_submission_code", last_sub_code)
-        setattr(question, "last_submission_language", last_sub_lang)
-        setattr(question, "submissions_by_language", submissions_by_language)
+        question.last_submission_code = last_sub_code
+        question.last_submission_language = last_sub_lang
+        question.submissions_by_language = submissions_by_language
 
         serializer = StudentQuestionDetailSerializer(question)
         return api_success(
@@ -202,14 +242,19 @@ class StudentCodeRunView(APIView):
     """Run code against sample visible test cases or custom standard input."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = CodeRunRequestSerializer
 
     @extend_schema(
         request=CodeRunRequestSerializer,
+        responses={200: OpenApiTypes.OBJECT},
         summary="Run Code in Sandbox",
         tags=["Student Coding Platform"],
     )
     def post(self, request, question_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="User does not possess an active student profile.",
@@ -221,9 +266,9 @@ class StudentCodeRunView(APIView):
 
         student = request.user.student_profile
         try:
-            question = CodingQuestion.objects.select_related("module", "module__course").get(
-                id=question_id, is_active=True
-            )
+            question = CodingQuestion.objects.select_related(
+                "module", "module__course"
+            ).get(id=question_id, is_active=True)
         except CodingQuestion.DoesNotExist:
             return api_error(
                 code="QUESTION_NOT_FOUND",
@@ -232,13 +277,19 @@ class StudentCodeRunView(APIView):
             )
 
         from apps.assignments.progression import StudentCurriculumProgressionService
+
         if question.module.course:
-            unlock_map = StudentCurriculumProgressionService.get_course_modules_unlock_map(student, question.module.course)
+            unlock_map = (
+                StudentCurriculumProgressionService.get_course_modules_unlock_map(
+                    student, question.module.course
+                )
+            )
             mod_status = unlock_map.get(str(question.module_id), {})
             if mod_status.get("is_locked", False):
                 return api_error(
                     code="MODULE_LOCKED",
-                    message=mod_status.get("unlock_requirement") or "This module is locked. Solve all problems in the previous module to unlock.",
+                    message=mod_status.get("unlock_requirement")
+                    or "This module is locked. Solve all problems in the previous module to unlock.",
                     status_code=status.HTTP_403_FORBIDDEN,
                 )
 
@@ -259,14 +310,19 @@ class StudentCodeSubmitView(APIView):
     """Submit code for full automated grading across visible and hidden test suites."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = CodeSubmitRequestSerializer
 
     @extend_schema(
         request=CodeSubmitRequestSerializer,
+        responses={201: OpenApiTypes.OBJECT},
         summary="Submit Code for Official Evaluation",
         tags=["Student Coding Platform"],
     )
     def post(self, request, question_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="User does not possess an active student profile.",
@@ -278,9 +334,9 @@ class StudentCodeSubmitView(APIView):
 
         student = request.user.student_profile
         try:
-            question = CodingQuestion.objects.select_related("module", "module__course").get(
-                id=question_id, is_active=True
-            )
+            question = CodingQuestion.objects.select_related(
+                "module", "module__course"
+            ).get(id=question_id, is_active=True)
         except CodingQuestion.DoesNotExist:
             return api_error(
                 code="QUESTION_NOT_FOUND",
@@ -289,13 +345,19 @@ class StudentCodeSubmitView(APIView):
             )
 
         from apps.assignments.progression import StudentCurriculumProgressionService
+
         if question.module.course:
-            unlock_map = StudentCurriculumProgressionService.get_course_modules_unlock_map(student, question.module.course)
+            unlock_map = (
+                StudentCurriculumProgressionService.get_course_modules_unlock_map(
+                    student, question.module.course
+                )
+            )
             mod_status = unlock_map.get(str(question.module_id), {})
             if mod_status.get("is_locked", False):
                 return api_error(
                     code="MODULE_LOCKED",
-                    message=mod_status.get("unlock_requirement") or "This module is locked. Solve all problems in the previous module to unlock.",
+                    message=mod_status.get("unlock_requirement")
+                    or "This module is locked. Solve all problems in the previous module to unlock.",
                     status_code=status.HTTP_403_FORBIDDEN,
                 )
 
@@ -316,13 +378,18 @@ class StudentSubmissionHistoryView(APIView):
     """View personal submission history for a coding question."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentSubmissionSerializer
 
     @extend_schema(
         summary="List Personal Submission History",
+        responses={200: StudentSubmissionSerializer(many=True)},
         tags=["Student Coding Platform"],
     )
     def get(self, request, question_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="User does not possess an active student profile.",
@@ -330,9 +397,11 @@ class StudentSubmissionHistoryView(APIView):
             )
 
         student = request.user.student_profile
-        submissions = CodeSubmission.objects.filter(
-            student=student, question_id=question_id
-        ).select_related("question").order_by("-submitted_at")
+        submissions = (
+            CodeSubmission.objects.filter(student=student, question_id=question_id)
+            .select_related("question")
+            .order_by("-submitted_at")
+        )
 
         serializer = StudentSubmissionSerializer(submissions, many=True)
         return api_success(
@@ -348,10 +417,14 @@ class StudentSubmissionDetailView(APIView):
 
     @extend_schema(
         summary="Retrieve Submission Execution Detail",
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Student Coding Platform"],
     )
     def get(self, request, submission_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="User does not possess an active student profile.",

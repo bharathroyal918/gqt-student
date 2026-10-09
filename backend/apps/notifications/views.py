@@ -1,7 +1,9 @@
 """Student views for notifications and institutional announcements."""
 
 import uuid
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -24,8 +26,12 @@ class StudentNotificationListView(APIView):
         summary="List Student Notifications",
         description="Fetch chronological in-app alerts and notifications with optional filtering.",
         parameters=[
-            OpenApiParameter("is_read", bool, description="Filter by read/unread status"),
-            OpenApiParameter("notification_type", str, description="Filter by event type"),
+            OpenApiParameter(
+                "is_read", bool, description="Filter by read/unread status"
+            ),
+            OpenApiParameter(
+                "notification_type", str, description="Filter by event type"
+            ),
         ],
         responses={200: NotificationSerializer(many=True)},
         tags=["Student Notifications"],
@@ -81,8 +87,10 @@ class StudentNotificationMarkReadView(APIView):
     """Mark a single notification as read."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
 
     @extend_schema(
+        request=None,
         summary="Mark Notification Read",
         description="Update read status of a specific user notification.",
         responses={200: NotificationSerializer},
@@ -90,7 +98,9 @@ class StudentNotificationMarkReadView(APIView):
     )
     def post(self, request, notification_id: uuid.UUID):
         try:
-            notification = NotificationService.mark_as_read(request.user, notification_id)
+            notification = NotificationService.mark_as_read(
+                request.user, notification_id
+            )
             serializer = NotificationSerializer(notification)
             unread_count = NotificationService.get_unread_count(request.user)
             return api_success(
@@ -118,9 +128,10 @@ class StudentNotificationMarkAllReadView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        request=None,
         summary="Mark All Notifications Read",
         description="Mark all unread notifications for the authenticated user as read.",
-        responses={200: None},
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Student Notifications"],
     )
     def post(self, request):

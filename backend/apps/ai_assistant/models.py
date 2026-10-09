@@ -7,7 +7,9 @@ class AIConversation(BaseModel):
     """Contextual conversation session between a student and the AI tutor."""
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="ai_conversations"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="ai_conversations",
     )
     context_question = models.ForeignKey(
         "assignments.CodingQuestion",
@@ -24,7 +26,9 @@ class AIConversation(BaseModel):
         verbose_name_plural = "AI Conversations"
         ordering = ["-updated_at"]
         indexes = [
-            models.Index(fields=["student", "-updated_at"], name="ai_conv_student_date_idx"),
+            models.Index(
+                fields=["student", "-updated_at"], name="ai_conv_student_date_idx"
+            ),
         ]
 
     def __str__(self):
@@ -42,7 +46,9 @@ class AIMessage(BaseModel):
     conversation = models.ForeignKey(
         AIConversation, on_delete=models.CASCADE, related_name="messages"
     )
-    sender = models.CharField(max_length=20, choices=SenderChoices.choices, db_index=True)
+    sender = models.CharField(
+        max_length=20, choices=SenderChoices.choices, db_index=True
+    )
     content = models.TextField()
     tokens_used = models.PositiveIntegerField(default=0)
 
@@ -51,7 +57,9 @@ class AIMessage(BaseModel):
         verbose_name_plural = "AI Messages"
         ordering = ["created_at"]
         indexes = [
-            models.Index(fields=["conversation", "created_at"], name="ai_msg_conv_date_idx"),
+            models.Index(
+                fields=["conversation", "created_at"], name="ai_msg_conv_date_idx"
+            ),
         ]
 
     def __str__(self):

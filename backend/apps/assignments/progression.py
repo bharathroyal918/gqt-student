@@ -1,6 +1,7 @@
 """Sequential Module Progression and Unlocking Service."""
 
-from typing import Any, Dict, Optional
+from typing import Any
+
 from django.db.models import Count
 
 from apps.assignments.models import CodingQuestion, StudentQuestionProgress
@@ -15,7 +16,7 @@ class StudentCurriculumProgressionService:
     @classmethod
     def get_course_modules_unlock_map(
         cls, student_profile: StudentProfile, course: Course
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Returns a dictionary mapping module_id -> {
             "module_id": str,
@@ -35,7 +36,9 @@ class StudentCurriculumProgressionService:
         - If any preceding module is incomplete, module N is LOCKED (is_locked=True) with a friendly requirement.
         """
         modules = list(
-            Module.objects.filter(course=course, is_published=True).order_by("order_index", "id")
+            Module.objects.filter(course=course, is_published=True).order_by(
+                "order_index", "id"
+            )
         )
         if not modules:
             return {}
@@ -61,9 +64,9 @@ class StudentCurriculumProgressionService:
             .values_list("question__module_id", "cnt")
         )
 
-        result: Dict[str, Dict[str, Any]] = {}
+        result: dict[str, dict[str, Any]] = {}
         all_previous_completed = True
-        earliest_incomplete_module: Optional[Module] = None
+        earliest_incomplete_module: Module | None = None
 
         for idx, mod in enumerate(modules):
             total_q = q_counts.get(mod.id, 0)

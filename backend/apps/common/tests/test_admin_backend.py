@@ -11,13 +11,14 @@ Tests every endpoint, business flow, and permission boundary across:
 8. Analytics & Executive Reports
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -98,7 +99,10 @@ class AdminBackendIntegrationTests(TestCase):
 
     def test_student_detail_and_update(self):
         self._auth_admin()
-        url = reverse("api_v1:admin_students:detail_update", kwargs={"pk": self.student_profile.id})
+        url = reverse(
+            "api_v1:admin_students:detail_update",
+            kwargs={"pk": self.student_profile.id},
+        )
 
         # Detail
         get_resp = self.client.get(url)
@@ -126,9 +130,12 @@ class AdminBackendIntegrationTests(TestCase):
         self._auth_admin()
 
         url = reverse(
-            "api_v1:admin_students:assign_courses", kwargs={"pk": self.student_profile.id}
+            "api_v1:admin_students:assign_courses",
+            kwargs={"pk": self.student_profile.id},
         )
-        response = self.client.post(url, {"course_ids": [str(course.id)]}, format="json")
+        response = self.client.post(
+            url, {"course_ids": [str(course.id)]}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(
             CourseEnrollment.objects.filter(
@@ -191,7 +198,9 @@ class AdminBackendIntegrationTests(TestCase):
         course_id = create_resp.data["data"]["id"]
 
         # 2. Retrieve & Update
-        detail_url = reverse("api_v1:admin_courses:detail_update_delete", kwargs={"pk": course_id})
+        detail_url = reverse(
+            "api_v1:admin_courses:detail_update_delete", kwargs={"pk": course_id}
+        )
         update_resp = self.client.patch(
             detail_url, {"description": "Updated description"}, format="json"
         )
@@ -331,7 +340,9 @@ class AdminBackendIntegrationTests(TestCase):
         self.assertEqual(len(q_resp.data["data"]["test_cases"]), 2)
 
         # 2. Add extra hidden testcase
-        tc_url = reverse("api_v1:admin_assignments:testcase_create", kwargs={"pk": question_id})
+        tc_url = reverse(
+            "api_v1:admin_assignments:testcase_create", kwargs={"pk": question_id}
+        )
         tc_resp = self.client.post(
             tc_url,
             {
@@ -347,9 +358,12 @@ class AdminBackendIntegrationTests(TestCase):
 
         # 3. Update Testcase
         tc_detail_url = reverse(
-            "api_v1:admin_assignments:testcase_detail_update_delete", kwargs={"pk": tc_id}
+            "api_v1:admin_assignments:testcase_detail_update_delete",
+            kwargs={"pk": tc_id},
         )
-        update_tc_resp = self.client.patch(tc_detail_url, {"weight": 5.00}, format="json")
+        update_tc_resp = self.client.patch(
+            tc_detail_url, {"weight": 5.00}, format="json"
+        )
         self.assertEqual(update_tc_resp.status_code, status.HTTP_200_OK)
 
         # 4. Delete Testcase
@@ -369,7 +383,7 @@ class AdminBackendIntegrationTests(TestCase):
 
     def test_daily_task_crud(self):
         self._auth_admin()
-        task_date = date.today() + timedelta(days=1)
+        task_date = timezone.localdate() + timedelta(days=1)
         list_url = reverse("api_v1:admin_tasks:list_create")
 
         # 1. Create Daily Task
@@ -388,7 +402,9 @@ class AdminBackendIntegrationTests(TestCase):
         task_id = create_resp.data["data"]["id"]
 
         # 2. Update Task
-        detail_url = reverse("api_v1:admin_tasks:detail_update_delete", kwargs={"pk": task_id})
+        detail_url = reverse(
+            "api_v1:admin_tasks:detail_update_delete", kwargs={"pk": task_id}
+        )
         update_resp = self.client.patch(detail_url, {"points": 30.00}, format="json")
         self.assertEqual(update_resp.status_code, status.HTTP_200_OK)
         self.assertEqual(update_resp.data["data"]["points"], "30.00")
@@ -440,7 +456,8 @@ class AdminBackendIntegrationTests(TestCase):
 
         # 3. Admin Review & Grade
         review_url = reverse(
-            "api_v1:admin_projects:submission_detail_review", kwargs={"pk": submission.id}
+            "api_v1:admin_projects:submission_detail_review",
+            kwargs={"pk": submission.id},
         )
         review_resp = self.client.post(
             review_url,
@@ -507,7 +524,9 @@ class AdminBackendIntegrationTests(TestCase):
         detail_url = reverse(
             "api_v1:admin_announcements:detail_update_delete", kwargs={"pk": ann_id}
         )
-        update_resp = self.client.patch(detail_url, {"priority": "URGENT"}, format="json")
+        update_resp = self.client.patch(
+            detail_url, {"priority": "URGENT"}, format="json"
+        )
         self.assertEqual(update_resp.status_code, status.HTTP_200_OK)
         self.assertEqual(update_resp.data["data"]["priority"], "URGENT")
 

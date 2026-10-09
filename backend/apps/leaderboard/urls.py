@@ -1,6 +1,7 @@
 """URL routing for Student & Public Leaderboard endpoints."""
 
 from django.urls import path
+
 from apps.leaderboard.views import LeaderboardListView, LeaderboardMeView
 
 app_name = "leaderboard"

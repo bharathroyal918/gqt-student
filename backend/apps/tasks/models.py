@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 from decimal import Decimal
+
 from django.db import models
 from django.utils import timezone
 
@@ -28,7 +29,9 @@ class Task(BaseModel):
         on_delete=models.SET_NULL,
         related_name="daily_tasks",
     )
-    points = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("20.00"))
+    points = models.DecimalField(
+        max_digits=5, decimal_places=2, default=Decimal("20.00")
+    )
     is_active = models.BooleanField(default=True, db_index=True)
 
     # Scoping / Target assignment
@@ -53,8 +56,12 @@ class Task(BaseModel):
         verbose_name_plural = "Daily Tasks"
         ordering = ["-scheduled_date", "-created_at"]
         indexes = [
-            models.Index(fields=["is_active", "deadline"], name="task_active_deadline_idx"),
-            models.Index(fields=["batch_code", "is_active"], name="task_batch_active_idx"),
+            models.Index(
+                fields=["is_active", "deadline"], name="task_active_deadline_idx"
+            ),
+            models.Index(
+                fields=["batch_code", "is_active"], name="task_batch_active_idx"
+            ),
         ]
 
     def __str__(self):
@@ -80,12 +87,16 @@ class StudentTask(BaseModel):
     """Record of a student completing a daily practice task challenge."""
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="task_completions"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="task_completions",
     )
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="completions")
     is_completed = models.BooleanField(default=True)
     completed_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    score_awarded = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("20.00"))
+    score_awarded = models.DecimalField(
+        max_digits=5, decimal_places=2, default=Decimal("20.00")
+    )
     submission_notes = models.TextField(blank=True, default="")
 
     class Meta:
@@ -98,7 +109,9 @@ class StudentTask(BaseModel):
             )
         ]
         indexes = [
-            models.Index(fields=["student", "completed_at"], name="student_task_comp_date_idx"),
+            models.Index(
+                fields=["student", "completed_at"], name="student_task_comp_date_idx"
+            ),
         ]
 
     def __str__(self):

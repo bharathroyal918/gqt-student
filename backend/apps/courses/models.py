@@ -27,7 +27,9 @@ class Course(BaseModel):
         verbose_name_plural = "Courses"
         ordering = ["order", "title"]
         indexes = [
-            models.Index(fields=["is_published", "is_deleted"], name="course_pub_del_idx"),
+            models.Index(
+                fields=["is_published", "is_deleted"], name="course_pub_del_idx"
+            ),
         ]
 
     def delete(self, using=None, keep_parents=False):
@@ -51,7 +53,9 @@ class CourseEnrollment(BaseModel):
     student = models.ForeignKey(
         "students.StudentProfile", on_delete=models.CASCADE, related_name="enrollments"
     )
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="enrollments")
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name="enrollments"
+    )
     status = models.CharField(
         max_length=20,
         choices=EnrollmentStatus.choices,
@@ -65,8 +69,12 @@ class CourseEnrollment(BaseModel):
         verbose_name = "Course Enrollment"
         verbose_name_plural = "Course Enrollments"
         indexes = [
-            models.Index(fields=["student", "status"], name="enrollment_student_status_idx"),
-            models.Index(fields=["course", "status"], name="enrollment_course_status_idx"),
+            models.Index(
+                fields=["student", "status"], name="enrollment_student_status_idx"
+            ),
+            models.Index(
+                fields=["course", "status"], name="enrollment_course_status_idx"
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -128,8 +136,15 @@ class RecordedClass(BaseModel):
         help_text="Explicit preview override flag. Note: First 5 videos are always free preview.",
     )
     is_published = models.BooleanField(default=True, db_index=True)
-    notes = models.TextField(blank=True, default="", help_text="Markdown lecture notes or syllabus summary")
-    resources_url = models.URLField(max_length=500, blank=True, default="", help_text="Repository or supplementary materials URL")
+    notes = models.TextField(
+        blank=True, default="", help_text="Markdown lecture notes or syllabus summary"
+    )
+    resources_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Repository or supplementary materials URL",
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -143,8 +158,13 @@ class RecordedClass(BaseModel):
         verbose_name_plural = "Recorded Classes"
         ordering = ["order_index", "created_at"]
         indexes = [
-            models.Index(fields=["course", "is_published", "order_index"], name="rec_class_course_pub_ord_idx"),
-            models.Index(fields=["course", "order_index"], name="rec_class_course_ord_idx"),
+            models.Index(
+                fields=["course", "is_published", "order_index"],
+                name="rec_class_course_pub_ord_idx",
+            ),
+            models.Index(
+                fields=["course", "order_index"], name="rec_class_course_ord_idx"
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -187,9 +207,13 @@ class RecordedClass(BaseModel):
             if yt_id:
                 self.youtube_video_id = yt_id
                 if not self.thumbnail_url:
-                    self.thumbnail_url = f"https://img.youtube.com/vi/{yt_id}/hqdefault.jpg"
+                    self.thumbnail_url = (
+                        f"https://img.youtube.com/vi/{yt_id}/hqdefault.jpg"
+                    )
 
-        if self.duration_seconds > 0 and (not self.duration_formatted or self.duration_formatted == "00:00"):
+        if self.duration_seconds > 0 and (
+            not self.duration_formatted or self.duration_formatted == "00:00"
+        ):
             mins, secs = divmod(self.duration_seconds, 60)
             hrs, mins = divmod(mins, 60)
             if hrs > 0:
@@ -224,12 +248,18 @@ class StudentRecordedClassProgress(BaseModel):
         verbose_name = "Student Recorded Class Progress"
         verbose_name_plural = "Student Recorded Class Progresses"
         indexes = [
-            models.Index(fields=["student", "is_completed"], name="rec_prog_student_comp_idx"),
-            models.Index(fields=["recorded_class", "is_completed"], name="rec_prog_class_comp_idx"),
+            models.Index(
+                fields=["student", "is_completed"], name="rec_prog_student_comp_idx"
+            ),
+            models.Index(
+                fields=["recorded_class", "is_completed"],
+                name="rec_prog_class_comp_idx",
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["student", "recorded_class"], name="unique_student_recorded_class_progress"
+                fields=["student", "recorded_class"],
+                name="unique_student_recorded_class_progress",
             )
         ]
 

@@ -4,6 +4,8 @@ import time
 from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, connection
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -14,6 +16,12 @@ from apps.common.throttling import HealthCheckThrottle
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(
+    summary="System Health Check",
+    description="Overall health probe verifying web service vitality and subsystem statuses.",
+    responses={200: OpenApiTypes.OBJECT, 503: OpenApiTypes.OBJECT},
+    tags=["System & Health"],
+)
 class HealthCheckView(APIView):
     """GET /api/v1/health/
 
@@ -31,7 +39,7 @@ class HealthCheckView(APIView):
                 cursor.execute("SELECT 1")
                 row = cursor.fetchone()
                 db_healthy = row == (1,)
-        except Exception as e:
+        except (DatabaseError, OSError) as e:
             logger.warning(f"Health probe database check failed: {e}")
             db_healthy = False
 
@@ -40,19 +48,22 @@ class HealthCheckView(APIView):
         try:
             cache.set("__health_probe_ping__", "pong", timeout=5)
             redis_healthy = cache.get("__health_probe_ping__") == "pong"
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, ValueError, KeyError) as e:
             logger.warning(f"Health probe Redis check failed: {e}")
             redis_healthy = False
 
         # 3. Probe Supabase (if configured)
         supabase_status = "unconfigured"
         if getattr(settings, "SUPABASE_URL", "") and (
-            getattr(settings, "SUPABASE_ANON_KEY", "") or getattr(settings, "SUPABASE_SERVICE_ROLE_KEY", "")
+            getattr(settings, "SUPABASE_ANON_KEY", "")
+            or getattr(settings, "SUPABASE_SERVICE_ROLE_KEY", "")
         ):
             supabase_status = "configured"
 
         overall_status = "healthy" if db_healthy else "degraded"
-        status_code = status.HTTP_200_OK if db_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        status_code = (
+            status.HTTP_200_OK if db_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        )
 
         return api_success(
             data={
@@ -70,6 +81,12 @@ class HealthCheckView(APIView):
         )
 
 
+@extend_schema(
+    summary="Database Health Check",
+    description="Targeted database probe measuring query round-trip latency and verifying schema connectivity.",
+    responses={200: OpenApiTypes.OBJECT, 503: OpenApiTypes.OBJECT},
+    tags=["System & Health"],
+)
 class DatabaseHealthCheckView(APIView):
     """GET /api/v1/health/database/
 
@@ -86,7 +103,9 @@ class DatabaseHealthCheckView(APIView):
                 cursor.execute("SELECT 1")
                 row = cursor.fetchone()
                 if row != (1,):
-                    raise DatabaseError("Database did not return expected verification tuple.")
+                    raise DatabaseError(
+                        "Database did not return expected verification tuple."
+                    )
 
             latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
             db_engine = settings.DATABASES["default"]["ENGINE"]
@@ -110,6 +129,12 @@ class DatabaseHealthCheckView(APIView):
             )
 
 
+@extend_schema(
+    summary="Redis Health Check",
+    description="Targeted Redis cache probe measuring read/write latency.",
+    responses={200: OpenApiTypes.OBJECT, 503: OpenApiTypes.OBJECT},
+    tags=["System & Health"],
+)
 class RedisHealthCheckView(APIView):
     """GET /api/v1/health/redis/
 
@@ -128,7 +153,9 @@ class RedisHealthCheckView(APIView):
             cache.set(probe_key, probe_val, timeout=5)
             retrieved = cache.get(probe_key)
             if retrieved != probe_val:
-                raise ConnectionError("Redis cache write succeeded but value verification failed.")
+                raise ConnectionError(
+                    "Redis cache write succeeded but value verification failed."
+                )
 
             cache.delete(probe_key)
             latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
@@ -150,9 +177,15 @@ class RedisHealthCheckView(APIView):
             )
 
 
+@extend_schema(
+    summary="Liveness Probe",
+    description="Fast, lightweight liveness probe for container orchestrators (Kubernetes/Docker).",
+    responses={200: OpenApiTypes.OBJECT},
+    tags=["System & Health"],
+)
 class LivenessCheckView(APIView):
     """GET /api/v1/health/live/
-    
+
     Fast, lightweight liveness probe for container orchestrators (Kubernetes/Docker).
     """
 
@@ -162,9 +195,15 @@ class LivenessCheckView(APIView):
         return api_success(data={"status": "alive", "timestamp": int(time.time())})
 
 
+@extend_schema(
+    summary="Readiness Probe",
+    description="Readiness probe verifying DB and cache connectivity before routing live traffic.",
+    responses={200: OpenApiTypes.OBJECT, 503: OpenApiTypes.OBJECT},
+    tags=["System & Health"],
+)
 class ReadinessCheckView(APIView):
     """GET /api/v1/health/ready/
-    
+
     Readiness probe verifying DB and cache connectivity before routing live traffic.
     """
 
@@ -180,11 +219,16 @@ class ReadinessCheckView(APIView):
             if cache.get("__readiness_ping__") != "1":
                 raise ConnectionError("Cache unavailable")
             return api_success(data={"status": "ready", "ready": True})
-        except Exception as exc:
+        except (
+            DatabaseError,
+            ConnectionError,
+            OSError,
+            TimeoutError,
+            ValueError,
+        ) as exc:
             return api_error(
                 code="SERVICE_NOT_READY",
                 message="Service not ready to accept traffic.",
                 details={"error": str(exc)},
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-

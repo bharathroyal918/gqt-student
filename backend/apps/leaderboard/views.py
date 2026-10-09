@@ -1,11 +1,10 @@
 """Views for Public and Student-Specific Leaderboard APIs."""
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from apps.common.permissions import IsActiveStudent
 from apps.common.responses import api_error, api_success
 from apps.leaderboard.serializers import (
     PublicLeaderboardEntrySerializer,
@@ -49,7 +48,11 @@ class LeaderboardListView(APIView):
         course_id = request.query_params.get("course_id")
 
         student_profile = getattr(request.user, "student_profile", None)
-        if not student_profile and hasattr(request.user, "is_student") and request.user.is_student:
+        if (
+            not student_profile
+            and hasattr(request.user, "is_student")
+            and request.user.is_student
+        ):
             student_profile = StudentProfile.objects.filter(user=request.user).first()
 
         if student_profile:

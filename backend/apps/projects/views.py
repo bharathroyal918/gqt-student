@@ -1,7 +1,7 @@
 """Student views for browsing projects, uploading deliverables, and inspecting review feedback."""
 
-import os
 from django.http import FileResponse, Http404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -23,6 +23,7 @@ class StudentProjectListView(APIView):
     """Retrieve curriculum capstone projects assigned to the authenticated student."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentProjectListSerializer
 
     @extend_schema(
         summary="List Student Projects",
@@ -54,6 +55,7 @@ class StudentProjectDetailView(APIView):
     """Retrieve project specifications, deliverables instructions, and submission history."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentProjectDetailSerializer
 
     @extend_schema(
         summary="Retrieve Project Detail",
@@ -86,9 +88,11 @@ class StudentProjectSubmitView(APIView):
 
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    serializer_class = StudentProjectSubmitSerializer
 
     @extend_schema(
         request=StudentProjectSubmitSerializer,
+        responses={200: OpenApiTypes.OBJECT},
         summary="Submit Project Deliverables",
         description="Upload project files, validated GitHub URL, live demo link, and notes.",
         tags=["Student Projects"],
@@ -144,10 +148,13 @@ class ProjectFileDownloadView(APIView):
     @extend_schema(
         summary="Download Project Deliverable",
         description="Secure authenticated download for project files.",
+        responses={(200, "application/octet-stream"): OpenApiTypes.BINARY},
         tags=["Project Files"],
     )
     def get(self, request, file_id):
-        project_file = ProjectAdminService.get_file_for_download(str(file_id), request.user)
+        project_file = ProjectAdminService.get_file_for_download(
+            str(file_id), request.user
+        )
 
         try:
             file_handle = project_file.file.open("rb")
@@ -159,4 +166,6 @@ class ProjectFileDownloadView(APIView):
             )
             return response
         except FileNotFoundError:
-            raise Http404("Requested deliverable file was not found on storage backend.")
+            raise Http404(
+                "Requested deliverable file was not found on storage backend."
+            )

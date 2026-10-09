@@ -10,7 +10,9 @@ class NotificationModelTests(TestCase):
     """Test suite for Notification and Announcement models."""
 
     def setUp(self):
-        self.user = User.objects.create_user(email="notif.user@gqt.local", password="Password123!")
+        self.user = User.objects.create_user(
+            email="notif.user@gqt.local", password="Password123!"
+        )
         self.admin = User.objects.create_superuser(
             email="admin.notif@gqt.local", password="Password123!"
         )
@@ -33,4 +35,6 @@ class NotificationModelTests(TestCase):
             published_by=self.admin,
         )
         self.assertTrue(announcement.is_active)
-        self.assertEqual(str(announcement), "Scheduled Maintenance Notice (Global) [HIGH]")
+        self.assertEqual(
+            str(announcement), "Scheduled Maintenance Notice (Global) [HIGH]"
+        )

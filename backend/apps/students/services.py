@@ -1,17 +1,20 @@
 """Domain services for administrative student management, enrollments, and academic reporting."""
 
+from datetime import date, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-
-from datetime import timedelta
-from django.utils import timezone
 from django.db.models import Count, Q, Sum
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
-from django.core.cache import cache
 from apps.accounts.models import AuditLog, User
-from apps.assignments.models import CodeSubmission, CodingQuestion, StudentQuestionProgress
+from apps.assignments.models import (
+    CodeSubmission,
+    CodingQuestion,
+    StudentQuestionProgress,
+)
 from apps.certificates.models import StudentBadge
 from apps.common.exceptions import DomainException
 from apps.courses.models import Course, CourseEnrollment
@@ -28,14 +31,16 @@ class StudentAdminService:
     @classmethod
     def get_student_detail(cls, student_id: str) -> StudentProfile:
         return get_object_or_404(
-            StudentProfile.objects.select_related("user").prefetch_related("enrollments__course"),
+            StudentProfile.objects.select_related("user").prefetch_related(
+                "enrollments__course"
+            ),
             id=student_id,
         )
 
     @classmethod
     @transaction.atomic
     def grant_student_access(
-        cls, student_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, student_id: str, admin_user: User, ip_address: str | None = None
     ) -> StudentProfile:
         """Admin explicitly grants full portal and curriculum access to a student."""
         student = cls.get_student_detail(student_id)
@@ -46,8 +51,12 @@ class StudentAdminService:
         user.save(update_fields=["onboarding_status", "is_active", "updated_at"])
 
         # Automatically enroll in published courses if student has none
-        if not student.enrollments.filter(status=CourseEnrollment.EnrollmentStatus.ACTIVE).exists():
-            default_courses = Course.objects.filter(is_published=True, is_deleted=False)[:2]
+        if not student.enrollments.filter(
+            status=CourseEnrollment.EnrollmentStatus.ACTIVE
+        ).exists():
+            default_courses = Course.objects.filter(
+                is_published=True, is_deleted=False
+            )[:2]
             for c in default_courses:
                 CourseEnrollment.objects.get_or_create(
                     student=student,
@@ -75,7 +84,7 @@ class StudentAdminService:
     @classmethod
     @transaction.atomic
     def revoke_student_access(
-        cls, student_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, student_id: str, admin_user: User, ip_address: str | None = None
     ) -> StudentProfile:
         """Admin suspends or revokes portal access for a student."""
         student = cls.get_student_detail(student_id)
@@ -102,18 +111,22 @@ class StudentAdminService:
         admin_user: User,
         course_opted: str = "Full Stack Software & Assessment Track",
         batch_code: str = "BATCH-2026-A",
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> StudentProfile:
         """Admin provides direct access to a student using their registered institutional email."""
         clean_email = email.strip().lower()
         user = User.objects.filter(email=clean_email).first()
 
         if not user:
-            raise DomainException(f"No student registered with email {clean_email}.", status_code=404)
+            raise DomainException(
+                f"No student registered with email {clean_email}.", status_code=404
+            )
 
         student = getattr(user, "student_profile", None)
         if not student:
-            raise DomainException("User does not have an attached Student Profile.", status_code=400)
+            raise DomainException(
+                "User does not have an attached Student Profile.", status_code=400
+            )
 
         user.onboarding_status = User.OnboardingStatusChoices.ACTIVE
         user.is_active = True
@@ -161,8 +174,8 @@ class StudentAdminService:
         session_title: str,
         remarks: str,
         admin_user: User,
-        technology: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        technology: str | None = None,
+        ip_address: str | None = None,
     ) -> AttendanceRecord:
         """Admin records daily session attendance for a student."""
         student = cls.get_student_detail(student_id)
@@ -182,13 +195,23 @@ class StudentAdminService:
         total = AttendanceRecord.objects.filter(student_profile=student).count()
         attended = AttendanceRecord.objects.filter(
             student_profile=student,
-            status__in=[AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE],
+            status__in=[
+                AttendanceRecord.AttendanceStatus.PRESENT,
+                AttendanceRecord.AttendanceStatus.LATE,
+            ],
         ).count()
 
         student.total_classes = max(total, student.total_classes)
         student.attended_classes = attended
         student.recalculate_attendance()
-        student.save(update_fields=["total_classes", "attended_classes", "attendance_percentage", "updated_at"])
+        student.save(
+            update_fields=[
+                "total_classes",
+                "attended_classes",
+                "attendance_percentage",
+                "updated_at",
+            ]
+        )
 
         AuditLog.objects.create(
             actor=admin_user,
@@ -196,37 +219,47 @@ class StudentAdminService:
             target_model="AttendanceRecord",
             target_id=str(record.id),
             ip_address=ip_address,
-            payload={"student_id": str(student.id), "date": str(date), "status": status, "technology": technology},
+            payload={
+                "student_id": str(student.id),
+                "date": str(date),
+                "status": status,
+                "technology": technology,
+            },
         )
         return record
 
     @classmethod
     def get_attendance_overview(
         cls,
-        batch_code: Optional[str] = None,
-        technology: Optional[str] = None,
-        date_str: Optional[str] = None,
-        status_filter: Optional[str] = None,
-        search: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        batch_code: str | None = None,
+        technology: str | None = None,
+        date_str: str | None = None,
+        status_filter: str | None = None,
+        search: str | None = None,
+    ) -> dict[str, Any]:
         """Admin inspects attendance across all students with flexible multi-dimensional filters."""
-        from django.db.models import Count, Q, Avg
+        from django.db.models import Q
 
         today = timezone.localdate()
         target_date = today
         if date_str:
             try:
-                target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            except Exception:
+                target_date = date.fromisoformat(date_str)
+            except ValueError:
                 target_date = today
 
-        queryset = AttendanceRecord.objects.select_related("student_profile", "student_profile__user").all()
+        queryset = AttendanceRecord.objects.select_related(
+            "student_profile", "student_profile__user"
+        ).all()
 
         if batch_code and batch_code != "ALL":
             queryset = queryset.filter(student_profile__batch_code__iexact=batch_code)
 
         if technology and technology != "ALL":
-            queryset = queryset.filter(Q(technology__iexact=technology) | Q(session_title__icontains=technology))
+            queryset = queryset.filter(
+                Q(technology__iexact=technology)
+                | Q(session_title__icontains=technology)
+            )
 
         if date_str:
             queryset = queryset.filter(date=target_date)
@@ -260,13 +293,21 @@ class StudentAdminService:
 
         # Calculate metrics for target date or overall selection
         records_subset = queryset[:300]
-        total_students_in_batch = StudentProfile.objects.filter(
-            batch_code__iexact=batch_code
-        ).count() if (batch_code and batch_code != "ALL") else StudentProfile.objects.count()
+        total_students_in_batch = (
+            StudentProfile.objects.filter(batch_code__iexact=batch_code).count()
+            if (batch_code and batch_code != "ALL")
+            else StudentProfile.objects.count()
+        )
 
-        present_count = queryset.filter(status=AttendanceRecord.AttendanceStatus.PRESENT).count()
-        absent_count = queryset.filter(status=AttendanceRecord.AttendanceStatus.ABSENT).count()
-        late_count = queryset.filter(status=AttendanceRecord.AttendanceStatus.LATE).count()
+        present_count = queryset.filter(
+            status=AttendanceRecord.AttendanceStatus.PRESENT
+        ).count()
+        absent_count = queryset.filter(
+            status=AttendanceRecord.AttendanceStatus.ABSENT
+        ).count()
+        late_count = queryset.filter(
+            status=AttendanceRecord.AttendanceStatus.LATE
+        ).count()
         total_marked = queryset.count()
         avg_percentage = (
             round((present_count + late_count) / max(1, total_marked) * 100.0, 1)
@@ -292,7 +333,9 @@ class StudentAdminService:
                     "student_id": str(r.student_profile.id),
                     "student_id_number": r.student_profile.student_id_number,
                     "student_name": r.student_profile.full_name,
-                    "student_email": r.student_profile.user.email if r.student_profile.user else "",
+                    "student_email": r.student_profile.user.email
+                    if r.student_profile.user
+                    else "",
                     "batch_code": r.student_profile.batch_code,
                     "college_name": r.student_profile.college_name,
                     "course_opted": r.student_profile.course_opted,
@@ -301,7 +344,9 @@ class StudentAdminService:
                     "session_title": r.session_title,
                     "status": r.status,
                     "remarks": r.remarks,
-                    "overall_attendance_pct": float(r.student_profile.attendance_percentage),
+                    "overall_attendance_pct": float(
+                        r.student_profile.attendance_percentage
+                    ),
                     "created_at": r.created_at.isoformat(),
                 }
                 for r in records_subset
@@ -313,16 +358,16 @@ class StudentAdminService:
     def scan_student_qr(
         cls,
         qr_data: str,
-        session_title: Optional[str] = None,
-        technology: Optional[str] = None,
+        session_title: str | None = None,
+        technology: str | None = None,
         date=None,
         status: str = "PRESENT",
-        remarks: Optional[str] = None,
-        admin_user: Optional[User] = None,
-        ip_address: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        remarks: str | None = None,
+        admin_user: User | None = None,
+        ip_address: str | None = None,
+    ) -> dict[str, Any]:
         """Admin scans student attendance QR code at classroom terminal/door.
-        
+
         Extracts student credentials from QR:
         1. Validates student profile existence.
         2. Course registration check: if not registered for any course, rejects with:
@@ -331,6 +376,7 @@ class StudentAdminService:
         4. Updates real-time streak and attendance telemetry.
         """
         import json
+
         if not qr_data or not qr_data.strip():
             raise DomainException("Invalid QR payload provided.", status_code=400)
 
@@ -341,8 +387,12 @@ class StudentAdminService:
         if cleaned_qr.startswith("{") and cleaned_qr.endswith("}"):
             try:
                 payload = json.loads(cleaned_qr)
-                student_id_number = payload.get("student_id") or payload.get("student_id_number") or payload.get("id")
-            except Exception:
+                student_id_number = (
+                    payload.get("student_id")
+                    or payload.get("student_id_number")
+                    or payload.get("id")
+                )
+            except ValueError:
                 pass
         elif "GQT_ATTENDANCE:" in cleaned_qr or "STUDENT_ATTENDANCE_ID" in cleaned_qr:
             parts = cleaned_qr.split(":")
@@ -366,7 +416,7 @@ class StudentAdminService:
             # Try UUID lookup
             try:
                 student = StudentProfile.objects.filter(id=student_id_number).first()
-            except Exception:
+            except ValueError:
                 pass
 
         if not student:
@@ -380,7 +430,9 @@ class StudentAdminService:
             student=student, status=CourseEnrollment.EnrollmentStatus.ACTIVE
         ).select_related("course")
 
-        has_active_courses = active_enrollments.exists() or bool(student.course_opted and student.course_opted.strip())
+        has_active_courses = active_enrollments.exists() or bool(
+            student.course_opted and student.course_opted.strip()
+        )
         if not has_active_courses:
             raise DomainException(
                 "You are not registered yet for any course. Please contact administrator to enroll in the course.",
@@ -392,7 +444,7 @@ class StudentAdminService:
         target_session = session_title or f"{target_technology} Class Session"
 
         # Update or create AttendanceRecord
-        record, created = AttendanceRecord.objects.update_or_create(
+        record, _created = AttendanceRecord.objects.update_or_create(
             student_profile=student,
             date=target_date,
             session_title=target_session,
@@ -407,16 +459,29 @@ class StudentAdminService:
         total = AttendanceRecord.objects.filter(student_profile=student).count()
         attended = AttendanceRecord.objects.filter(
             student_profile=student,
-            status__in=[AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE],
+            status__in=[
+                AttendanceRecord.AttendanceStatus.PRESENT,
+                AttendanceRecord.AttendanceStatus.LATE,
+            ],
         ).count()
 
         student.total_classes = max(total, student.total_classes)
         student.attended_classes = attended
         student.recalculate_attendance()
-        student.save(update_fields=["total_classes", "attended_classes", "attendance_percentage", "updated_at"])
+        student.save(
+            update_fields=[
+                "total_classes",
+                "attended_classes",
+                "attendance_percentage",
+                "updated_at",
+            ]
+        )
 
         # Update learning streak if marked PRESENT/LATE
-        if status in [AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE]:
+        if status in [
+            AttendanceRecord.AttendanceStatus.PRESENT,
+            AttendanceRecord.AttendanceStatus.LATE,
+        ]:
             student.record_activity_and_update_streak(activity_date=target_date)
 
         AuditLog.objects.create(
@@ -434,7 +499,11 @@ class StudentAdminService:
             },
         )
 
-        course_name = active_enrollments.first().course.title if active_enrollments.exists() else (student.course_opted or "Full Stack Track")
+        course_name = (
+            active_enrollments.first().course.title
+            if active_enrollments.exists()
+            else (student.course_opted or "Full Stack Track")
+        )
 
         return {
             "success": True,
@@ -463,16 +532,16 @@ class StudentAdminService:
     @transaction.atomic
     def bulk_mark_attendance(
         cls,
-        batch_code: Optional[str] = None,
-        student_ids: Optional[List[str]] = None,
+        batch_code: str | None = None,
+        student_ids: list[str] | None = None,
         date=None,
-        session_title: Optional[str] = None,
-        technology: Optional[str] = None,
+        session_title: str | None = None,
+        technology: str | None = None,
         status: str = "PRESENT",
-        remarks: Optional[str] = None,
-        admin_user: Optional[User] = None,
-        ip_address: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        remarks: str | None = None,
+        admin_user: User | None = None,
+        ip_address: str | None = None,
+    ) -> dict[str, Any]:
         """Bulk mark attendance for an entire batch or list of students."""
         target_date = date or timezone.localdate()
         target_technology = technology or "Full Stack Development"
@@ -484,7 +553,10 @@ class StudentAdminService:
         elif student_ids:
             students_qs = students_qs.filter(id__in=student_ids)
         else:
-            raise DomainException("Please specify either a batch_code or a list of student IDs.", status_code=400)
+            raise DomainException(
+                "Please specify either a batch_code or a list of student IDs.",
+                status_code=400,
+            )
 
         students = list(students_qs)
         marked_count = 0
@@ -504,14 +576,27 @@ class StudentAdminService:
             total = AttendanceRecord.objects.filter(student_profile=student).count()
             attended = AttendanceRecord.objects.filter(
                 student_profile=student,
-                status__in=[AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE],
+                status__in=[
+                    AttendanceRecord.AttendanceStatus.PRESENT,
+                    AttendanceRecord.AttendanceStatus.LATE,
+                ],
             ).count()
             student.total_classes = max(total, student.total_classes)
             student.attended_classes = attended
             student.recalculate_attendance()
-            student.save(update_fields=["total_classes", "attended_classes", "attendance_percentage", "updated_at"])
+            student.save(
+                update_fields=[
+                    "total_classes",
+                    "attended_classes",
+                    "attendance_percentage",
+                    "updated_at",
+                ]
+            )
 
-            if status in [AttendanceRecord.AttendanceStatus.PRESENT, AttendanceRecord.AttendanceStatus.LATE]:
+            if status in [
+                AttendanceRecord.AttendanceStatus.PRESENT,
+                AttendanceRecord.AttendanceStatus.LATE,
+            ]:
                 student.record_activity_and_update_streak(activity_date=target_date)
             marked_count += 1
 
@@ -522,10 +607,12 @@ class StudentAdminService:
         }
 
     @classmethod
-    def get_student_attendance(cls, student_id: str) -> Dict[str, Any]:
+    def get_student_attendance(cls, student_id: str) -> dict[str, Any]:
         """Admin inspects student's full attendance history."""
         student = cls.get_student_detail(student_id)
-        records = AttendanceRecord.objects.filter(student_profile=student).order_by("-date")[:50]
+        records = AttendanceRecord.objects.filter(student_profile=student).order_by(
+            "-date"
+        )[:50]
         return {
             "attendance_percentage": float(student.attendance_percentage),
             "total_classes": student.total_classes,
@@ -551,21 +638,21 @@ class StudentAdminService:
         cls,
         student_id: str,
         admin_user: User,
-        full_name: Optional[str] = None,
-        batch_code: Optional[str] = None,
-        college_name: Optional[str] = None,
-        graduation_year: Optional[int] = None,
+        full_name: str | None = None,
+        batch_code: str | None = None,
+        college_name: str | None = None,
+        graduation_year: int | None = None,
         dob=None,
-        branch: Optional[str] = None,
-        course_opted: Optional[str] = None,
-        avatar_url: Optional[str] = None,
-        email: Optional[str] = None,
-        mobile_number: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        onboarding_status: Optional[str] = None,
-        total_classes: Optional[int] = None,
-        attended_classes: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        branch: str | None = None,
+        course_opted: str | None = None,
+        avatar_url: str | None = None,
+        email: str | None = None,
+        mobile_number: str | None = None,
+        is_active: bool | None = None,
+        onboarding_status: str | None = None,
+        total_classes: int | None = None,
+        attended_classes: int | None = None,
+        ip_address: str | None = None,
     ) -> StudentProfile:
         student = cls.get_student_detail(student_id)
         user = student.user
@@ -618,7 +705,10 @@ class StudentAdminService:
 
         if email is not None:
             email_clean = email.strip().lower()
-            if email_clean and User.objects.filter(email=email_clean).exclude(id=user.id).exists():
+            if (
+                email_clean
+                and User.objects.filter(email=email_clean).exclude(id=user.id).exists()
+            ):
                 raise DomainException("An account with this email already exists.")
             user.email = email_clean or None
             updated_fields_user.append("email")
@@ -627,9 +717,13 @@ class StudentAdminService:
             mob_clean = mobile_number.strip()
             if (
                 mob_clean
-                and User.objects.filter(mobile_number=mob_clean).exclude(id=user.id).exists()
+                and User.objects.filter(mobile_number=mob_clean)
+                .exclude(id=user.id)
+                .exists()
             ):
-                raise DomainException("An account with this mobile number already exists.")
+                raise DomainException(
+                    "An account with this mobile number already exists."
+                )
             user.mobile_number = mob_clean or None
             updated_fields_user.append("mobile_number")
 
@@ -666,14 +760,16 @@ class StudentAdminService:
     def assign_courses(
         cls,
         student_id: str,
-        course_ids: List[str],
+        course_ids: list[str],
         admin_user: User,
-        ip_address: Optional[str] = None,
-    ) -> List[CourseEnrollment]:
+        ip_address: str | None = None,
+    ) -> list[CourseEnrollment]:
         student = cls.get_student_detail(student_id)
         courses = Course.objects.filter(id__in=course_ids, is_deleted=False)
         if len(courses) != len(course_ids):
-            raise DomainException("One or more specified courses do not exist or are deleted.")
+            raise DomainException(
+                "One or more specified courses do not exist or are deleted."
+            )
 
         enrollments = []
         for course in courses:
@@ -682,7 +778,10 @@ class StudentAdminService:
                 course=course,
                 defaults={"status": CourseEnrollment.EnrollmentStatus.ACTIVE},
             )
-            if not created and enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE:
+            if (
+                not created
+                and enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE
+            ):
                 enrollment.status = CourseEnrollment.EnrollmentStatus.ACTIVE
                 enrollment.save(update_fields=["status", "updated_at"])
             enrollments.append(enrollment)
@@ -698,7 +797,7 @@ class StudentAdminService:
         return enrollments
 
     @classmethod
-    def get_student_progress(cls, student_id: str) -> Dict[str, Any]:
+    def get_student_progress(cls, student_id: str) -> dict[str, Any]:
         student = cls.get_student_detail(student_id)
         module_progress = (
             StudentModuleProgress.objects.filter(student=student)
@@ -727,12 +826,18 @@ class StudentAdminService:
                 "total_modules": total_modules,
                 "completed_modules": completed_modules,
                 "module_completion_rate": round(
-                    (completed_modules / total_modules * 100) if total_modules > 0 else 0, 2
+                    (completed_modules / total_modules * 100)
+                    if total_modules > 0
+                    else 0,
+                    2,
                 ),
                 "total_questions": total_questions,
                 "solved_questions": solved_questions,
                 "question_solve_rate": round(
-                    (solved_questions / total_questions * 100) if total_questions > 0 else 0, 2
+                    (solved_questions / total_questions * 100)
+                    if total_questions > 0
+                    else 0,
+                    2,
                 ),
             },
             "modules": [
@@ -761,7 +866,7 @@ class StudentAdminService:
         }
 
     @classmethod
-    def get_student_scores(cls, student_id: str) -> Dict[str, Any]:
+    def get_student_scores(cls, student_id: str) -> dict[str, Any]:
         student = cls.get_student_detail(student_id)
         records = (
             ScoreRecord.objects.filter(student=student)
@@ -771,7 +876,9 @@ class StudentAdminService:
 
         breakdown = {}
         for r in records:
-            breakdown[r.source_type] = breakdown.get(r.source_type, Decimal("0.00")) + r.points
+            breakdown[r.source_type] = (
+                breakdown.get(r.source_type, Decimal("0.00")) + r.points
+            )
 
         return {
             "student_id": str(student.id),
@@ -792,7 +899,7 @@ class StudentAdminService:
         }
 
     @classmethod
-    def get_student_rank(cls, student_id: str) -> Dict[str, Any]:
+    def get_student_rank(cls, student_id: str) -> dict[str, Any]:
         student = cls.get_student_detail(student_id)
         # Global rank
         higher_global = StudentProfile.objects.filter(
@@ -808,7 +915,9 @@ class StudentAdminService:
         ).count()
         batch_rank = higher_batch + 1
 
-        total_students_global = StudentProfile.objects.filter(user__is_active=True).count()
+        total_students_global = StudentProfile.objects.filter(
+            user__is_active=True
+        ).count()
         total_students_batch = StudentProfile.objects.filter(
             batch_code=student.batch_code, user__is_active=True
         ).count()
@@ -831,11 +940,13 @@ class StudentDashboardService:
     """Service providing aggregated dashboard telemetry and leaderboard standing for the authenticated student."""
 
     @classmethod
-    def get_dashboard_data(cls, user: User) -> Dict[str, Any]:
+    def get_dashboard_data(cls, user: User) -> dict[str, Any]:
         if not user.is_authenticated:
             raise DomainException("Authentication required.")
 
-        profile = StudentProfile.objects.filter(user=user).select_related("user").first()
+        profile = (
+            StudentProfile.objects.filter(user=user).select_related("user").first()
+        )
         if not profile:
             raise DomainException("User does not have an active student profile.")
 
@@ -844,7 +955,9 @@ class StudentDashboardService:
             total_points__gt=profile.total_points, user__is_active=True
         ).count()
         global_rank = higher_global + 1
-        total_students_global = StudentProfile.objects.filter(user__is_active=True).count()
+        total_students_global = StudentProfile.objects.filter(
+            user__is_active=True
+        ).count()
 
         active_enrollment = (
             profile.enrollments.filter(status=CourseEnrollment.EnrollmentStatus.ACTIVE)
@@ -876,7 +989,9 @@ class StudentDashboardService:
             ).count()
 
         overall_progress = (
-            round((completed_modules / total_modules) * 100, 1) if total_modules > 0 else 0.0
+            round((completed_modules / total_modules) * 100, 1)
+            if total_modules > 0
+            else 0.0
         )
 
         profile_data = {
@@ -900,7 +1015,8 @@ class StudentDashboardService:
             "total_classes": profile.total_classes,
             "attended_classes": profile.attended_classes,
             "onboarding_status": user.onboarding_status,
-            "is_approved": user.onboarding_status == User.OnboardingStatusChoices.ACTIVE,
+            "is_approved": user.onboarding_status
+            == User.OnboardingStatusChoices.ACTIVE,
             "total_score": float(profile.total_points),
             "current_rank": global_rank,
             "total_students": total_students_global,
@@ -914,7 +1030,9 @@ class StudentDashboardService:
         # 2. LEADERBOARD (via LeaderboardService)
         from apps.leaderboard.services import LeaderboardService
 
-        leaderboard_payload = LeaderboardService.get_full_leaderboard_for_student(student=profile)
+        leaderboard_payload = LeaderboardService.get_full_leaderboard_for_student(
+            student=profile
+        )
         top_10 = leaderboard_payload["top_10"]
         current_student_leaderboard = leaderboard_payload["current_student"]
         global_rank = current_student_leaderboard["rank"]
@@ -928,31 +1046,26 @@ class StudentDashboardService:
             student=profile, is_solved=True
         ).count()
         assignment_percentage = (
-            round((solved_questions / total_questions) * 100, 1) if total_questions > 0 else 0.0
+            round((solved_questions / total_questions) * 100, 1)
+            if total_questions > 0
+            else 0.0
         )
-        assignment_points = (
-            ScoreRecord.objects.filter(
-                student=profile, source_type=ScoreRecord.SourceType.ASSIGNMENT
-            ).aggregate(total=Sum("points"))["total"]
-            or Decimal("0.00")
-        )
+        assignment_points = ScoreRecord.objects.filter(
+            student=profile, source_type=ScoreRecord.SourceType.ASSIGNMENT
+        ).aggregate(total=Sum("points"))["total"] or Decimal("0.00")
 
         project_submissions_count = profile.project_submissions.count()
-        approved_projects_count = profile.project_submissions.filter(status="APPROVED").count()
-        project_points = (
-            ScoreRecord.objects.filter(
-                student=profile, source_type=ScoreRecord.SourceType.PROJECT
-            ).aggregate(total=Sum("points"))["total"]
-            or Decimal("0.00")
-        )
+        approved_projects_count = profile.project_submissions.filter(
+            status="APPROVED"
+        ).count()
+        project_points = ScoreRecord.objects.filter(
+            student=profile, source_type=ScoreRecord.SourceType.PROJECT
+        ).aggregate(total=Sum("points"))["total"] or Decimal("0.00")
 
         tasks_completed = profile.task_completions.filter(is_completed=True).count()
-        task_points = (
-            ScoreRecord.objects.filter(
-                student=profile, source_type=ScoreRecord.SourceType.DAILY_TASK
-            ).aggregate(total=Sum("points"))["total"]
-            or Decimal("0.00")
-        )
+        task_points = ScoreRecord.objects.filter(
+            student=profile, source_type=ScoreRecord.SourceType.DAILY_TASK
+        ).aggregate(total=Sum("points"))["total"] or Decimal("0.00")
 
         today = timezone.now().date()
         start_date = today - timedelta(days=6)
@@ -964,7 +1077,9 @@ class StudentDashboardService:
             .values("created_at__date")
             .annotate(total=Sum("delta"))
         )
-        events_by_date = {event["created_at__date"]: event["total"] for event in recent_events}
+        events_by_date = {
+            event["created_at__date"]: event["total"] for event in recent_events
+        }
         chart_history = []
         for i in range(6, -1, -1):
             day = today - timedelta(days=i)
@@ -978,10 +1093,26 @@ class StudentDashboardService:
             )
 
         skills_radar = [
-            {"skill": "Coding Labs", "score": min(100, int(assignment_percentage)), "fullMark": 100},
-            {"skill": "Curriculum", "score": min(100, int(overall_progress)), "fullMark": 100},
-            {"skill": "Projects", "score": min(100, int(approved_projects_count * 50)), "fullMark": 100},
-            {"skill": "Daily Tasks", "score": min(100, int(tasks_completed * 10)), "fullMark": 100},
+            {
+                "skill": "Coding Labs",
+                "score": min(100, int(assignment_percentage)),
+                "fullMark": 100,
+            },
+            {
+                "skill": "Curriculum",
+                "score": min(100, int(overall_progress)),
+                "fullMark": 100,
+            },
+            {
+                "skill": "Projects",
+                "score": min(100, int(approved_projects_count * 50)),
+                "fullMark": 100,
+            },
+            {
+                "skill": "Daily Tasks",
+                "score": min(100, int(tasks_completed * 10)),
+                "fullMark": 100,
+            },
             {
                 "skill": "Streak Consistency",
                 "score": min(100, int(profile.current_streak_days * 10)),
@@ -1015,7 +1146,9 @@ class StudentDashboardService:
                 "percentage": float(profile.attendance_percentage),
                 "total_classes": profile.total_classes,
                 "attended_classes": profile.attended_classes,
-                "missed_classes": max(0, profile.total_classes - profile.attended_classes),
+                "missed_classes": max(
+                    0, profile.total_classes - profile.attended_classes
+                ),
             },
             "chart_history": chart_history,
             "skills_radar": skills_radar,
@@ -1074,7 +1207,9 @@ class StudentDashboardService:
                 "is_read": notif.is_read,
                 "created_at": notif.created_at.isoformat(),
             }
-            for notif in Notification.objects.filter(recipient=user).order_by("-created_at")[:5]
+            for notif in Notification.objects.filter(recipient=user).order_by(
+                "-created_at"
+            )[:5]
         ]
 
         # 5. LEETCODE-STYLE STREAK & YEARLY ACTIVITY HEATMAP
@@ -1098,7 +1233,9 @@ class StudentDashboardService:
         }
 
     @classmethod
-    def get_student_activity_heatmap_data(cls, profile: StudentProfile) -> Dict[str, Any]:
+    def get_student_activity_heatmap_data(
+        cls, profile: StudentProfile
+    ) -> dict[str, Any]:
         """Calculates 365-day problem-solving activity matrix and streaks."""
         today_date = timezone.localdate()
         effective_streak = profile.get_effective_streak(today_date)
@@ -1115,7 +1252,9 @@ class StudentDashboardService:
             .values("created_at__date")
             .annotate(
                 total_subs=Count("id"),
-                accepted_subs=Count("id", filter=Q(status=CodeSubmission.SubmissionStatus.ACCEPTED)),
+                accepted_subs=Count(
+                    "id", filter=Q(status=CodeSubmission.SubmissionStatus.ACCEPTED)
+                ),
                 points_sum=Sum("score_awarded"),
             )
         )
@@ -1207,7 +1346,7 @@ class StudentDashboardService:
         }
 
     @classmethod
-    def get_student_activity_heatmap(cls, user: User) -> Dict[str, Any]:
+    def get_student_activity_heatmap(cls, user: User) -> dict[str, Any]:
         """Entry point for authenticated user activity heatmap."""
         profile = StudentProfile.objects.filter(user=user).first()
         if not profile:
@@ -1222,7 +1361,7 @@ class StudentDashboardService:
         **kwargs,
     ) -> StudentProfile:
         """Student updates their own permitted profile fields (DOB, branch, college, avatar, bio, URLs).
-        
+
         Strictly prohibits mutating email, full_name, student_id_number, course_opted, or points.
         """
         profile = StudentProfile.objects.filter(user=user).first()
@@ -1278,9 +1417,10 @@ class StudentDashboardService:
         return profile
 
     @classmethod
-    def get_student_attendance(cls, user: User) -> Dict[str, Any]:
+    def get_student_attendance(cls, user: User) -> dict[str, Any]:
         """Retrieve authenticated student's attendance records, profile details, and personal QR token."""
         import json
+
         profile = StudentProfile.objects.filter(user=user).first()
         if not profile:
             raise DomainException("Student profile not found.", status_code=404)
@@ -1288,15 +1428,23 @@ class StudentDashboardService:
         active_enrollments = CourseEnrollment.objects.filter(
             student=profile, status=CourseEnrollment.EnrollmentStatus.ACTIVE
         ).select_related("course")
-        
-        enrolled_courses = [e.course.title for e in active_enrollments]
-        has_enrollments = len(enrolled_courses) > 0 or bool(profile.course_opted and profile.course_opted.strip())
-        primary_course = enrolled_courses[0] if enrolled_courses else (profile.course_opted or "Not Enrolled")
 
-        records = AttendanceRecord.objects.filter(student_profile=profile).order_by("-date", "-created_at")[:60]
+        enrolled_courses = [e.course.title for e in active_enrollments]
+        has_enrollments = len(enrolled_courses) > 0 or bool(
+            profile.course_opted and profile.course_opted.strip()
+        )
+        primary_course = (
+            enrolled_courses[0]
+            if enrolled_courses
+            else (profile.course_opted or "Not Enrolled")
+        )
+
+        records = AttendanceRecord.objects.filter(student_profile=profile).order_by(
+            "-date", "-created_at"
+        )[:60]
 
         # Aggregate per-technology metrics
-        tech_stats: Dict[str, Dict[str, Any]] = {}
+        tech_stats: dict[str, dict[str, Any]] = {}
         all_technologies = [
             "All Technologies",
             "Full Stack Development",
@@ -1325,15 +1473,17 @@ class StudentDashboardService:
             tot = s["total"]
             pres = s["present"] + s["late"]
             pct = round((pres / max(1, tot)) * 100.0, 1)
-            technologies_summary.append({
-                "technology": tech,
-                "total_sessions": tot,
-                "present_count": s["present"],
-                "absent_count": s["absent"],
-                "late_count": s["late"],
-                "attendance_percentage": pct,
-            })
-        
+            technologies_summary.append(
+                {
+                    "technology": tech,
+                    "total_sessions": tot,
+                    "present_count": s["present"],
+                    "absent_count": s["absent"],
+                    "late_count": s["late"],
+                    "attendance_percentage": pct,
+                }
+            )
+
         # Build student QR identification payload
         student_qr_payload = {
             "type": "STUDENT_ATTENDANCE_ID",
@@ -1380,10 +1530,10 @@ class StudentDashboardService:
     @classmethod
     @transaction.atomic
     def mark_qr_attendance(
-        cls, user: User, qr_data: str, session_code: Optional[str] = None
-    ) -> Dict[str, Any]:
+        cls, user: User, qr_data: str, session_code: str | None = None
+    ) -> dict[str, Any]:
         """Scan and record QR Code attendance for enrolled students.
-        
+
         Validates:
         1. Student profile existence.
         2. Course registration: Verifies that student is registered in at least one course.
@@ -1394,6 +1544,7 @@ class StudentDashboardService:
         5. Updates real-time streak and telemetry.
         """
         import json
+
         profile = StudentProfile.objects.filter(user=user).first()
         if not profile:
             raise DomainException("Student profile not found.", status_code=404)
@@ -1403,7 +1554,9 @@ class StudentDashboardService:
             student=profile, status=CourseEnrollment.EnrollmentStatus.ACTIVE
         ).select_related("course")
 
-        has_active_courses = active_enrollments.exists() or (bool(profile.course_opted) and profile.course_opted.strip() != "")
+        has_active_courses = active_enrollments.exists() or (
+            bool(profile.course_opted) and profile.course_opted.strip() != ""
+        )
 
         if not has_active_courses:
             raise DomainException(
@@ -1411,7 +1564,11 @@ class StudentDashboardService:
                 status_code=400,
             )
 
-        course_name = active_enrollments.first().course.title if active_enrollments.exists() else (profile.course_opted or "General Track")
+        course_name = (
+            active_enrollments.first().course.title
+            if active_enrollments.exists()
+            else (profile.course_opted or "General Track")
+        )
         session_title = "Daily Training & Coding Lab"
 
         raw_qr = (qr_data or session_code or "").strip()
@@ -1419,7 +1576,12 @@ class StudentDashboardService:
             try:
                 if raw_qr.startswith("{") and raw_qr.endswith("}"):
                     parsed = json.loads(raw_qr)
-                    session_title = parsed.get("session_title") or parsed.get("title") or parsed.get("name") or session_title
+                    session_title = (
+                        parsed.get("session_title")
+                        or parsed.get("title")
+                        or parsed.get("name")
+                        or session_title
+                    )
                     if "course_name" in parsed:
                         course_name = parsed["course_name"]
                 elif ":" in raw_qr:
@@ -1428,7 +1590,7 @@ class StudentDashboardService:
                         session_title = parts[1].strip()
                 else:
                     session_title = raw_qr
-            except Exception:
+            except ValueError:
                 session_title = raw_qr[:60]
 
         today = timezone.localdate()
@@ -1445,7 +1607,9 @@ class StudentDashboardService:
         if existing:
             is_already_marked = True
             attendance_record = existing
-            message = f"Attendance already recorded as {existing.status} for today's session."
+            message = (
+                f"Attendance already recorded as {existing.status} for today's session."
+            )
         else:
             attendance_record = AttendanceRecord.objects.create(
                 student_profile=profile,
@@ -1458,7 +1622,14 @@ class StudentDashboardService:
             if (profile.total_classes or 0) < profile.attended_classes:
                 profile.total_classes = profile.attended_classes
             profile.recalculate_attendance()
-            profile.save(update_fields=["attended_classes", "total_classes", "attendance_percentage", "updated_at"])
+            profile.save(
+                update_fields=[
+                    "attended_classes",
+                    "total_classes",
+                    "attendance_percentage",
+                    "updated_at",
+                ]
+            )
 
             # Increment learning activity streak
             profile.record_activity_and_update_streak(activity_date=today)
@@ -1490,4 +1661,3 @@ class StudentDashboardService:
                 "streak_days": profile.current_streak_days,
             },
         }
-

@@ -11,5 +11,9 @@ app_name = "admin_certificates"
 
 urlpatterns = [
     path("", AdminCertificateListView.as_view(), name="list"),
-    path("<uuid:certificate_id>/revoke/", AdminCertificateRevokeView.as_view(), name="revoke"),
+    path(
+        "<uuid:certificate_id>/revoke/",
+        AdminCertificateRevokeView.as_view(),
+        name="revoke",
+    ),
 ]

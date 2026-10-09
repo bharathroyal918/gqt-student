@@ -37,7 +37,10 @@ class ContactInquiry(BaseModel):
     )
     message = models.TextField()
     status = models.CharField(
-        max_length=20, choices=InquiryStatus.choices, default=InquiryStatus.PENDING, db_index=True
+        max_length=20,
+        choices=InquiryStatus.choices,
+        default=InquiryStatus.PENDING,
+        db_index=True,
     )
     admin_notes = models.TextField(blank=True, default="")
     ip_address = models.GenericIPAddressField(null=True, blank=True)
@@ -56,7 +59,9 @@ class ContactInquiry(BaseModel):
         verbose_name_plural = "Contact Inquiries"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["status", "-created_at"], name="contact_status_date_idx"),
+            models.Index(
+                fields=["status", "-created_at"], name="contact_status_date_idx"
+            ),
             models.Index(fields=["category", "status"], name="contact_cat_status_idx"),
         ]
 

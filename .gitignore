@@ -90,3 +90,11 @@ celerybeat.pid
 # Docker
 docker-data/
 *.local.yml
+
+# Frontend environment files — do not commit secrets
+/frontend/.env*
+!/frontend/.env.example
+
+# Frontend environment files — do not commit secrets
+/frontend/.env*
+!/frontend/.env.example

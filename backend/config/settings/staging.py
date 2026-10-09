@@ -1,6 +1,6 @@
 """Staging environment settings for GQT Student Portal."""
 
-from .base import *  # noqa: F403
+from .base import *
 from .base import env
 
 DEBUG = False
@@ -8,7 +8,9 @@ ENVIRONMENT = "staging"
 
 raw_db_url = env("DATABASE_URL", default="").strip()
 if not raw_db_url:
-    raise ValueError("DATABASE_URL environment variable must be set in staging to your Supabase PostgreSQL connection string.")
+    raise ValueError(
+        "DATABASE_URL environment variable must be set in staging to your Supabase PostgreSQL connection string."
+    )
 
 DATABASES = {"default": env.db_url_config(raw_db_url)}
 
@@ -17,7 +19,9 @@ if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
     DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
     if "OPTIONS" not in DATABASES["default"]:
         DATABASES["default"]["OPTIONS"] = {}
-    DATABASES["default"]["OPTIONS"].setdefault("sslmode", env("DB_SSLMODE", default="require"))
+    DATABASES["default"]["OPTIONS"].setdefault(
+        "sslmode", env("DB_SSLMODE", default="require")
+    )
 
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True

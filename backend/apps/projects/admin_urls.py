@@ -14,8 +14,14 @@ app_name = "admin_projects"
 
 urlpatterns = [
     path("", ProjectAdminListCreateView.as_view(), name="project_list_create"),
-    path("<uuid:pk>/", ProjectAdminDetailUpdateView.as_view(), name="project_detail_update"),
-    path("submissions/", ProjectSubmissionAdminListView.as_view(), name="submission_list"),
+    path(
+        "<uuid:pk>/",
+        ProjectAdminDetailUpdateView.as_view(),
+        name="project_detail_update",
+    ),
+    path(
+        "submissions/", ProjectSubmissionAdminListView.as_view(), name="submission_list"
+    ),
     path(
         "submissions/<uuid:pk>/",
         ProjectSubmissionAdminDetailReviewView.as_view(),

@@ -34,7 +34,9 @@ class ProjectFilter(django_filters.FilterSet):
 class ProjectSubmissionFilter(django_filters.FilterSet):
     project_id = django_filters.UUIDFilter(field_name="project__id")
     student_id = django_filters.UUIDFilter(field_name="student__id")
-    status = django_filters.ChoiceFilter(choices=ProjectSubmission.SubmissionStatus.choices)
+    status = django_filters.ChoiceFilter(
+        choices=ProjectSubmission.SubmissionStatus.choices
+    )
 
     class Meta:
         model = ProjectSubmission
@@ -46,14 +48,22 @@ class ProjectAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = ProjectAdminSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = ProjectFilter
     search_fields = ["title", "slug", "description"]
     ordering_fields = ["due_date", "max_score", "created_at", "title"]
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        return Project.objects.select_related("course").prefetch_related("submissions").all()
+        return (
+            Project.objects.select_related("course")
+            .prefetch_related("submissions")
+            .all()
+        )
 
     @extend_schema(
         request=ProjectAdminCreateSerializer,
@@ -144,14 +154,24 @@ class ProjectSubmissionAdminListView(generics.ListAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = ProjectSubmissionAdminListSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = ProjectSubmissionFilter
-    search_fields = ["student__full_name", "student__student_id_number", "project__title"]
+    search_fields = [
+        "student__full_name",
+        "student__student_id_number",
+        "project__title",
+    ]
     ordering_fields = ["submitted_at", "reviewed_at", "score"]
     ordering = ["-submitted_at"]
 
     def get_queryset(self):
-        return ProjectSubmission.objects.select_related("project", "student", "reviewed_by").all()
+        return ProjectSubmission.objects.select_related(
+            "project", "student", "reviewed_by"
+        ).all()
 
 
 class ProjectSubmissionAdminDetailReviewView(APIView):

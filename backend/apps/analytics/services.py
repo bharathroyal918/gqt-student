@@ -4,19 +4,21 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timedelta
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
-import uuid
+from typing import Any
 
 from django.core.cache import cache
-from django.db.models import Avg, Case, Count, F, IntegerField, Max, Q, Sum, Value, When
+from django.db.models import Avg, Case, Count, IntegerField, Max, Sum, When
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.analytics.models import ExportJob
 from apps.analytics.tasks import dispatch_async_export
-from apps.assignments.models import CodeSubmission, CodingQuestion, StudentQuestionProgress
+from apps.assignments.models import (
+    CodeSubmission,
+    CodingQuestion,
+    StudentQuestionProgress,
+)
 from apps.courses.models import Course, CourseEnrollment
 from apps.modules.models import Module, StudentModuleProgress
 from apps.projects.models import Project, ProjectSubmission
@@ -41,13 +43,15 @@ class AnalyticsAdminService:
     @classmethod
     def get_dashboard_analytics(
         cls,
-        course_id: Optional[str] = None,
-        batch_code: Optional[str] = None,
+        course_id: str | None = None,
+        batch_code: str | None = None,
         days: int = 7,
         use_cache: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Compute top-level KPI metrics, activity timelines, score distributions, and breakdown charts."""
-        cache_key = cls._get_cache_key("dashboard", course_id=course_id, batch_code=batch_code, days=days)
+        cache_key = cls._get_cache_key(
+            "dashboard", course_id=course_id, batch_code=batch_code, days=days
+        )
         if use_cache:
             cached_val = cache.get(cache_key)
             if cached_val is not None:
@@ -66,13 +70,17 @@ class AnalyticsAdminService:
 
         student_counts = student_qs.aggregate(
             total=Count("id"),
-            active=Count(Case(When(user__is_active=True, then=1), output_field=IntegerField())),
+            active=Count(
+                Case(When(user__is_active=True, then=1), output_field=IntegerField())
+            ),
         )
         total_students = student_counts["total"] or 0
         active_students = student_counts["active"] or 0
 
         # Top 5 Performers
-        top_performers_qs = student_qs.filter(user__is_active=True).order_by("-total_points")[:5]
+        top_performers_qs = student_qs.filter(user__is_active=True).order_by(
+            "-total_points"
+        )[:5]
         top_performers = [
             {
                 "id": str(s.id),
@@ -102,7 +110,10 @@ class AnalyticsAdminService:
 
         expected_total = total_students * total_modules
         module_completion_rate = round(
-            (completed_module_entries / expected_total * 100) if expected_total > 0 else 0, 2
+            (completed_module_entries / expected_total * 100)
+            if expected_total > 0
+            else 0,
+            2,
         )
 
         # 3. Assignment Statistics
@@ -114,13 +125,26 @@ class AnalyticsAdminService:
 
         sub_stats = sub_qs.aggregate(
             total=Count("id"),
-            accepted=Count(Case(When(status=CodeSubmission.SubmissionStatus.ACCEPTED, then=1), output_field=IntegerField())),
-            today_total=Count(Case(When(submitted_at__gte=today_start, then=1), output_field=IntegerField())),
+            accepted=Count(
+                Case(
+                    When(status=CodeSubmission.SubmissionStatus.ACCEPTED, then=1),
+                    output_field=IntegerField(),
+                )
+            ),
+            today_total=Count(
+                Case(
+                    When(submitted_at__gte=today_start, then=1),
+                    output_field=IntegerField(),
+                )
+            ),
         )
         total_submissions = sub_stats["total"] or 0
         accepted_submissions = sub_stats["accepted"] or 0
         acceptance_rate = round(
-            (accepted_submissions / total_submissions * 100) if total_submissions > 0 else 0, 2
+            (accepted_submissions / total_submissions * 100)
+            if total_submissions > 0
+            else 0,
+            2,
         )
 
         today_submissions = sub_stats["today_total"] or 0
@@ -161,22 +185,49 @@ class AnalyticsAdminService:
 
         proj_stats = proj_sub_qs.aggregate(
             total_subs=Count("id"),
-            approved_subs=Count(Case(When(status=ProjectSubmission.SubmissionStatus.APPROVED, then=1), output_field=IntegerField())),
+            approved_subs=Count(
+                Case(
+                    When(status=ProjectSubmission.SubmissionStatus.APPROVED, then=1),
+                    output_field=IntegerField(),
+                )
+            ),
             avg_score=Avg("score"),
         )
         total_project_subs = proj_stats["total_subs"] or 0
         approved_project_subs = proj_stats["approved_subs"] or 0
         project_approval_rate = round(
-            (approved_project_subs / total_project_subs * 100) if total_project_subs > 0 else 0, 2
+            (approved_project_subs / total_project_subs * 100)
+            if total_project_subs > 0
+            else 0,
+            2,
         )
 
         # 5. Score Distribution Buckets
         score_buckets = student_qs.aggregate(
-            b_0_100=Count(Case(When(total_points__lte=100, then=1), output_field=IntegerField())),
-            b_101_300=Count(Case(When(total_points__gt=100, total_points__lte=300, then=1), output_field=IntegerField())),
-            b_301_600=Count(Case(When(total_points__gt=300, total_points__lte=600, then=1), output_field=IntegerField())),
-            b_601_1000=Count(Case(When(total_points__gt=600, total_points__lte=1000, then=1), output_field=IntegerField())),
-            b_1000_plus=Count(Case(When(total_points__gt=1000, then=1), output_field=IntegerField())),
+            b_0_100=Count(
+                Case(When(total_points__lte=100, then=1), output_field=IntegerField())
+            ),
+            b_101_300=Count(
+                Case(
+                    When(total_points__gt=100, total_points__lte=300, then=1),
+                    output_field=IntegerField(),
+                )
+            ),
+            b_301_600=Count(
+                Case(
+                    When(total_points__gt=300, total_points__lte=600, then=1),
+                    output_field=IntegerField(),
+                )
+            ),
+            b_601_1000=Count(
+                Case(
+                    When(total_points__gt=600, total_points__lte=1000, then=1),
+                    output_field=IntegerField(),
+                )
+            ),
+            b_1000_plus=Count(
+                Case(When(total_points__gt=1000, then=1), output_field=IntegerField())
+            ),
         )
         score_distribution = [
             {"bracket": "0 - 100 pts", "count": score_buckets["b_0_100"] or 0},
@@ -210,13 +261,17 @@ class AnalyticsAdminService:
         for i in range(days):
             day_dt = (timeline_start + timedelta(days=i)).date()
             day_str = day_dt.strftime("%Y-%m-%d")
-            entry = timeline_dict.get(day_str, {"submissions_count": 0, "active_students": 0})
-            timeline.append({
-                "date": day_str,
-                "label": day_dt.strftime("%b %d"),
-                "submissions_count": entry["submissions_count"],
-                "active_students": entry["active_students"],
-            })
+            entry = timeline_dict.get(
+                day_str, {"submissions_count": 0, "active_students": 0}
+            )
+            timeline.append(
+                {
+                    "date": day_str,
+                    "label": day_dt.strftime("%b %d"),
+                    "submissions_count": entry["submissions_count"],
+                    "active_students": entry["active_students"],
+                }
+            )
 
         result = {
             "total_students": total_students,
@@ -262,13 +317,18 @@ class AnalyticsAdminService:
     @classmethod
     def get_performance_report(
         cls,
-        batch_code: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        batch_code: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         use_cache: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Aggregate student performance telemetry, cohort averages, and top scores."""
-        cache_key = cls._get_cache_key("perf_report", batch_code=batch_code, start_date=start_date, end_date=end_date)
+        cache_key = cls._get_cache_key(
+            "perf_report",
+            batch_code=batch_code,
+            start_date=start_date,
+            end_date=end_date,
+        )
         if use_cache:
             cached_val = cache.get(cache_key)
             if cached_val is not None:
@@ -335,9 +395,9 @@ class AnalyticsAdminService:
     @classmethod
     def get_completion_report(
         cls,
-        course_id: Optional[str] = None,
+        course_id: str | None = None,
         use_cache: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Aggregate course curriculum progress, enrollment statistics, and module completion rates."""
         cache_key = cls._get_cache_key("comp_report", course_id=course_id)
         if use_cache:
@@ -358,30 +418,39 @@ class AnalyticsAdminService:
                 course=course, status=CourseEnrollment.EnrollmentStatus.COMPLETED
             ).count()
 
-            modules = Module.objects.filter(course=course, is_published=True).order_by("order_index")
+            modules = Module.objects.filter(course=course, is_published=True).order_by(
+                "order_index"
+            )
             module_stats = []
             for mod in modules:
                 completed_mods = StudentModuleProgress.objects.filter(
                     module=mod, status=StudentModuleProgress.ModuleStatus.COMPLETED
                 ).count()
                 rate = round(
-                    (completed_mods / enrolled_count * 100) if enrolled_count > 0 else 0, 2
+                    (completed_mods / enrolled_count * 100)
+                    if enrolled_count > 0
+                    else 0,
+                    2,
                 )
-                module_stats.append({
-                    "module_id": str(mod.id),
-                    "module_title": mod.title,
-                    "order_index": mod.order_index,
-                    "completed_students": completed_mods,
-                    "completion_rate": rate,
-                })
+                module_stats.append(
+                    {
+                        "module_id": str(mod.id),
+                        "module_title": mod.title,
+                        "order_index": mod.order_index,
+                        "completed_students": completed_mods,
+                        "completion_rate": rate,
+                    }
+                )
 
-            course_data.append({
-                "course_id": str(course.id),
-                "course_title": course.title,
-                "active_enrollments": enrolled_count,
-                "completed_enrollments": completed_count,
-                "modules": module_stats,
-            })
+            course_data.append(
+                {
+                    "course_id": str(course.id),
+                    "course_title": course.title,
+                    "active_enrollments": enrolled_count,
+                    "completed_enrollments": completed_count,
+                    "modules": module_stats,
+                }
+            )
 
         result = {"courses": course_data}
         cache.set(cache_key, result, CACHE_TTL_REPORTS)
@@ -390,18 +459,22 @@ class AnalyticsAdminService:
     @classmethod
     def get_assignment_report(
         cls,
-        module_id: Optional[str] = None,
-        course_id: Optional[str] = None,
+        module_id: str | None = None,
+        course_id: str | None = None,
         use_cache: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Aggregate question-level pass rates, test case failures, and difficulty analytics."""
-        cache_key = cls._get_cache_key("assign_report", module_id=module_id, course_id=course_id)
+        cache_key = cls._get_cache_key(
+            "assign_report", module_id=module_id, course_id=course_id
+        )
         if use_cache:
             cached_val = cache.get(cache_key)
             if cached_val is not None:
                 return cached_val
 
-        questions = CodingQuestion.objects.filter(is_active=True).select_related("module", "module__course")
+        questions = CodingQuestion.objects.filter(is_active=True).select_related(
+            "module", "module__course"
+        )
         if module_id:
             questions = questions.filter(module_id=module_id)
         if course_id:
@@ -413,25 +486,34 @@ class AnalyticsAdminService:
         for q in questions:
             sub_agg = CodeSubmission.objects.filter(question=q).aggregate(
                 total=Count("id"),
-                accepted=Count(Case(When(status=CodeSubmission.SubmissionStatus.ACCEPTED, then=1), output_field=IntegerField())),
+                accepted=Count(
+                    Case(
+                        When(status=CodeSubmission.SubmissionStatus.ACCEPTED, then=1),
+                        output_field=IntegerField(),
+                    )
+                ),
             )
             total_sub = sub_agg["total"] or 0
             acc_sub = sub_agg["accepted"] or 0
-            solved_students = StudentQuestionProgress.objects.filter(question=q, is_solved=True).count()
+            solved_students = StudentQuestionProgress.objects.filter(
+                question=q, is_solved=True
+            ).count()
             pass_rate = round((acc_sub / total_sub * 100) if total_sub > 0 else 0, 2)
 
-            question_stats.append({
-                "question_id": str(q.id),
-                "title": q.title,
-                "module_title": q.module.title,
-                "course_title": q.module.course.title,
-                "difficulty": q.difficulty,
-                "points": str(q.points),
-                "total_submissions": total_sub,
-                "accepted_submissions": acc_sub,
-                "pass_rate": pass_rate,
-                "unique_students_solved": solved_students,
-            })
+            question_stats.append(
+                {
+                    "question_id": str(q.id),
+                    "title": q.title,
+                    "module_title": q.module.title,
+                    "course_title": q.module.course.title,
+                    "difficulty": q.difficulty,
+                    "points": str(q.points),
+                    "total_submissions": total_sub,
+                    "accepted_submissions": acc_sub,
+                    "pass_rate": pass_rate,
+                    "unique_students_solved": solved_students,
+                }
+            )
 
         result = {"questions": question_stats}
         cache.set(cache_key, result, CACHE_TTL_REPORTS)
@@ -440,9 +522,9 @@ class AnalyticsAdminService:
     @classmethod
     def get_project_report(
         cls,
-        course_id: Optional[str] = None,
+        course_id: str | None = None,
         use_cache: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Aggregate capstone project submissions, evaluations, and grading distributions."""
         cache_key = cls._get_cache_key("proj_report", course_id=course_id)
         if use_cache:
@@ -459,23 +541,47 @@ class AnalyticsAdminService:
             subs = ProjectSubmission.objects.filter(project=p)
             sub_agg = subs.aggregate(
                 total=Count("id"),
-                approved=Count(Case(When(status=ProjectSubmission.SubmissionStatus.APPROVED, then=1), output_field=IntegerField())),
-                under_review=Count(Case(When(status=ProjectSubmission.SubmissionStatus.UNDER_REVIEW, then=1), output_field=IntegerField())),
-                rejected=Count(Case(When(status=ProjectSubmission.SubmissionStatus.REJECTED, then=1), output_field=IntegerField())),
+                approved=Count(
+                    Case(
+                        When(
+                            status=ProjectSubmission.SubmissionStatus.APPROVED, then=1
+                        ),
+                        output_field=IntegerField(),
+                    )
+                ),
+                under_review=Count(
+                    Case(
+                        When(
+                            status=ProjectSubmission.SubmissionStatus.UNDER_REVIEW,
+                            then=1,
+                        ),
+                        output_field=IntegerField(),
+                    )
+                ),
+                rejected=Count(
+                    Case(
+                        When(
+                            status=ProjectSubmission.SubmissionStatus.REJECTED, then=1
+                        ),
+                        output_field=IntegerField(),
+                    )
+                ),
                 avg_score=Avg("score"),
             )
 
-            project_stats.append({
-                "project_id": str(p.id),
-                "title": p.title,
-                "course_title": p.course.title if p.course else None,
-                "max_score": str(p.max_score),
-                "total_submissions": sub_agg["total"] or 0,
-                "approved_submissions": sub_agg["approved"] or 0,
-                "under_review_submissions": sub_agg["under_review"] or 0,
-                "rejected_submissions": sub_agg["rejected"] or 0,
-                "average_score": str(round(sub_agg["avg_score"] or 0, 2)),
-            })
+            project_stats.append(
+                {
+                    "project_id": str(p.id),
+                    "title": p.title,
+                    "course_title": p.course.title if p.course else None,
+                    "max_score": str(p.max_score),
+                    "total_submissions": sub_agg["total"] or 0,
+                    "approved_submissions": sub_agg["approved"] or 0,
+                    "under_review_submissions": sub_agg["under_review"] or 0,
+                    "rejected_submissions": sub_agg["rejected"] or 0,
+                    "average_score": str(round(sub_agg["avg_score"] or 0, 2)),
+                }
+            )
 
         result = {"projects": project_stats}
         cache.set(cache_key, result, CACHE_TTL_REPORTS)
@@ -486,7 +592,7 @@ class AnalyticsAdminService:
         cls,
         days: int = 30,
         use_cache: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Compile comprehensive time series activity analysis across submissions and user logins."""
         cache_key = cls._get_cache_key("month_report", days=days)
         if use_cache:
@@ -496,7 +602,9 @@ class AnalyticsAdminService:
 
         now = timezone.now()
         start_date = (now - timedelta(days=days)).date()
-        start_dt = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
+        start_dt = timezone.make_aware(
+            datetime.combine(start_date, datetime.min.time())
+        )
 
         daily_sub_counts = (
             CodeSubmission.objects.filter(submitted_at__gte=start_dt)
@@ -521,13 +629,17 @@ class AnalyticsAdminService:
         for i in range(days):
             current_day = start_date + timedelta(days=i)
             day_str = current_day.strftime("%Y-%m-%d")
-            entry = timeline_dict.get(day_str, {"submissions_count": 0, "active_students": 0})
-            timeline.append({
-                "date": day_str,
-                "label": current_day.strftime("%b %d"),
-                "submissions_count": entry["submissions_count"],
-                "active_students": entry["active_students"],
-            })
+            entry = timeline_dict.get(
+                day_str, {"submissions_count": 0, "active_students": 0}
+            )
+            timeline.append(
+                {
+                    "date": day_str,
+                    "label": current_day.strftime("%b %d"),
+                    "submissions_count": entry["submissions_count"],
+                    "active_students": entry["active_students"],
+                }
+            )
 
         result = {"days_analyzed": days, "timeline": timeline}
         cache.set(cache_key, result, CACHE_TTL_REPORTS)
@@ -542,7 +654,7 @@ class AnalyticsAdminService:
         user: User,
         report_type: str,
         export_format: str = "CSV",
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> ExportJob:
         """Create non-blocking export job and dispatch to background worker pool."""
         job = ExportJob.objects.create(
@@ -556,7 +668,7 @@ class AnalyticsAdminService:
         return job
 
     @classmethod
-    def list_export_jobs(cls, user: Optional[User] = None):
+    def list_export_jobs(cls, user: User | None = None):
         """List export jobs with optional user filter."""
         qs = ExportJob.objects.select_related("user").order_by("-created_at")
         if user and not (user.is_superuser or getattr(user, "role", "") == "ADMIN"):

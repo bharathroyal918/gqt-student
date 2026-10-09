@@ -6,8 +6,12 @@ from apps.notifications.models import Announcement
 
 
 class AnnouncementAdminSerializer(serializers.ModelSerializer):
-    published_by_email = serializers.EmailField(source="published_by.email", allow_null=True)
-    target_course_title = serializers.CharField(source="target_course.title", allow_null=True, read_only=True)
+    published_by_email = serializers.EmailField(
+        source="published_by.email", allow_null=True
+    )
+    target_course_title = serializers.CharField(
+        source="target_course.title", allow_null=True, read_only=True
+    )
 
     class Meta:
         model = Announcement
@@ -45,7 +49,8 @@ class AnnouncementAdminCreateSerializer(serializers.Serializer):
     )
     target_course_id = serializers.UUIDField(required=False, allow_null=True)
     priority = serializers.ChoiceField(
-        choices=Announcement.PriorityChoices.choices, default=Announcement.PriorityChoices.NORMAL
+        choices=Announcement.PriorityChoices.choices,
+        default=Announcement.PriorityChoices.NORMAL,
     )
     is_published = serializers.BooleanField(required=False, default=True)
     send_email = serializers.BooleanField(required=False, default=False)
@@ -58,8 +63,12 @@ class AnnouncementAdminUpdateSerializer(serializers.Serializer):
     target_audience = serializers.ChoiceField(
         choices=Announcement.TargetAudienceChoices.choices, required=False
     )
-    target_batch = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    target_batch = serializers.CharField(
+        max_length=50, required=False, allow_blank=True
+    )
     target_course_id = serializers.UUIDField(required=False, allow_null=True)
-    priority = serializers.ChoiceField(choices=Announcement.PriorityChoices.choices, required=False)
+    priority = serializers.ChoiceField(
+        choices=Announcement.PriorityChoices.choices, required=False
+    )
     is_active = serializers.BooleanField(required=False)
     expires_at = serializers.DateTimeField(required=False, allow_null=True)

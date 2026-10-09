@@ -1,15 +1,13 @@
 """Comprehensive test suite for Admin Analytics, KPI Dashboards, Reports, and Async Export Architecture."""
 
 from decimal import Decimal
-import json
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.analytics.models import ExportJob
-from apps.analytics.services import AnalyticsAdminService
 from apps.analytics.tasks import _process_export_job_worker
 from apps.assignments.models import CodeSubmission, CodingQuestion
 from apps.courses.models import Course, CourseEnrollment
@@ -33,7 +31,9 @@ class AnalyticsAndReportsApiTests(APITestCase):
 
         # 2. Regular Student User
         self.student_user = User.objects.create_user(
-            email="student.analytics@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="student.analytics@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_profile = StudentProfile.objects.create(
             user=self.student_user,
@@ -47,7 +47,9 @@ class AnalyticsAndReportsApiTests(APITestCase):
 
         # 3. Student 2
         self.student_user_2 = User.objects.create_user(
-            email="bob.analytics@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="bob.analytics@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_profile_2 = StudentProfile.objects.create(
             user=self.student_user_2,
@@ -145,13 +147,17 @@ class AnalyticsAndReportsApiTests(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
 
         # Filter by specific batch
-        res_batch = self.client.get("/api/v1/admin/analytics/dashboard/?batch_code=BATCH-2026-A")
+        res_batch = self.client.get(
+            "/api/v1/admin/analytics/dashboard/?batch_code=BATCH-2026-A"
+        )
         self.assertEqual(res_batch.status_code, status.HTTP_200_OK)
         data_batch = res_batch.json()["data"]
         self.assertEqual(data_batch["total_students"], 1)
 
         # Filter by course ID
-        res_course = self.client.get(f"/api/v1/admin/analytics/dashboard/?course_id={self.course.id}")
+        res_course = self.client.get(
+            f"/api/v1/admin/analytics/dashboard/?course_id={self.course.id}"
+        )
         self.assertEqual(res_course.status_code, status.HTTP_200_OK)
         data_course = res_course.json()["data"]
         self.assertEqual(data_course["total_modules"], 1)
@@ -171,7 +177,9 @@ class AnalyticsAndReportsApiTests(APITestCase):
     def test_curriculum_completion_report(self):
         """Admin fetches curriculum module completion percentages."""
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(f"/api/v1/admin/reports/completion/?course_id={self.course.id}")
+        res = self.client.get(
+            f"/api/v1/admin/reports/completion/?course_id={self.course.id}"
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         data = res.json()["data"]
@@ -184,7 +192,9 @@ class AnalyticsAndReportsApiTests(APITestCase):
     def test_assignment_statistics_report(self):
         """Admin fetches question pass rate and attempt statistics."""
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(f"/api/v1/admin/reports/assignment/?module_id={self.module.id}")
+        res = self.client.get(
+            f"/api/v1/admin/reports/assignment/?module_id={self.module.id}"
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         data = res.json()["data"]
@@ -196,7 +206,9 @@ class AnalyticsAndReportsApiTests(APITestCase):
     def test_project_evaluation_report(self):
         """Admin fetches project evaluation scores and review numbers."""
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(f"/api/v1/admin/reports/project/?course_id={self.course.id}")
+        res = self.client.get(
+            f"/api/v1/admin/reports/project/?course_id={self.course.id}"
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         data = res.json()["data"]
@@ -242,7 +254,9 @@ class AnalyticsAndReportsApiTests(APITestCase):
         self.assertEqual(job_data["row_count"], 1)
 
         # 4. Download file
-        download_res = self.client.get(f"/api/v1/admin/reports/exports/{job_id}/download/")
+        download_res = self.client.get(
+            f"/api/v1/admin/reports/exports/{job_id}/download/"
+        )
         self.assertEqual(download_res.status_code, status.HTTP_200_OK)
         self.assertEqual(download_res["Content-Type"], "text/csv")
         self.assertIn("attachment; filename=", download_res["Content-Disposition"])

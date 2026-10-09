@@ -2,6 +2,7 @@
 
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, status
 from rest_framework.views import APIView
@@ -15,6 +16,7 @@ from apps.students.admin_serializers import (
     AdminScanStudentQRSerializer,
     AssignCoursesSerializer,
     BulkMarkAttendanceSerializer,
+    CollegeAdminSerializer,
     GrantAccessByEmailSerializer,
     MarkAttendanceSerializer,
     StudentAdminDetailSerializer,
@@ -22,7 +24,7 @@ from apps.students.admin_serializers import (
     StudentAdminUpdateSerializer,
     StudentEnrollmentBriefSerializer,
 )
-from apps.students.models import StudentProfile
+from apps.students.models import College, StudentProfile
 from apps.students.services import StudentAdminService
 
 
@@ -41,9 +43,19 @@ class StudentAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = StudentAdminListSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = StudentFilter
-    search_fields = ["full_name", "student_id_number", "user__email", "batch_code", "college_name"]
+    search_fields = [
+        "full_name",
+        "student_id_number",
+        "user__email",
+        "batch_code",
+        "college_name",
+    ]
     ordering_fields = [
         "created_at",
         "total_points",
@@ -54,7 +66,11 @@ class StudentAdminListCreateView(generics.ListCreateAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        return StudentProfile.objects.select_related("user").prefetch_related("enrollments").all()
+        return (
+            StudentProfile.objects.select_related("user")
+            .prefetch_related("enrollments")
+            .all()
+        )
 
     @extend_schema(
         request=StudentProvisionSerializer,
@@ -68,7 +84,7 @@ class StudentAdminListCreateView(generics.ListCreateAPIView):
         data = serializer.validated_data
         ip_address = get_client_ip(request)
 
-        user, profile = StudentProvisioningService.provision_student(
+        _user, profile = StudentProvisioningService.provision_student(
             admin_user=request.user,
             full_name=data["full_name"],
             student_id_number=data["student_id_number"],
@@ -93,6 +109,7 @@ class StudentAdminDetailUpdateView(APIView):
     """Admin endpoint to retrieve or update an existing student profile and account settings."""
 
     permission_classes = [IsAdmin]
+    serializer_class = StudentAdminDetailSerializer
 
     @extend_schema(
         responses={200: StudentAdminDetailSerializer},
@@ -133,6 +150,7 @@ class StudentAdminCoursesView(APIView):
     """Admin endpoint to enroll/assign courses to a student."""
 
     permission_classes = [IsAdmin]
+    serializer_class = AssignCoursesSerializer
 
     @extend_schema(
         request=AssignCoursesSerializer,
@@ -163,6 +181,7 @@ class StudentAdminProgressView(APIView):
     permission_classes = [IsAdmin]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin View Student Progress",
         tags=["Admin Student Management"],
     )
@@ -180,6 +199,7 @@ class StudentAdminScoresView(APIView):
     permission_classes = [IsAdmin]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin View Student Scores",
         tags=["Admin Student Management"],
     )
@@ -197,6 +217,7 @@ class StudentAdminRankView(APIView):
     permission_classes = [IsAdmin]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin View Student Rank",
         tags=["Admin Student Management"],
     )
@@ -212,8 +233,10 @@ class StudentAdminGrantAccessView(APIView):
     """Admin endpoint to grant full portal and course access to a specific student."""
 
     permission_classes = [IsAdmin]
+    serializer_class = StudentAdminDetailSerializer
 
     @extend_schema(
+        request=None,
         responses={200: StudentAdminDetailSerializer},
         summary="Admin Grant Student Access",
         tags=["Admin Student Management"],
@@ -233,8 +256,10 @@ class StudentAdminRevokeAccessView(APIView):
     """Admin endpoint to suspend/revoke portal access for a specific student."""
 
     permission_classes = [IsAdmin]
+    serializer_class = StudentAdminDetailSerializer
 
     @extend_schema(
+        request=None,
         responses={200: StudentAdminDetailSerializer},
         summary="Admin Revoke Student Access",
         tags=["Admin Student Management"],
@@ -254,6 +279,7 @@ class StudentAdminGrantAccessByEmailView(APIView):
     """Admin grants access to a student by entering their registered institutional email."""
 
     permission_classes = [IsAdmin]
+    serializer_class = GrantAccessByEmailSerializer
 
     @extend_schema(
         request=GrantAccessByEmailSerializer,
@@ -268,7 +294,9 @@ class StudentAdminGrantAccessByEmailView(APIView):
 
         student = StudentAdminService.grant_access_by_email(
             email=serializer.validated_data["email"],
-            course_opted=serializer.validated_data.get("course_opted", "Full Stack Software & Assessment Track"),
+            course_opted=serializer.validated_data.get(
+                "course_opted", "Full Stack Software & Assessment Track"
+            ),
             batch_code=serializer.validated_data.get("batch_code", "BATCH-2026-A"),
             admin_user=request.user,
             ip_address=ip_address,
@@ -283,8 +311,10 @@ class StudentAdminAttendanceView(APIView):
     """Admin retrieves student attendance records or marks a new session attendance."""
 
     permission_classes = [IsAdmin]
+    serializer_class = MarkAttendanceSerializer
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin View Student Attendance",
         tags=["Admin Student Management"],
     )
@@ -297,6 +327,7 @@ class StudentAdminAttendanceView(APIView):
 
     @extend_schema(
         request=MarkAttendanceSerializer,
+        responses={201: OpenApiTypes.OBJECT},
         summary="Admin Mark Student Attendance",
         tags=["Admin Student Management"],
     )
@@ -309,8 +340,12 @@ class StudentAdminAttendanceView(APIView):
             student_id=str(pk),
             date=serializer.validated_data["date"],
             status=serializer.validated_data["status"],
-            technology=serializer.validated_data.get("technology", "Full Stack Development"),
-            session_title=serializer.validated_data.get("session_title", "Daily Training & Coding Lab"),
+            technology=serializer.validated_data.get(
+                "technology", "Full Stack Development"
+            ),
+            session_title=serializer.validated_data.get(
+                "session_title", "Daily Training & Coding Lab"
+            ),
             remarks=serializer.validated_data.get("remarks", ""),
             admin_user=request.user,
             ip_address=ip_address,
@@ -334,6 +369,7 @@ class StudentAdminAttendanceOverviewView(APIView):
     permission_classes = [IsAdmin]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin View Attendance Overview",
         tags=["Admin Student Management"],
     )
@@ -361,9 +397,11 @@ class StudentAdminScanQRView(APIView):
     """Admin scans student attendance QR code to record attendance instantly."""
 
     permission_classes = [IsAdmin]
+    serializer_class = AdminScanStudentQRSerializer
 
     @extend_schema(
         request=AdminScanStudentQRSerializer,
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin Scan Student Attendance QR",
         tags=["Admin Student Management"],
     )
@@ -375,7 +413,9 @@ class StudentAdminScanQRView(APIView):
         result = StudentAdminService.scan_student_qr(
             qr_data=serializer.validated_data["qr_data"],
             session_title=serializer.validated_data.get("session_title"),
-            technology=serializer.validated_data.get("technology", "Full Stack Development"),
+            technology=serializer.validated_data.get(
+                "technology", "Full Stack Development"
+            ),
             date=serializer.validated_data.get("date"),
             status=serializer.validated_data.get("status", "PRESENT"),
             remarks=serializer.validated_data.get("remarks"),
@@ -393,9 +433,11 @@ class StudentAdminBulkAttendanceView(APIView):
     """Admin bulk marks attendance for a whole batch or multiple students."""
 
     permission_classes = [IsAdmin]
+    serializer_class = BulkMarkAttendanceSerializer
 
     @extend_schema(
         request=BulkMarkAttendanceSerializer,
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin Bulk Mark Batch Attendance",
         tags=["Admin Student Management"],
     )
@@ -408,7 +450,9 @@ class StudentAdminBulkAttendanceView(APIView):
             batch_code=serializer.validated_data.get("batch_code"),
             student_ids=serializer.validated_data.get("student_ids"),
             date=serializer.validated_data.get("date"),
-            technology=serializer.validated_data.get("technology", "Full Stack Development"),
+            technology=serializer.validated_data.get(
+                "technology", "Full Stack Development"
+            ),
             session_title=serializer.validated_data.get("session_title"),
             status=serializer.validated_data.get("status", "PRESENT"),
             remarks=serializer.validated_data.get("remarks"),
@@ -419,4 +463,88 @@ class StudentAdminBulkAttendanceView(APIView):
             data=result,
             message=result["message"],
             status_code=status.HTTP_200_OK,
+        )
+
+
+class CollegeAdminListCreateView(generics.ListCreateAPIView):
+    """Admin endpoint to list all configured colleges or add a new institutional college."""
+
+    permission_classes = [IsAdmin]
+    serializer_class = CollegeAdminSerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["name", "code", "city", "state"]
+    ordering_fields = ["name", "code", "city", "created_at", "is_active"]
+    ordering = ["name"]
+
+    def get_queryset(self):
+        if not College.objects.exists():
+            from apps.students.seeds import seed_default_colleges
+
+            seed_default_colleges()
+        return College.objects.all().order_by("name")
+
+    @extend_schema(
+        request=CollegeAdminSerializer,
+        responses={201: CollegeAdminSerializer},
+        summary="Admin Create Institutional College",
+        tags=["Admin Student Management"],
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = CollegeAdminSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        college = serializer.save()
+        return api_success(
+            data=CollegeAdminSerializer(college).data,
+            message=f"College '{college.name}' created successfully.",
+            status_code=status.HTTP_201_CREATED,
+        )
+
+
+class CollegeAdminDetailUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    """Admin endpoint to view, update, or remove an institutional college."""
+
+    permission_classes = [IsAdmin]
+    serializer_class = CollegeAdminSerializer
+    queryset = College.objects.all()
+
+    @extend_schema(
+        request=CollegeAdminSerializer,
+        responses={200: CollegeAdminSerializer},
+        summary="Admin Update College Details",
+        tags=["Admin Student Management"],
+    )
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return api_success(
+            data=CollegeAdminSerializer(instance).data,
+            message=f"College '{instance.name}' updated successfully.",
+        )
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        college_name = instance.name
+        students_count = StudentProfile.objects.filter(
+            college_name__iexact=college_name
+        ).count()
+        if students_count > 0:
+            instance.is_active = False
+            instance.save(update_fields=["is_active", "updated_at"])
+            return api_success(
+                data=CollegeAdminSerializer(instance).data,
+                message=f"College '{college_name}' has {students_count} enrolled students and was deactivated instead of deleted.",
+            )
+        instance.delete()
+        return api_success(
+            data=None,
+            message=f"College '{college_name}' deleted successfully.",
         )

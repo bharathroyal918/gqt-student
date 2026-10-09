@@ -1,30 +1,35 @@
 """Core Domain Service for Sandboxed Code Execution and Assessment Grading."""
 
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar
+
 from django.core.cache import cache
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from apps.assignments.execution.interfaces import BaseExecutionProvider, ExecutionOutput
+from apps.assignments.execution.interfaces import BaseExecutionProvider
 from apps.assignments.execution.mock_provider import MockExecutionProvider
 from apps.assignments.models import (
-    CodingQuestion,
     CodeSubmission,
+    CodingQuestion,
     ExecutionResult,
     StudentQuestionProgress,
-    TestCase,
 )
 from apps.common.exceptions import DomainException
-from apps.scoring.models import ScoreRecord
 from apps.students.models import StudentProfile
 
 
 class CodeExecutionService:
     """Provider-agnostic service orchestrating student code execution, sandboxing, and assessment."""
 
-    SUPPORTED_LANGUAGES = ["python", "java", "c", "cpp", "javascript"]
+    SUPPORTED_LANGUAGES: ClassVar[list[str]] = [
+        "python",
+        "java",
+        "c",
+        "cpp",
+        "javascript",
+    ]
     MAX_SOURCE_CODE_BYTES = 65536  # 64 KB limit
     RATE_LIMIT_COOLDOWN_SECONDS = 3  # Minimum seconds between executions
     RATE_LIMIT_MAX_PER_MINUTE = 20  # Max executions per minute
@@ -51,7 +56,11 @@ class CodeExecutionService:
         """Enforces security boundaries, size constraints, rate limiting, and language validation."""
         # 1. Source code size check
         if not source_code or not source_code.strip():
-            raise DomainException("Source code cannot be empty.", code="EMPTY_SOURCE_CODE", status_code=400)
+            raise DomainException(
+                "Source code cannot be empty.",
+                code="EMPTY_SOURCE_CODE",
+                status_code=400,
+            )
 
         byte_len = len(source_code.encode("utf-8"))
         if byte_len > cls.MAX_SOURCE_CODE_BYTES:
@@ -70,7 +79,9 @@ class CodeExecutionService:
                 status_code=400,
             )
 
-        if question.allowed_languages and norm_lang not in [l.lower() for l in question.allowed_languages]:
+        if question.allowed_languages and norm_lang not in [
+            l.lower() for l in question.allowed_languages
+        ]:
             raise DomainException(
                 f"Language '{language}' is not permitted for this specific question.",
                 code="LANGUAGE_NOT_ALLOWED_FOR_QUESTION",
@@ -106,8 +117,8 @@ class CodeExecutionService:
         question_id: str,
         language: str,
         source_code: str,
-        custom_input: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        custom_input: str | None = None,
+    ) -> dict[str, Any]:
         """Runs student code against visible sample test cases or custom input without grading."""
         question = get_object_or_404(CodingQuestion, id=question_id, is_active=True)
         norm_lang = cls._validate_submission_request(
@@ -181,12 +192,16 @@ class CodeExecutionService:
             )
 
             tc_status = output.status
-            if tc_status == CodeSubmission.SubmissionStatus.ACCEPTED:
-                # Check actual stdout against expected
-                if output.stdout.strip() != tc.expected_output.strip():
-                    tc_status = CodeSubmission.SubmissionStatus.WRONG_ANSWER
+            if (
+                tc_status == CodeSubmission.SubmissionStatus.ACCEPTED
+                and output.stdout.strip() != tc.expected_output.strip()
+            ):
+                tc_status = CodeSubmission.SubmissionStatus.WRONG_ANSWER
 
-            if tc_status != CodeSubmission.SubmissionStatus.ACCEPTED and overall_status == CodeSubmission.SubmissionStatus.ACCEPTED:
+            if (
+                tc_status != CodeSubmission.SubmissionStatus.ACCEPTED
+                and overall_status == CodeSubmission.SubmissionStatus.ACCEPTED
+            ):
                 overall_status = tc_status
 
             test_results.append(
@@ -216,10 +231,12 @@ class CodeExecutionService:
         question_id: str,
         language: str,
         source_code: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Atomically evaluates student solution against ALL visible & hidden test cases, records progress, and awards scores."""
         question = get_object_or_404(
-            CodingQuestion.objects.select_related("module"), id=question_id, is_active=True
+            CodingQuestion.objects.select_related("module"),
+            id=question_id,
+            is_active=True,
         )
         norm_lang = cls._validate_submission_request(
             str(student_profile.id), question, language, source_code
@@ -277,7 +294,10 @@ class CodeExecutionService:
             else:
                 result_status = ExecutionResult.ResultStatus.FAILED
 
-            if result_status != ExecutionResult.ResultStatus.PASSED and overall_status == CodeSubmission.SubmissionStatus.ACCEPTED:
+            if (
+                result_status != ExecutionResult.ResultStatus.PASSED
+                and overall_status == CodeSubmission.SubmissionStatus.ACCEPTED
+            ):
                 if result_status == ExecutionResult.ResultStatus.FAILED:
                     overall_status = CodeSubmission.SubmissionStatus.WRONG_ANSWER
                 else:
@@ -299,7 +319,9 @@ class CodeExecutionService:
                     status=er_status,
                     stdout=output.stdout,
                     stderr=output.stderr,
-                    execution_time_seconds=Decimal(str(round(output.execution_time_seconds, 4))),
+                    execution_time_seconds=Decimal(
+                        str(round(output.execution_time_seconds, 4))
+                    ),
                     memory_kb=output.memory_kb,
                     exit_code=output.exit_code,
                 )
@@ -311,7 +333,9 @@ class CodeExecutionService:
                     {
                         "order": tc.order or (idx + 1),
                         "is_visible": True,
-                        "status": "PASSED" if result_status == ExecutionResult.ResultStatus.PASSED else "FAILED",
+                        "status": "PASSED"
+                        if result_status == ExecutionResult.ResultStatus.PASSED
+                        else "FAILED",
                         "input_data": tc.input_data,
                         "expected_output": tc.expected_output,
                         "actual_output": output.stdout,
@@ -325,7 +349,9 @@ class CodeExecutionService:
                     {
                         "order": tc.order or (idx + 1),
                         "is_visible": False,
-                        "status": "PASSED" if result_status == ExecutionResult.ResultStatus.PASSED else "FAILED",
+                        "status": "PASSED"
+                        if result_status == ExecutionResult.ResultStatus.PASSED
+                        else "FAILED",
                         "execution_time_ms": tc_exec_time_ms,
                         # No input_data, expected_output, stdout, or stderr exposed
                     }
@@ -354,7 +380,11 @@ class CodeExecutionService:
         if is_all_passed:
             submission_status = CodeSubmission.SubmissionStatus.ACCEPTED
         else:
-            submission_status = overall_status if overall_status != CodeSubmission.SubmissionStatus.ACCEPTED else CodeSubmission.SubmissionStatus.WRONG_ANSWER
+            submission_status = (
+                overall_status
+                if overall_status != CodeSubmission.SubmissionStatus.ACCEPTED
+                else CodeSubmission.SubmissionStatus.WRONG_ANSWER
+            )
 
         avg_time_ms = int(total_time_ms / total_tc) if total_tc > 0 else 0
 
@@ -404,7 +434,9 @@ class CodeExecutionService:
         }
 
     @classmethod
-    def get_execution_result(cls, submission_id: str, student_profile: StudentProfile) -> Dict[str, Any]:
+    def get_execution_result(
+        cls, submission_id: str, student_profile: StudentProfile
+    ) -> dict[str, Any]:
         """Retrieves a past submission's sanitized execution results."""
         submission = get_object_or_404(
             CodeSubmission.objects.select_related("question"),
@@ -413,7 +445,9 @@ class CodeExecutionService:
         )
 
         results = []
-        for er in submission.execution_results.select_related("test_case").order_by("test_case__order"):
+        for er in submission.execution_results.select_related("test_case").order_by(
+            "test_case__order"
+        ):
             tc = er.test_case
             if tc.is_visible:
                 results.append(
@@ -425,7 +459,9 @@ class CodeExecutionService:
                         "expected_output": tc.expected_output,
                         "actual_output": er.stdout,
                         "stderr": er.stderr,
-                        "execution_time_ms": int((er.execution_time_seconds or 0) * 1000),
+                        "execution_time_ms": int(
+                            (er.execution_time_seconds or 0) * 1000
+                        ),
                         "memory_kb": er.memory_kb,
                     }
                 )
@@ -435,7 +471,9 @@ class CodeExecutionService:
                         "order": tc.order,
                         "is_visible": False,
                         "status": er.status,
-                        "execution_time_ms": int((er.execution_time_seconds or 0) * 1000),
+                        "execution_time_ms": int(
+                            (er.execution_time_seconds or 0) * 1000
+                        ),
                     }
                 )
 

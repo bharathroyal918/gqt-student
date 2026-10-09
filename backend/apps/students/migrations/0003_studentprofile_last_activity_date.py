@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('students', '0002_studentprofile_attendance_percentage_and_more'),
+        ("students", "0002_studentprofile_attendance_percentage_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='studentprofile',
-            name='last_activity_date',
-            field=models.DateField(blank=True, help_text='Date of last solved problem for streak tracking', null=True),
+            model_name="studentprofile",
+            name="last_activity_date",
+            field=models.DateField(
+                blank=True,
+                help_text="Date of last solved problem for streak tracking",
+                null=True,
+            ),
         ),
     ]

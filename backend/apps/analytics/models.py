@@ -27,9 +27,12 @@ class ActivityEvent(BaseModel):
         ordering = ["-created_at"]
         indexes = [
             models.Index(
-                fields=["user", "event_name", "-created_at"], name="act_user_evt_date_idx"
+                fields=["user", "event_name", "-created_at"],
+                name="act_user_evt_date_idx",
             ),
-            models.Index(fields=["event_name", "-created_at"], name="act_name_date_idx"),
+            models.Index(
+                fields=["event_name", "-created_at"], name="act_name_date_idx"
+            ),
         ]
 
     def __str__(self):
@@ -40,20 +43,26 @@ class DailyStudentAnalytics(BaseModel):
     """Pre-aggregated daily activity summary for high-performance reporting."""
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="daily_analytics"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="daily_analytics",
     )
     date = models.DateField(db_index=True)
     submissions_count = models.PositiveIntegerField(default=0)
     questions_solved_count = models.PositiveIntegerField(default=0)
     time_spent_minutes = models.PositiveIntegerField(default=0)
-    score_earned = models.DecimalField(max_digits=7, decimal_places=2, default=Decimal("0.00"))
+    score_earned = models.DecimalField(
+        max_digits=7, decimal_places=2, default=Decimal("0.00")
+    )
 
     class Meta:
         verbose_name = "Daily Student Analytics"
         verbose_name_plural = "Daily Student Analytics"
         ordering = ["-date"]
         indexes = [
-            models.Index(fields=["date", "-score_earned"], name="daily_ana_date_score_idx"),
+            models.Index(
+                fields=["date", "-score_earned"], name="daily_ana_date_score_idx"
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -91,10 +100,17 @@ class ExportJob(BaseModel):
         on_delete=models.CASCADE,
         related_name="export_jobs",
     )
-    report_type = models.CharField(max_length=50, choices=ReportType.choices, db_index=True)
-    format = models.CharField(max_length=10, choices=ExportFormat.choices, default=ExportFormat.CSV)
+    report_type = models.CharField(
+        max_length=50, choices=ReportType.choices, db_index=True
+    )
+    format = models.CharField(
+        max_length=10, choices=ExportFormat.choices, default=ExportFormat.CSV
+    )
     status = models.CharField(
-        max_length=20, choices=JobStatus.choices, default=JobStatus.PENDING, db_index=True
+        max_length=20,
+        choices=JobStatus.choices,
+        default=JobStatus.PENDING,
+        db_index=True,
     )
     filters = models.JSONField(default=dict, blank=True)
     file_name = models.CharField(max_length=255, blank=True, default="")
@@ -109,10 +125,11 @@ class ExportJob(BaseModel):
         verbose_name_plural = "Export Jobs"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["user", "status", "-created_at"], name="exp_usr_stat_idx"),
+            models.Index(
+                fields=["user", "status", "-created_at"], name="exp_usr_stat_idx"
+            ),
             models.Index(fields=["report_type", "status"], name="exp_type_stat_idx"),
         ]
 
     def __str__(self):
         return f"ExportJob {self.id} [{self.report_type} - {self.status}]"
-

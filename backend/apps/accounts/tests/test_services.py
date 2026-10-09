@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
@@ -30,7 +31,9 @@ class AuthServiceTests(TestCase):
         self.assertTrue(result)
 
         # Check DB record
-        record = OTPVerification.objects.filter(mobile_number=self.mobile, is_used=False).first()
+        record = OTPVerification.objects.filter(
+            mobile_number=self.mobile, is_used=False
+        ).first()
         self.assertIsNotNone(record)
         self.assertEqual(record.user, self.user)
         self.assertEqual(record.otp_hash, AuthService._hash_otp(self.mobile, "123456"))
@@ -90,10 +93,12 @@ class AuthServiceTests(TestCase):
             AuthService.verify_otp_and_login(self.mobile, "111111")
 
         self.assertEqual(ctx.exception.status_code, 400)
-        self.assertIn("Maximum OTP verification attempts exceeded", str(ctx.exception.detail))
+        self.assertIn(
+            "Maximum OTP verification attempts exceeded", str(ctx.exception.detail)
+        )
 
     def test_issue_tokens_for_user(self):
-        access_token, refresh_token = AuthService.issue_tokens_for_user(self.user)
+        access_token, _refresh_token = AuthService.issue_tokens_for_user(self.user)
         token_payload = AccessToken(access_token)
         self.assertEqual(token_payload["role"], User.RoleChoices.STUDENT)
         self.assertEqual(token_payload["user_id"], str(self.user.id))

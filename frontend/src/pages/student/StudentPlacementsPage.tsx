@@ -365,91 +365,93 @@ export const StudentPlacementsPage: React.FC = () => {
                 return (
                   <div
                     key={drive.id}
-                    className="group rounded-3xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 p-6 shadow-sm transition-all duration-200 hover:border-brand-500/40 hover:shadow-lg flex flex-col justify-between"
+                    className="group rounded-3xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 p-6 shadow-sm transition-all duration-200 hover:border-brand-500/40 hover:shadow-lg flex flex-col justify-between overflow-hidden min-w-0"
                   >
-                    <div>
+                    <div className="min-w-0">
                       {/* Top Header */}
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3.5">
-                          <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600/10 to-indigo-600/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 font-black text-xl">
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          <div className="flex h-12 w-12 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600/10 to-indigo-600/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 font-black text-lg sm:text-xl">
                             {drive.company_name.slice(0, 2).toUpperCase()}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg truncate" title={drive.company_name}>
                                 {drive.company_name}
                               </h3>
                               {drive.company_code && (
-                                <span className="text-[11px] font-mono text-slate-400 bg-slate-100 dark:bg-surface-800 px-2 py-0.5 rounded-md">
+                                <span className="text-[11px] font-mono text-slate-400 bg-slate-100 dark:bg-surface-800 px-2 py-0.5 rounded-md shrink-0">
                                   {drive.company_code}
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm font-semibold text-brand-600 dark:text-brand-400">
+                            <p className="text-sm font-semibold text-brand-600 dark:text-brand-400 truncate" title={drive.role}>
                               {drive.role}
                             </p>
                           </div>
                         </div>
 
-                        {hasApplied ? (
-                          <Badge
-                            variant={
-                              myStatus === "SELECTED"
-                                ? "emerald"
-                                : myStatus === "SHORTLISTED"
-                                  ? "indigo"
-                                  : myStatus === "REJECTED"
-                                    ? "rose"
-                                    : "amber"
-                            }
-                            size="md"
-                          >
-                            Status: {myStatus}
-                          </Badge>
-                        ) : (
-                          <Badge variant="brand" size="sm">
-                            {drive.mode_of_work}
-                          </Badge>
-                        )}
+                        <div className="shrink-0">
+                          {hasApplied ? (
+                            <Badge
+                              variant={
+                                myStatus === "SELECTED"
+                                  ? "emerald"
+                                  : myStatus === "SHORTLISTED"
+                                    ? "indigo"
+                                    : myStatus === "REJECTED"
+                                      ? "rose"
+                                      : "amber"
+                              }
+                              size="md"
+                            >
+                              Status: {myStatus}
+                            </Badge>
+                          ) : (
+                            <Badge variant="brand" size="sm">
+                              {drive.mode_of_work}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
                       {/* Package & Key Specs */}
-                      <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-surface-950/60 p-3.5 rounded-2xl">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-emerald-500 shrink-0" />
-                          <div>
+                      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-surface-950/60 p-3.5 rounded-2xl">
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <DollarSign className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
                             <span className="text-[10px] text-slate-400 block font-medium">Package / CTC</span>
-                            <span className="font-bold text-slate-900 dark:text-white">
+                            <span className="font-bold text-slate-900 dark:text-white block truncate" title={drive.stipend_or_ctc}>
                               {drive.stipend_or_ctc}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-rose-500 shrink-0" />
-                          <div>
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <MapPin className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
                             <span className="text-[10px] text-slate-400 block font-medium">Location</span>
-                            <span className="font-medium text-slate-900 dark:text-white truncate">
+                            <span className="font-medium text-slate-900 dark:text-white block truncate" title={drive.location}>
                               {drive.location}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="h-4 w-4 text-amber-500 shrink-0" />
-                          <div>
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <ShieldCheck className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
                             <span className="text-[10px] text-slate-400 block font-medium">Bond / Agreement</span>
-                            <span className="font-medium text-slate-900 dark:text-white truncate">
+                            <span className="font-medium text-slate-900 dark:text-white block truncate" title={drive.bond_period}>
                               {drive.bond_period}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-indigo-500 shrink-0" />
-                          <div>
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <Clock className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
                             <span className="text-[10px] text-slate-400 block font-medium">Apply By</span>
-                            <span className="font-medium text-slate-900 dark:text-white">
+                            <span className="font-medium text-slate-900 dark:text-white block truncate">
                               {new Date(drive.application_deadline).toLocaleDateString()}
                             </span>
                           </div>
@@ -457,9 +459,9 @@ export const StudentPlacementsPage: React.FC = () => {
                       </div>
 
                       {/* Eligibility Criteria */}
-                      <div className="mt-3.5 text-xs text-slate-600 dark:text-slate-300">
+                      <div className="mt-3.5 text-xs text-slate-600 dark:text-slate-300 break-words line-clamp-2" title={drive.eligibility_criteria}>
                         <span className="font-semibold text-slate-900 dark:text-white">Eligibility: </span>
-                        {drive.eligibility_criteria}
+                        <span>{drive.eligibility_criteria}</span>
                       </div>
 
                       {/* Required Skills */}
@@ -467,7 +469,7 @@ export const StudentPlacementsPage: React.FC = () => {
                         {drive.skills.split(",").map((s, idx) => (
                           <span
                             key={idx}
-                            className="rounded-lg bg-brand-500/10 dark:bg-brand-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-brand-700 dark:text-brand-300"
+                            className="rounded-lg bg-brand-500/10 dark:bg-brand-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-brand-700 dark:text-brand-300 max-w-full truncate"
                           >
                             {s.trim()}
                           </span>
@@ -475,43 +477,45 @@ export const StudentPlacementsPage: React.FC = () => {
                       </div>
 
                       {/* Description preview */}
-                      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 break-words">
                         {drive.job_description}
                       </p>
                     </div>
 
                     {/* Bottom CTA */}
-                    <div className="mt-6 pt-4 border-t border-slate-200 dark:border-surface-800 flex items-center justify-between">
-                      <span className="text-xs text-slate-400">
+                    <div className="mt-6 pt-4 border-t border-slate-200 dark:border-surface-800 flex items-center justify-between gap-3">
+                      <span className="text-xs text-slate-400 truncate flex-1" title={`Batch: ${drive.eligible_batches}`}>
                         Batch: {drive.eligible_batches}
                       </span>
 
-                      {hasApplied ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Applied
-                          </span>
+                      <div className="shrink-0">
+                        {hasApplied ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 className="h-4 w-4 shrink-0" />
+                              Applied
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setActiveTab("MY_APPLICATIONS")}
+                              className="text-xs"
+                            >
+                              View Status
+                            </Button>
+                          </div>
+                        ) : (
                           <Button
-                            variant="outline"
+                            variant="primary"
                             size="sm"
-                            onClick={() => setActiveTab("MY_APPLICATIONS")}
-                            className="text-xs"
+                            onClick={() => handleOpenApply(drive)}
+                            className="flex items-center gap-1.5 font-bold shadow-md shadow-brand-500/20"
                           >
-                            View Status
+                            <Send className="h-3.5 w-3.5" />
+                            <span>Apply Now</span>
                           </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleOpenApply(drive)}
-                          className="flex items-center gap-1.5 font-bold shadow-md shadow-brand-500/20"
-                        >
-                          <Send className="h-3.5 w-3.5" />
-                          <span>Apply Now</span>
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

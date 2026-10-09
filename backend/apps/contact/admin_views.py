@@ -1,8 +1,12 @@
 """Admin views for managing student contact inquiries and support tickets."""
 
 import uuid
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import Http404
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.views import APIView
 
 from apps.common.permissions import IsAdmin
@@ -25,9 +29,21 @@ class AdminContactInquiryListView(APIView):
         summary="List Contact Inquiries",
         description="Fetch all submitted inquiries with filtering by status, category, and search keyword.",
         parameters=[
-            OpenApiParameter(name="status", description="Inquiry status filter", required=False, type=str),
-            OpenApiParameter(name="category", description="Category filter", required=False, type=str),
-            OpenApiParameter(name="search", description="Search by name, email, subject, or message", required=False, type=str),
+            OpenApiParameter(
+                name="status",
+                description="Inquiry status filter",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="category", description="Category filter", required=False, type=str
+            ),
+            OpenApiParameter(
+                name="search",
+                description="Search by name, email, subject, or message",
+                required=False,
+                type=str,
+            ),
         ],
         responses={200: ContactInquiryAdminSerializer(many=True)},
         tags=["Admin Contact & Support"],
@@ -62,7 +78,9 @@ class AdminContactInquiryDetailView(APIView):
     )
     def get(self, request, inquiry_id: uuid.UUID):
         try:
-            inquiry = ContactInquiry.objects.select_related("user", "resolved_by").get(id=inquiry_id)
+            inquiry = ContactInquiry.objects.select_related("user", "resolved_by").get(
+                id=inquiry_id
+            )
         except ContactInquiry.DoesNotExist:
             return api_error(
                 code="NOT_FOUND",
@@ -102,7 +120,13 @@ class AdminContactInquiryDetailView(APIView):
                 admin_notes=serializer.validated_data.get("admin_notes"),
                 ip_address=client_ip,
             )
-        except Exception as exc:
+        except (
+            Http404,
+            NotFound,
+            ValidationError,
+            DjangoValidationError,
+            ValueError,
+        ) as exc:
             return api_error(
                 code="UPDATE_FAILED",
                 message=str(exc),

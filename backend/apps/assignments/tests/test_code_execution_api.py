@@ -17,6 +17,7 @@ Tests:
 """
 
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
@@ -24,14 +25,14 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.accounts.models import User
 from apps.assignments.execution.mock_provider import MockExecutionProvider
 from apps.assignments.execution.service import CodeExecutionService
 from apps.assignments.models import (
-    CodingQuestion,
     CodeSubmission,
-    ExecutionResult,
+    CodingQuestion,
     StudentQuestionProgress,
+)
+from apps.assignments.models import (
     TestCase as QuestionTestCase,
 )
 from apps.courses.models import Course
@@ -148,7 +149,10 @@ class CodeExecutionApiTests(TestCase):
 
     def test_question_detail_excludes_hidden_test_cases(self):
         """Security: GET question detail must return visible test cases and NEVER leak hidden test cases."""
-        url = reverse("api_v1:student_assignments:question_detail", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:question_detail",
+            kwargs={"question_id": self.question.id},
+        )
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -170,7 +174,10 @@ class CodeExecutionApiTests(TestCase):
 
     def test_run_code_against_sample_test_cases(self):
         """POST /run/ executes against visible test cases only without grading or points."""
-        url = reverse("api_v1:student_assignments:code_run", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_run",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "def two_sum(nums, target):\n    # Standard correct solution\n    return [0, 1]",
@@ -189,7 +196,10 @@ class CodeExecutionApiTests(TestCase):
 
     def test_run_code_with_custom_input(self):
         """POST /run/ with custom_input evaluates standard input string directly."""
-        url = reverse("api_v1:student_assignments:code_run", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_run",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "print('Custom Result')",
@@ -204,7 +214,10 @@ class CodeExecutionApiTests(TestCase):
 
     def test_run_code_compilation_error(self):
         """POST /run/ correctly captures and reports simulated compilation/syntax errors."""
-        url = reverse("api_v1:student_assignments:code_run", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_run",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "# ERROR: COMPILE\ndef broken_syntax(:",
@@ -218,7 +231,10 @@ class CodeExecutionApiTests(TestCase):
 
     def test_run_code_runtime_error(self):
         """POST /run/ correctly captures and reports runtime exceptions (e.g. ZeroDivisionError)."""
-        url = reverse("api_v1:student_assignments:code_run", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_run",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "# ERROR: RUNTIME\nx = 1 / 0",
@@ -228,11 +244,16 @@ class CodeExecutionApiTests(TestCase):
 
         data = response.data["data"]
         self.assertEqual(data["overall_status"], "RUNTIME_ERROR")
-        self.assertTrue(any("ZeroDivisionError" in r["stderr"] for r in data["test_results"]))
+        self.assertTrue(
+            any("ZeroDivisionError" in r["stderr"] for r in data["test_results"])
+        )
 
     def test_run_code_timeout_time_limit_exceeded(self):
         """POST /run/ reports TIME_LIMIT_EXCEEDED when execution exceeds threshold."""
-        url = reverse("api_v1:student_assignments:code_run", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_run",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "# ERROR: TIMEOUT\nwhile True: pass",
@@ -245,7 +266,10 @@ class CodeExecutionApiTests(TestCase):
 
     def test_run_code_memory_limit_exceeded(self):
         """POST /run/ reports MEMORY_LIMIT_EXCEEDED when memory allocation exceeds threshold."""
-        url = reverse("api_v1:student_assignments:code_run", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_run",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "# ERROR: MEMORY\narr = [1] * 100000000",
@@ -259,7 +283,10 @@ class CodeExecutionApiTests(TestCase):
     def test_submit_code_all_passed_awards_full_score(self):
         """POST /submit/ passing all visible and hidden test cases marks question SOLVED and awards full points."""
         cache.clear()
-        url = reverse("api_v1:student_assignments:code_submit", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_submit",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "# Perfect optimal solution",
@@ -306,7 +333,10 @@ class CodeExecutionApiTests(TestCase):
     def test_submit_code_wrong_answer_partial_score(self):
         """POST /submit/ with wrong answer receives partial or zero score and updates attempt count."""
         cache.clear()
-        url = reverse("api_v1:student_assignments:code_submit", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_submit",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {
             "language": "python",
             "source_code": "# ERROR: WRONG\nreturn [-1, -1]",
@@ -330,7 +360,10 @@ class CodeExecutionApiTests(TestCase):
     def test_oversized_source_code_rejected(self):
         """Submitting source code exceeding 64KB is rejected immediately (HTTP 400)."""
         cache.clear()
-        url = reverse("api_v1:student_assignments:code_submit", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_submit",
+            kwargs={"question_id": self.question.id},
+        )
         large_code = "x = 1\n" * 20000  # >70KB
         payload = {"language": "python", "source_code": large_code}
 
@@ -341,7 +374,10 @@ class CodeExecutionApiTests(TestCase):
     def test_unsupported_language_rejected(self):
         """Submitting an unsupported language like 'rust' or 'ruby' is rejected (HTTP 400)."""
         cache.clear()
-        url = reverse("api_v1:student_assignments:code_submit", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_submit",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {"language": "rust", "source_code": "fn main() {}"}
 
         response = self.client.post(url, payload, format="json")
@@ -351,7 +387,10 @@ class CodeExecutionApiTests(TestCase):
     def test_rate_limiting_and_cooldown_abuse_prevention(self):
         """Rapid fire submissions within cooldown threshold trigger HTTP 429 RATE_LIMIT_COOLDOWN."""
         cache.clear()
-        url = reverse("api_v1:student_assignments:code_submit", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_submit",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {"language": "python", "source_code": "# Valid Code"}
 
         # First request succeeds
@@ -365,7 +404,10 @@ class CodeExecutionApiTests(TestCase):
 
     def test_unauthorized_non_student_access_rejected(self):
         """User without active student profile is forbidden from submitting code (HTTP 403)."""
-        url = reverse("api_v1:student_assignments:code_submit", kwargs={"question_id": self.question.id})
+        url = reverse(
+            "api_v1:student_assignments:code_submit",
+            kwargs={"question_id": self.question.id},
+        )
         payload = {"language": "python", "source_code": "print(1)"}
 
         response = self.unauthorized_client.post(url, payload, format="json")

@@ -2,6 +2,7 @@
 
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, status
 from rest_framework.views import APIView
@@ -24,7 +25,9 @@ class TaskFilter(django_filters.FilterSet):
     is_active = django_filters.BooleanFilter()
     batch_code = django_filters.CharFilter(lookup_expr="iexact")
     scheduled_date = django_filters.DateFilter()
-    date_from = django_filters.DateFilter(field_name="scheduled_date", lookup_expr="gte")
+    date_from = django_filters.DateFilter(
+        field_name="scheduled_date", lookup_expr="gte"
+    )
     date_to = django_filters.DateFilter(field_name="scheduled_date", lookup_expr="lte")
 
     class Meta:
@@ -37,14 +40,22 @@ class TaskAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = TaskAdminListSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = TaskFilter
     search_fields = ["title", "description", "batch_code"]
     ordering_fields = ["scheduled_date", "deadline", "points", "created_at"]
     ordering = ["-scheduled_date", "-created_at"]
 
     def get_queryset(self):
-        return Task.objects.select_related("question", "course", "assigned_student").prefetch_related("completions").all()
+        return (
+            Task.objects.select_related("question", "course", "assigned_student")
+            .prefetch_related("completions")
+            .all()
+        )
 
     @extend_schema(
         request=TaskAdminCreateSerializer,
@@ -60,7 +71,11 @@ class TaskAdminListCreateView(generics.ListCreateAPIView):
 
         q_id = str(data["question_id"]) if data.get("question_id") else None
         c_id = str(data["course_id"]) if data.get("course_id") else None
-        s_id = str(data["assigned_student_id"]) if data.get("assigned_student_id") else None
+        s_id = (
+            str(data["assigned_student_id"])
+            if data.get("assigned_student_id")
+            else None
+        )
 
         task = TaskAdminService.create_task(
             admin_user=request.user,
@@ -87,6 +102,7 @@ class TaskAdminDetailUpdateDeleteView(APIView):
     """Admin endpoint to retrieve, edit, or delete a daily practice task."""
 
     permission_classes = [IsAdmin]
+    serializer_class = TaskAdminDetailSerializer
 
     @extend_schema(
         responses={200: TaskAdminDetailSerializer},
@@ -114,7 +130,11 @@ class TaskAdminDetailUpdateDeleteView(APIView):
 
         q_id = str(data["question_id"]) if data.get("question_id") is not None else None
         c_id = str(data["course_id"]) if data.get("course_id") is not None else None
-        s_id = str(data["assigned_student_id"]) if data.get("assigned_student_id") is not None else None
+        s_id = (
+            str(data["assigned_student_id"])
+            if data.get("assigned_student_id") is not None
+            else None
+        )
 
         task = TaskAdminService.update_task(
             task_id=str(pk),
@@ -137,6 +157,7 @@ class TaskAdminDetailUpdateDeleteView(APIView):
         )
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Admin Delete Task",
         tags=["Admin Task Management"],
     )
@@ -157,6 +178,7 @@ class TaskAdminCompletionsView(APIView):
     """Admin endpoint to view student completion records for a task."""
 
     permission_classes = [IsAdmin]
+    serializer_class = TaskCompletionAdminSerializer
 
     @extend_schema(
         responses={200: TaskCompletionAdminSerializer(many=True)},

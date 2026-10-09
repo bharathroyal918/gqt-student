@@ -1,17 +1,17 @@
 """Comprehensive test suite for Notifications, Announcements, Idempotency, and Async Email delivery."""
 
-import uuid
+import smtplib
 from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AuditLog
 from apps.courses.models import Course, CourseEnrollment
 from apps.notifications.models import Announcement, Notification
-from apps.notifications.services import AnnouncementAdminService, NotificationService
+from apps.notifications.services import NotificationService
 from apps.notifications.tasks import _deliver_email_worker
 from apps.students.models import StudentProfile
 
@@ -31,7 +31,9 @@ class NotificationsAndAnnouncementsApiTests(APITestCase):
 
         # Student A (Batch Alpha, enrolled in Course 1)
         self.user_a = User.objects.create_user(
-            email="bharath.student@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="bharath.student@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_a = StudentProfile.objects.create(
             user=self.user_a,
@@ -42,7 +44,9 @@ class NotificationsAndAnnouncementsApiTests(APITestCase):
 
         # Student B (Batch Beta, not enrolled in Course 1)
         self.user_b = User.objects.create_user(
-            email="bob.student@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="bob.student@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_b = StudentProfile.objects.create(
             user=self.user_b,
@@ -67,21 +71,21 @@ class NotificationsAndAnnouncementsApiTests(APITestCase):
     def test_student_notifications_list_and_unread_count(self):
         """Student retrieves their notification feed and live unread count."""
         # Create 2 unread notifications and 1 read notification for Student A
-        n1 = Notification.objects.create(
+        _n1 = Notification.objects.create(
             recipient=self.user_a,
             title="Task Deadline Approaching",
             body="Daily Challenge #4 is due in 2 hours.",
             notification_type=Notification.NotificationType.TASK_DEADLINE,
             is_read=False,
         )
-        n2 = Notification.objects.create(
+        _n2 = Notification.objects.create(
             recipient=self.user_a,
             title="Project Graded",
             body="Your capstone submission received 10.00 marks.",
             notification_type=Notification.NotificationType.PROJECT_MARKED,
             is_read=False,
         )
-        n3 = Notification.objects.create(
+        _n3 = Notification.objects.create(
             recipient=self.user_a,
             title="Achievement Unlocked",
             body="Earned 'Fast Learner' badge!",
@@ -129,7 +133,9 @@ class NotificationsAndAnnouncementsApiTests(APITestCase):
         # Student B attempts to mark Student A's notification read
         self.client.force_authenticate(user=self.user_b)
         res_b = self.client.post(f"/api/v1/students/notifications/{notif_a.id}/read/")
-        self.assertIn(res_b.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
+        self.assertIn(
+            res_b.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND]
+        )
 
         # Student A marks their own notification read
         self.client.force_authenticate(user=self.user_a)
@@ -158,7 +164,9 @@ class NotificationsAndAnnouncementsApiTests(APITestCase):
         self.assertEqual(res.json()["data"]["updated_count"], 5)
         self.assertEqual(res.json()["data"]["unread_count"], 0)
 
-        unread_remaining = Notification.objects.filter(recipient=self.user_a, is_read=False).count()
+        unread_remaining = Notification.objects.filter(
+            recipient=self.user_a, is_read=False
+        ).count()
         self.assertEqual(unread_remaining, 0)
 
     def test_notification_idempotency_duplicate_prevention(self):
@@ -208,13 +216,15 @@ class NotificationsAndAnnouncementsApiTests(APITestCase):
 
         # 2. Failure & retry simulation
         mock_send_mail.reset_mock()
-        mock_send_mail.side_effect = Exception("SMTP Connection Timeout")
+        mock_send_mail.side_effect = smtplib.SMTPException("SMTP Connection Timeout")
         notif_fail = Notification.objects.create(
             recipient=self.user_a,
             title="System Alert",
             body="System maintenance tonight.",
         )
-        fail_res = _deliver_email_worker(str(notif_fail.id), max_retries=2, base_delay=0.01)
+        fail_res = _deliver_email_worker(
+            str(notif_fail.id), max_retries=2, base_delay=0.01
+        )
         self.assertFalse(fail_res)
         self.assertEqual(mock_send_mail.call_count, 2)
 

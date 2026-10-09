@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -13,7 +13,7 @@ class AIProviderResult:
     tokens_used: int = 0
     model_name: str = "default-tutor"
     finish_reason: str = "stop"
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseAIProvider(ABC):
@@ -22,9 +22,9 @@ class BaseAIProvider(ABC):
     @abstractmethod
     def generate_response(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         system_prompt: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> AIProviderResult:
         """Generate a pedagogical AI tutor response.
@@ -38,4 +38,3 @@ class BaseAIProvider(ABC):
         Returns:
             AIProviderResult containing the AI text, tokens used, and metadata.
         """
-        pass

@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from apps.accounts.models import User, AdminProfile
+
+from apps.accounts.models import AdminProfile, User
 from apps.students.models import StudentProfile
 
 
@@ -23,10 +24,36 @@ class StudentRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     mobile_number = serializers.CharField(max_length=20)
     password = serializers.CharField(min_length=8, write_only=True)
-    student_id_number = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
-    college_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
-    batch_code = serializers.CharField(max_length=50, required=False, allow_blank=True, default="BATCH-2026-A")
-    graduation_year = serializers.IntegerField(required=False, allow_null=True, default=2026)
+    student_id_number = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, default=""
+    )
+    college_name = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default=""
+    )
+    batch_code = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, default="BATCH-2026-A"
+    )
+    graduation_year = serializers.IntegerField(
+        required=False, allow_null=True, default=2026
+    )
+
+    def validate_college_name(self, value):
+        if not value or not value.strip():
+            return ""
+        trimmed = value.strip()
+        from apps.students.models import College
+
+        matching_college = College.objects.filter(name__iexact=trimmed, is_active=True).first()
+        if not matching_college:
+            if not College.objects.filter(is_active=True).exists():
+                from apps.students.seeds import seed_default_colleges
+                seed_default_colleges()
+                matching_college = College.objects.filter(name__iexact=trimmed, is_active=True).first()
+        if not matching_college:
+            raise serializers.ValidationError(
+                "Please select an approved college from the available list."
+            )
+        return matching_college.name
 
 
 class RequestOTPSerializer(serializers.Serializer):
@@ -139,12 +166,17 @@ class StudentProvisionSerializer(serializers.Serializer):
     student_id_number = serializers.CharField(max_length=50)
     batch_code = serializers.CharField(max_length=50)
     email = serializers.EmailField(required=False, allow_null=True)
-    mobile_number = serializers.CharField(max_length=20, required=False, allow_null=True)
-    password = serializers.CharField(min_length=8, required=False, allow_null=True, write_only=True)
+    mobile_number = serializers.CharField(
+        max_length=20, required=False, allow_null=True
+    )
+    password = serializers.CharField(
+        min_length=8, required=False, allow_null=True, write_only=True
+    )
     college_name = serializers.CharField(max_length=255, required=False, default="")
     graduation_year = serializers.IntegerField(required=False, allow_null=True)
     onboarding_status = serializers.ChoiceField(
-        choices=User.OnboardingStatusChoices.choices, default=User.OnboardingStatusChoices.ACTIVE
+        choices=User.OnboardingStatusChoices.choices,
+        default=User.OnboardingStatusChoices.ACTIVE,
     )
 
 
@@ -157,10 +189,16 @@ class StudentStatusUpdateSerializer(serializers.Serializer):
 
 class AdminProfileUpdateSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    designation = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    designation = serializers.CharField(
+        max_length=100, required=False, allow_blank=True
+    )
     department = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    mobile_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    phone_number = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    mobile_number = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
+    )
+    phone_number = serializers.CharField(
+        max_length=30, required=False, allow_blank=True
+    )
     bio = serializers.CharField(required=False, allow_blank=True)
     avatar_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
     can_review_projects = serializers.BooleanField(required=False)
@@ -172,3 +210,9 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True, min_length=8, required=True)
 
     reason = serializers.CharField(max_length=255, required=False, default="")
+
+
+class AvatarUploadSerializer(serializers.Serializer):
+    avatar = serializers.ImageField(required=False)
+    image = serializers.ImageField(required=False)
+    file = serializers.ImageField(required=False)

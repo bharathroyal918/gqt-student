@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -9,22 +10,53 @@ from apps.common.exceptions import DomainException
 from apps.common.permissions import IsOwnerOrAdmin
 from apps.common.responses import api_error, api_success
 from apps.modules.services import StudentModuleService
-from apps.students.models import StudentProfile
+from apps.students.models import College, StudentProfile
 from apps.students.serializers import (
-    AttendanceRecordSerializer,
+    CollegeSerializer,
+    StudentAttendanceScanSerializer,
     StudentAttendanceSummarySerializer,
+    StudentModuleCompleteSerializer,
     StudentProfileUpdateSerializer,
 )
 from apps.students.services import StudentDashboardService
 
 
+class PublicCollegeListView(APIView):
+    """List all active colleges configured by administrators for student registration and profile selection."""
+
+    permission_classes = []
+
+    @extend_schema(
+        responses={200: CollegeSerializer(many=True)},
+        summary="List Active Institutional Colleges",
+        tags=["Students"],
+    )
+    def get(self, request):
+        if not College.objects.exists():
+            from apps.students.seeds import seed_default_colleges
+
+            seed_default_colleges()
+
+        search = request.query_params.get("search", "").strip()
+        queryset = College.objects.filter(is_active=True).order_by("name")
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        serializer = CollegeSerializer(queryset, many=True)
+        return api_success(
+            data=serializer.data,
+            message="Institutional colleges retrieved successfully.",
+        )
+
+
 class StudentProfileSelfUpdateView(APIView):
     """Authenticated student views or updates their own allowed profile fields (DOB, branch, college, bio, URLs, avatar).
-    
+
     Email, Name, Student ID, Course Opted, and Points cannot be altered by student.
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentProfileUpdateSerializer
 
     @extend_schema(
         responses={200: StudentProfileNestedSerializer},
@@ -69,6 +101,7 @@ class StudentAttendanceSelfView(APIView):
     """Authenticated student retrieves their attendance summary and session logs."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentAttendanceSummarySerializer
 
     @extend_schema(
         responses={200: StudentAttendanceSummarySerializer},
@@ -87,8 +120,11 @@ class StudentAttendanceScanQRView(APIView):
     """Authenticated student submits a scanned QR code to record class attendance."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentAttendanceScanSerializer
 
     @extend_schema(
+        request=StudentAttendanceScanSerializer,
+        responses={200: OpenApiTypes.OBJECT},
         summary="Scan QR Code to Mark Daily / Session Attendance",
         tags=["Students"],
     )
@@ -111,17 +147,11 @@ class StudentAttendanceScanQRView(APIView):
                 message=str(e),
                 status_code=getattr(e, "status_code", status.HTTP_400_BAD_REQUEST),
             )
-        except Exception as e:
-            return api_error(
-                code="ATTENDANCE_FAILED",
-                message=f"Failed to process attendance QR code: {str(e)}",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
 
 
 class StudentDashboardView(APIView):
     """Aggregate real-time dashboard telemetry strictly for the authenticated student.
-    
+
     CRITICAL SECURITY ENFORCEMENT:
     Identity and ownership are derived exclusively from request.user.
     No student ID parameter is accepted in URLs or query strings.
@@ -130,11 +160,15 @@ class StudentDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Retrieve Authenticated Student Dashboard",
         tags=["Students"],
     )
     def get(self, request):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="Authenticated user does not possess an active student profile.",
@@ -155,11 +189,15 @@ class StudentLeaderboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Retrieve Global Leaderboard with Current Student Standing",
         tags=["Students"],
     )
     def get(self, request):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="Authenticated user does not possess an active student profile.",
@@ -178,6 +216,7 @@ class StudentProfileDetailView(APIView):
     """Retrieve individual student profile protected by object-level permission."""
 
     permission_classes = [IsOwnerOrAdmin]
+    serializer_class = StudentProfileNestedSerializer
 
     @extend_schema(
         responses={200: StudentProfileNestedSerializer},
@@ -185,7 +224,9 @@ class StudentProfileDetailView(APIView):
         tags=["Students"],
     )
     def get(self, request, pk):
-        profile = get_object_or_404(StudentProfile.objects.select_related("user"), id=pk)
+        profile = get_object_or_404(
+            StudentProfile.objects.select_related("user"), id=pk
+        )
         self.check_object_permissions(request, profile)
         return api_success(
             data=StudentProfileNestedSerializer(profile).data,
@@ -200,11 +241,16 @@ class StudentCourseListView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        operation_id="student_courses_list",
+        responses={200: OpenApiTypes.OBJECT},
         summary="List Enrolled and Available Courses for Student",
         tags=["Students"],
     )
     def get(self, request):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="Authenticated user does not possess an active student profile.",
@@ -226,11 +272,16 @@ class StudentCourseDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        operation_id="student_course_detail",
+        responses={200: OpenApiTypes.OBJECT},
         summary="Retrieve Course Detail and Sequential Module Roadmap",
         tags=["Students"],
     )
     def get(self, request, course_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="Authenticated user does not possess an active student profile.",
@@ -238,7 +289,9 @@ class StudentCourseDetailView(APIView):
             )
 
         student_profile = request.user.student_profile
-        detail = StudentModuleService.get_student_course_detail(student_profile, str(course_id))
+        detail = StudentModuleService.get_student_course_detail(
+            student_profile, str(course_id)
+        )
         return api_success(
             data=detail,
             message="Course curriculum roadmap retrieved successfully.",
@@ -252,11 +305,15 @@ class StudentModuleDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Retrieve Sequential Learning Module Detail",
         tags=["Students"],
     )
     def get(self, request, module_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="Authenticated user does not possess an active student profile.",
@@ -264,7 +321,9 @@ class StudentModuleDetailView(APIView):
             )
 
         student_profile = request.user.student_profile
-        detail = StudentModuleService.get_student_module_detail(student_profile, str(module_id))
+        detail = StudentModuleService.get_student_module_detail(
+            student_profile, str(module_id)
+        )
         return api_success(
             data=detail,
             message="Module detail retrieved successfully.",
@@ -276,13 +335,19 @@ class StudentModuleCompleteView(APIView):
     """Mark a learning module as complete, sequentially unlock the next module, and recalculate course progress."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentModuleCompleteSerializer
 
     @extend_schema(
+        request=StudentModuleCompleteSerializer,
+        responses={200: OpenApiTypes.OBJECT},
         summary="Mark Module Completed and Trigger Sequential Unlock",
         tags=["Students"],
     )
     def post(self, request, module_id):
-        if not hasattr(request.user, "student_profile") and not StudentProfile.objects.filter(user=request.user).exists():
+        if (
+            not hasattr(request.user, "student_profile")
+            and not StudentProfile.objects.filter(user=request.user).exists()
+        ):
             return api_error(
                 code="STUDENT_PROFILE_REQUIRED",
                 message="Authenticated user does not possess an active student profile.",
@@ -307,6 +372,7 @@ class StudentActivityHeatmapView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
         summary="Retrieve Student 365-Day Problem Solving Activity Heatmap",
         tags=["Students"],
     )
@@ -316,4 +382,3 @@ class StudentActivityHeatmapView(APIView):
             data=data,
             message="Activity heatmap matrix retrieved successfully.",
         )
-

@@ -1,4 +1,8 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -9,9 +13,13 @@ from apps.common.models import BaseModel, TimeStampedModel, UUIDModel
 class UserManager(BaseUserManager):
     """Custom manager for the User model supporting email or mobile auth."""
 
-    def create_user(self, email=None, mobile_number=None, password=None, **extra_fields):
+    def create_user(
+        self, email=None, mobile_number=None, password=None, **extra_fields
+    ):
         if not email and not mobile_number:
-            raise ValueError("A user must have either an email address or mobile number.")
+            raise ValueError(
+                "A user must have either an email address or mobile number."
+            )
 
         if email:
             email = self.normalize_email(email)
@@ -61,12 +69,17 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         ACTIVE = "ACTIVE", "Active"
         SUSPENDED = "SUSPENDED", "Suspended"
 
-    email = models.EmailField(max_length=255, unique=True, null=True, blank=True, db_index=True)
+    email = models.EmailField(
+        max_length=255, unique=True, null=True, blank=True, db_index=True
+    )
     mobile_number = models.CharField(
         max_length=20, unique=True, null=True, blank=True, db_index=True
     )
     role = models.CharField(
-        max_length=20, choices=RoleChoices.choices, default=RoleChoices.STUDENT, db_index=True
+        max_length=20,
+        choices=RoleChoices.choices,
+        default=RoleChoices.STUDENT,
+        db_index=True,
     )
     onboarding_status = models.CharField(
         max_length=30,
@@ -90,14 +103,18 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         verbose_name_plural = "Users"
         indexes = [
             models.Index(fields=["email", "is_active"], name="user_email_active_idx"),
-            models.Index(fields=["mobile_number", "is_active"], name="user_mobile_active_idx"),
+            models.Index(
+                fields=["mobile_number", "is_active"], name="user_mobile_active_idx"
+            ),
             models.Index(fields=["role", "is_active"], name="user_role_active_idx"),
         ]
 
     def clean(self):
         super().clean()
         if not self.email and not self.mobile_number:
-            raise ValidationError("Either an email address or mobile number must be provided.")
+            raise ValidationError(
+                "Either an email address or mobile number must be provided."
+            )
 
     def __str__(self):
         return self.email or self.mobile_number or str(self.id)
@@ -106,9 +123,13 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
 class AdminProfile(BaseModel):
     """Profile extension for staff and institutional administrators."""
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="admin_profile")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="admin_profile"
+    )
     full_name = models.CharField(max_length=150, blank=True, default="Administrator")
-    designation = models.CharField(max_length=100, blank=True, default="Portal Administrator")
+    designation = models.CharField(
+        max_length=100, blank=True, default="Portal Administrator"
+    )
     department = models.CharField(max_length=100, default="Academic Operations")
     phone_number = models.CharField(max_length=30, blank=True, default="")
     bio = models.TextField(blank=True, default="")
@@ -135,7 +156,11 @@ class LoginActivity(UUIDModel, TimeStampedModel):
         LOCKED = "LOCKED", "Account Locked"
 
     user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="login_activities"
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="login_activities",
     )
     identifier = models.CharField(max_length=255, db_index=True)
     login_type = models.CharField(max_length=30, choices=LoginType.choices)
@@ -150,8 +175,12 @@ class LoginActivity(UUIDModel, TimeStampedModel):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["user", "created_at"], name="login_user_created_idx"),
-            models.Index(fields=["ip_address", "created_at"], name="login_ip_created_idx"),
-            models.Index(fields=["status", "created_at"], name="login_status_created_idx"),
+            models.Index(
+                fields=["ip_address", "created_at"], name="login_ip_created_idx"
+            ),
+            models.Index(
+                fields=["status", "created_at"], name="login_status_created_idx"
+            ),
         ]
 
     def __str__(self):
@@ -167,7 +196,11 @@ class OTPVerification(UUIDModel, TimeStampedModel):
         PHONE_VERIFY = "PHONE_VERIFY", "Phone Verification"
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, null=True, blank=True, related_name="otp_verifications"
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="otp_verifications",
     )
     mobile_number = models.CharField(max_length=20, db_index=True)
     otp_hash = models.CharField(max_length=128)
@@ -209,7 +242,9 @@ class OTPVerification(UUIDModel, TimeStampedModel):
 class PasswordResetRequest(UUIDModel, TimeStampedModel):
     """Tracks tokenized password reset workflows."""
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_resets")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="password_resets"
+    )
     token_hash = models.CharField(max_length=128, unique=True, db_index=True)
     expires_at = models.DateTimeField(db_index=True)
     is_used = models.BooleanField(default=False, db_index=True)
@@ -219,7 +254,9 @@ class PasswordResetRequest(UUIDModel, TimeStampedModel):
         verbose_name = "Password Reset Request"
         verbose_name_plural = "Password Reset Requests"
         indexes = [
-            models.Index(fields=["token_hash", "is_used"], name="pwd_reset_token_used_idx"),
+            models.Index(
+                fields=["token_hash", "is_used"], name="pwd_reset_token_used_idx"
+            ),
             models.Index(fields=["user", "is_used"], name="pwd_reset_user_used_idx"),
         ]
 
@@ -233,7 +270,9 @@ class PasswordResetRequest(UUIDModel, TimeStampedModel):
 class AuditLog(UUIDModel, TimeStampedModel):
     """Immutable audit trail for compliance and administrative actions."""
 
-    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="audit_logs")
+    actor = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="audit_logs"
+    )
     action = models.CharField(max_length=100, db_index=True)
     target_model = models.CharField(max_length=100, db_index=True)
     target_id = models.CharField(max_length=100, db_index=True)
@@ -245,7 +284,9 @@ class AuditLog(UUIDModel, TimeStampedModel):
         verbose_name_plural = "Audit Logs"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["actor", "created_at"], name="audit_actor_created_idx"),
+            models.Index(
+                fields=["actor", "created_at"], name="audit_actor_created_idx"
+            ),
             models.Index(fields=["target_model", "target_id"], name="audit_target_idx"),
         ]
 

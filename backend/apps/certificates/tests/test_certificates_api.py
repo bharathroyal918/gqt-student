@@ -1,14 +1,15 @@
 """Comprehensive test suite for Achievement Badges, Milestone Rules, and Certificate Generation."""
 
-import uuid
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.certificates.models import Badge, Certificate, StudentBadge
+from apps.certificates.models import Certificate
 from apps.certificates.services import AchievementService, CertificateService
 from apps.certificates.tasks import _generate_certificate_pdf_worker
 from apps.courses.models import Course, CourseEnrollment
@@ -32,7 +33,9 @@ class CertificatesAndAchievementsApiTests(APITestCase):
 
         # Student A
         self.user_a = User.objects.create_user(
-            email="alice.cert@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="alice.cert@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_a = StudentProfile.objects.create(
             user=self.user_a,
@@ -46,7 +49,9 @@ class CertificatesAndAchievementsApiTests(APITestCase):
 
         # Student B
         self.user_b = User.objects.create_user(
-            email="bob.cert@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="bob.cert@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_b = StudentProfile.objects.create(
             user=self.user_b,
@@ -146,22 +151,33 @@ class CertificatesAndAchievementsApiTests(APITestCase):
         )
 
         # 1. Issue certificate
-        cert1 = CertificateService.issue_certificate_if_eligible(self.student_a, self.course)
+        cert1 = CertificateService.issue_certificate_if_eligible(
+            self.student_a, self.course
+        )
         self.assertIsNotNone(cert1.certificate_id)
         self.assertTrue(cert1.certificate_id.startswith("GQT-CERT-"))
         self.assertEqual(cert1.student_name, self.student_a.full_name)
         self.assertEqual(cert1.course_title, self.course.title)
 
         # 2. Repeated trigger returns same certificate (duplicate prevention)
-        cert2 = CertificateService.issue_certificate_if_eligible(self.student_a, self.course)
+        cert2 = CertificateService.issue_certificate_if_eligible(
+            self.student_a, self.course
+        )
         self.assertEqual(cert1.id, cert2.id)
-        self.assertEqual(Certificate.objects.filter(student=self.student_a, course=self.course).count(), 1)
+        self.assertEqual(
+            Certificate.objects.filter(
+                student=self.student_a, course=self.course
+            ).count(),
+            1,
+        )
 
     def test_ineligible_student_certificate_issuance_blocked(self):
         """Student who has not completed all modules cannot receive a certificate."""
         # Student B has completed 0 modules
-        with self.assertRaises(Exception):
-            CertificateService.issue_certificate_if_eligible(self.student_b, self.course)
+        with self.assertRaises(DjangoValidationError):
+            CertificateService.issue_certificate_if_eligible(
+                self.student_b, self.course
+            )
 
     def test_async_pdf_document_generation(self):
         """Async worker generates a valid PDF document with reportlab."""
@@ -205,7 +221,9 @@ class CertificatesAndAchievementsApiTests(APITestCase):
 
         # 3. Admin can download
         self.client.force_authenticate(user=self.admin_user)
-        down_admin = self.client.get(f"/api/v1/students/certificates/{cert.id}/download/")
+        down_admin = self.client.get(
+            f"/api/v1/students/certificates/{cert.id}/download/"
+        )
         self.assertEqual(down_admin.status_code, status.HTTP_200_OK)
 
         # 4. Student B is denied

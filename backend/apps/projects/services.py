@@ -1,7 +1,8 @@
 """Domain services for Capstone Project Submissions, Security Validation, and Review Workflows."""
 
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import Prefetch, Q
@@ -13,7 +14,12 @@ from apps.accounts.models import AuditLog, User
 from apps.common.exceptions import DomainException
 from apps.courses.models import Course, CourseEnrollment
 from apps.notifications.models import Notification
-from apps.projects.models import Project, ProjectFeedback, ProjectFile, ProjectSubmission
+from apps.projects.models import (
+    Project,
+    ProjectFeedback,
+    ProjectFile,
+    ProjectSubmission,
+)
 from apps.projects.security import FileSecurityValidator, GitHubUrlValidator
 from apps.scoring.services import ScoringService
 from apps.students.models import StudentProfile
@@ -41,13 +47,15 @@ class ProjectAdminService:
     @classmethod
     def get_submissions_queryset(
         cls,
-        status: Optional[str] = None,
-        project_id: Optional[str] = None,
-        batch_code: Optional[str] = None,
-        search: Optional[str] = None,
+        status: str | None = None,
+        project_id: str | None = None,
+        batch_code: str | None = None,
+        search: str | None = None,
     ):
         qs = (
-            ProjectSubmission.objects.select_related("project", "student", "student__user", "reviewed_by")
+            ProjectSubmission.objects.select_related(
+                "project", "student", "student__user", "reviewed_by"
+            )
             .prefetch_related("files", "feedbacks__reviewer")
             .order_by("-submitted_at")
         )
@@ -80,12 +88,12 @@ class ProjectAdminService:
         title: str,
         description: str,
         deliverables_instructions: str,
-        course_id: Optional[str] = None,
+        course_id: str | None = None,
         max_score: Decimal = Decimal("10.00"),
-        due_date: Optional[timezone.datetime] = None,
+        due_date: timezone.datetime | None = None,
         is_active: bool = True,
-        slug: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        slug: str | None = None,
+        ip_address: str | None = None,
     ) -> Project:
         p_slug = slug.strip().lower() if slug else slugify(title)
         if Project.objects.filter(slug=p_slug).exists():
@@ -122,15 +130,15 @@ class ProjectAdminService:
         cls,
         project_id: str,
         admin_user: User,
-        title: Optional[str] = None,
-        slug: Optional[str] = None,
-        description: Optional[str] = None,
-        deliverables_instructions: Optional[str] = None,
-        course_id: Optional[str] = None,
-        max_score: Optional[Decimal] = None,
-        due_date: Optional[timezone.datetime] = None,
-        is_active: Optional[bool] = None,
-        ip_address: Optional[str] = None,
+        title: str | None = None,
+        slug: str | None = None,
+        description: str | None = None,
+        deliverables_instructions: str | None = None,
+        course_id: str | None = None,
+        max_score: Decimal | None = None,
+        due_date: timezone.datetime | None = None,
+        is_active: bool | None = None,
+        ip_address: str | None = None,
     ) -> Project:
         project = cls.get_project(project_id)
         update_fields = ["updated_at"]
@@ -158,7 +166,9 @@ class ProjectAdminService:
             if course_id == "":
                 project.course = None
             else:
-                project.course = get_object_or_404(Course, id=course_id, is_deleted=False)
+                project.course = get_object_or_404(
+                    Course, id=course_id, is_deleted=False
+                )
             update_fields.append("course")
 
         if max_score is not None:
@@ -192,11 +202,11 @@ class ProjectAdminService:
         submission_id: str,
         admin_user: User,
         status: str,
-        score: Optional[Decimal] = None,
+        score: Decimal | None = None,
         feedback_text: str = "",
         suggested_changes: str = "",
-        rating: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        rating: int | None = None,
+        ip_address: str | None = None,
     ) -> ProjectSubmission:
         submission = cls.get_submission_detail(submission_id)
 
@@ -205,18 +215,25 @@ class ProjectAdminService:
                 f"Invalid status. Allowed choices: {ProjectSubmission.SubmissionStatus.values}"
             )
 
-        if score is not None:
-            if score < Decimal("0.00") or score > submission.project.max_score:
-                raise DomainException(
-                    f"Score must be between 0.00 and {submission.project.max_score}."
-                )
+        if score is not None and (
+            score < Decimal("0.00") or score > submission.project.max_score
+        ):
+            raise DomainException(
+                f"Score must be between 0.00 and {submission.project.max_score}."
+            )
 
         submission.status = status
         submission.score = score
         submission.reviewed_at = timezone.now()
         submission.reviewed_by = admin_user
         submission.save(
-            update_fields=["status", "score", "reviewed_at", "reviewed_by", "updated_at"]
+            update_fields=[
+                "status",
+                "score",
+                "reviewed_at",
+                "reviewed_by",
+                "updated_at",
+            ]
         )
 
         if feedback_text or suggested_changes:
@@ -246,7 +263,10 @@ class ProjectAdminService:
             target_model="ProjectSubmission",
             target_id=str(submission.id),
             ip_address=ip_address,
-            payload={"status": status, "score": str(score) if score is not None else None},
+            payload={
+                "status": status,
+                "score": str(score) if score is not None else None,
+            },
         )
         return submission
 
@@ -274,7 +294,7 @@ class StudentProjectService:
     """Service providing student project browsing, secure deliverables upload, and feedback views."""
 
     @classmethod
-    def get_assigned_projects(cls, student: StudentProfile) -> List[Dict[str, Any]]:
+    def get_assigned_projects(cls, student: StudentProfile) -> list[dict[str, Any]]:
         enrolled_course_ids = CourseEnrollment.objects.filter(
             student=student, status=CourseEnrollment.EnrollmentStatus.ACTIVE
         ).values_list("course_id", flat=True)
@@ -286,9 +306,9 @@ class StudentProjectService:
             .prefetch_related(
                 Prefetch(
                     "submissions",
-                    queryset=ProjectSubmission.objects.filter(student=student).prefetch_related(
-                        "files", "feedbacks__reviewer"
-                    ),
+                    queryset=ProjectSubmission.objects.filter(
+                        student=student
+                    ).prefetch_related("files", "feedbacks__reviewer"),
                     to_attr="student_submissions",
                 )
             )
@@ -305,7 +325,9 @@ class StudentProjectService:
         return results
 
     @classmethod
-    def get_project_detail(cls, student: StudentProfile, project_id: str) -> Dict[str, Any]:
+    def get_project_detail(
+        cls, student: StudentProfile, project_id: str
+    ) -> dict[str, Any]:
         enrolled_course_ids = CourseEnrollment.objects.filter(
             student=student, status=CourseEnrollment.EnrollmentStatus.ACTIVE
         ).values_list("course_id", flat=True)
@@ -317,9 +339,9 @@ class StudentProjectService:
             .prefetch_related(
                 Prefetch(
                     "submissions",
-                    queryset=ProjectSubmission.objects.filter(student=student).prefetch_related(
-                        "files", "feedbacks__reviewer"
-                    ),
+                    queryset=ProjectSubmission.objects.filter(
+                        student=student
+                    ).prefetch_related("files", "feedbacks__reviewer"),
                     to_attr="student_submissions",
                 )
             )
@@ -327,7 +349,9 @@ class StudentProjectService:
         )
 
         if not project:
-            raise DomainException("Project not found or not assigned to your enrolled curriculum.")
+            raise DomainException(
+                "Project not found or not assigned to your enrolled curriculum."
+            )
 
         sub_list = getattr(project, "student_submissions", [])
         submission = sub_list[0] if sub_list else None
@@ -343,8 +367,8 @@ class StudentProjectService:
         github_repository_url: str,
         live_demo_url: str = "",
         notes: str = "",
-        uploaded_files: Optional[List[UploadedFile]] = None,
-        ip_address: Optional[str] = None,
+        uploaded_files: list[UploadedFile] | None = None,
+        ip_address: str | None = None,
     ) -> ProjectSubmission:
         enrolled_course_ids = CourseEnrollment.objects.filter(
             student=student, status=CourseEnrollment.EnrollmentStatus.ACTIVE
@@ -356,19 +380,29 @@ class StudentProjectService:
             .first()
         )
         if not project:
-            raise DomainException("Project not found or not assigned to your enrolled curriculum.")
+            raise DomainException(
+                "Project not found or not assigned to your enrolled curriculum."
+            )
 
         # 1. Normalize and validate GitHub URL
-        normalized_github_url = GitHubUrlValidator.normalize_github_url(github_repository_url)
+        normalized_github_url = GitHubUrlValidator.normalize_github_url(
+            github_repository_url
+        )
         if not normalized_github_url and not uploaded_files:
-            raise DomainException("Either a valid GitHub repository URL or project files must be provided.")
+            raise DomainException(
+                "Either a valid GitHub repository URL or project files must be provided."
+            )
 
         # 2. Validate all uploaded files before committing
         validated_file_meta = []
         if uploaded_files:
             for file_obj in uploaded_files:
-                clean_name, size_bytes, mime_type = FileSecurityValidator.validate_file(file_obj)
-                validated_file_meta.append((file_obj, clean_name, size_bytes, mime_type))
+                clean_name, size_bytes, mime_type = FileSecurityValidator.validate_file(
+                    file_obj
+                )
+                validated_file_meta.append(
+                    (file_obj, clean_name, size_bytes, mime_type)
+                )
 
         # 3. Create or update submission record
         submission, created = ProjectSubmission.objects.get_or_create(
@@ -388,7 +422,13 @@ class StudentProjectService:
             submission.notes = notes.strip()
             submission.status = ProjectSubmission.SubmissionStatus.SUBMITTED
             submission.save(
-                update_fields=["github_repository_url", "live_demo_url", "notes", "status", "updated_at"]
+                update_fields=[
+                    "github_repository_url",
+                    "live_demo_url",
+                    "notes",
+                    "status",
+                    "updated_at",
+                ]
             )
 
         # 4. Save validated files
@@ -427,8 +467,8 @@ class StudentProjectService:
 
     @classmethod
     def _serialize_student_project_summary(
-        cls, project: Project, submission: Optional[ProjectSubmission]
-    ) -> Dict[str, Any]:
+        cls, project: Project, submission: ProjectSubmission | None
+    ) -> dict[str, Any]:
         return {
             "id": str(project.id),
             "title": project.title,
@@ -441,14 +481,16 @@ class StudentProjectService:
             "has_submitted": submission is not None,
             "submission_id": str(submission.id) if submission else None,
             "status": submission.status if submission else "PENDING",
-            "score": float(submission.score) if submission and submission.score is not None else None,
+            "score": float(submission.score)
+            if submission and submission.score is not None
+            else None,
             "submitted_at": submission.submitted_at.isoformat() if submission else None,
         }
 
     @classmethod
     def _serialize_student_project_detail(
-        cls, project: Project, submission: Optional[ProjectSubmission]
-    ) -> Dict[str, Any]:
+        cls, project: Project, submission: ProjectSubmission | None
+    ) -> dict[str, Any]:
         data = cls._serialize_student_project_summary(project, submission)
         data["deliverables_instructions"] = project.deliverables_instructions
 
@@ -459,9 +501,13 @@ class StudentProjectService:
                 "live_demo_url": submission.live_demo_url,
                 "notes": submission.notes,
                 "status": submission.status,
-                "score": float(submission.score) if submission.score is not None else None,
+                "score": float(submission.score)
+                if submission.score is not None
+                else None,
                 "submitted_at": submission.submitted_at.isoformat(),
-                "reviewed_at": submission.reviewed_at.isoformat() if submission.reviewed_at else None,
+                "reviewed_at": submission.reviewed_at.isoformat()
+                if submission.reviewed_at
+                else None,
                 "files": [
                     {
                         "id": str(f.id),
@@ -476,7 +522,8 @@ class StudentProjectService:
                 "feedbacks": [
                     {
                         "id": str(fb.id),
-                        "reviewer_name": fb.reviewer.get_full_name() or fb.reviewer.email,
+                        "reviewer_name": fb.reviewer.get_full_name()
+                        or fb.reviewer.email,
                         "feedback_text": fb.feedback_text,
                         "suggested_changes": fb.suggested_changes,
                         "rating": fb.rating,

@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+
 from apps.accounts.models import User
 
 
@@ -105,7 +106,10 @@ class IsOwnerOrAdmin(BasePermission):
                 return True
             if student == request.user:
                 return True
-            if hasattr(request.user, "student_profile") and student == request.user.student_profile:
+            if (
+                hasattr(request.user, "student_profile")
+                and student == request.user.student_profile
+            ):
                 return True
 
         return False

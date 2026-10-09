@@ -137,6 +137,9 @@ const PlacementApplicantsPage = lazy(() =>
 const StudentsPage = lazy(() =>
   import("../pages/admin/StudentsPage").then((m) => ({ default: m.StudentsPage }))
 );
+const CollegesPage = lazy(() =>
+  import("../pages/admin/CollegesPage").then((m) => ({ default: m.CollegesPage }))
+);
 const StudentDetailPage = lazy(() =>
   import("../pages/admin/StudentDetailPage").then((m) => ({ default: m.StudentDetailPage }))
 );
@@ -408,6 +411,10 @@ export const router = createBrowserRouter([
               {
                 path: "students",
                 element: withSuspense(StudentsPage),
+              },
+              {
+                path: "colleges",
+                element: withSuspense(CollegesPage),
               },
               {
                 path: "students/:id",

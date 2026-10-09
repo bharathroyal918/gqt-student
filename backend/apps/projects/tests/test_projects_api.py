@@ -24,6 +24,7 @@ Tests:
 """
 
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -31,7 +32,7 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.accounts.models import User
+from apps.common.exceptions import DomainException
 from apps.courses.models import Course, CourseEnrollment
 from apps.notifications.models import Notification
 from apps.projects.models import Project, ProjectFile, ProjectSubmission
@@ -138,7 +139,9 @@ class ProjectSubmissionApiTests(TestCase):
         self.client.force_authenticate(user=self.user_a)
 
         file_content = b"PK\x03\x04mock zip payload for capstone project"
-        uploaded_zip = SimpleUploadedFile("project_src.zip", file_content, content_type="application/zip")
+        uploaded_zip = SimpleUploadedFile(
+            "project_src.zip", file_content, content_type="application/zip"
+        )
 
         res_submit = self.client.post(
             f"/api/v1/students/projects/{self.project.id}/submit/",
@@ -154,9 +157,14 @@ class ProjectSubmissionApiTests(TestCase):
         sub_data = res_submit.json()["data"]
 
         submission = ProjectSubmission.objects.get(id=sub_data["submission_id"])
-        self.assertEqual(submission.status, ProjectSubmission.SubmissionStatus.SUBMITTED)
+        self.assertEqual(
+            submission.status, ProjectSubmission.SubmissionStatus.SUBMITTED
+        )
         # Normalized GitHub URL (stripped trailing .git and /)
-        self.assertEqual(submission.github_repository_url, "https://github.com/alice/ecommerce-backend")
+        self.assertEqual(
+            submission.github_repository_url,
+            "https://github.com/alice/ecommerce-backend",
+        )
         self.assertEqual(submission.files.count(), 1)
         self.assertEqual(submission.files.first().file_name, "project_src.zip")
 
@@ -164,7 +172,11 @@ class ProjectSubmissionApiTests(TestCase):
         """Upload of executable files (.exe, .sh, .bat) is strictly rejected."""
         self.client.force_authenticate(user=self.user_a)
 
-        bad_exe = SimpleUploadedFile("malicious_app.exe", b"binary content", content_type="application/x-msdownload")
+        bad_exe = SimpleUploadedFile(
+            "malicious_app.exe",
+            b"binary content",
+            content_type="application/x-msdownload",
+        )
 
         res = self.client.post(
             f"/api/v1/students/projects/{self.project.id}/submit/",
@@ -181,7 +193,9 @@ class ProjectSubmissionApiTests(TestCase):
         """Disguised executable with .txt or .zip extension but 'MZ' header is rejected."""
         self.client.force_authenticate(user=self.user_a)
 
-        fake_txt = SimpleUploadedFile("notes.txt", b"MZ\x90\x00\x03\x00\x00\x00", content_type="text/plain")
+        fake_txt = SimpleUploadedFile(
+            "notes.txt", b"MZ\x90\x00\x03\x00\x00\x00", content_type="text/plain"
+        )
 
         res = self.client.post(
             f"/api/v1/students/projects/{self.project.id}/submit/",
@@ -199,13 +213,19 @@ class ProjectSubmissionApiTests(TestCase):
         sanitized = FileSecurityValidator.sanitize_filename("../../etc/passwd.pdf")
         self.assertEqual(sanitized, "passwd.pdf")
 
-        sanitized_win = FileSecurityValidator.sanitize_filename("..\\..\\Windows\\System32\\calc.zip")
+        sanitized_win = FileSecurityValidator.sanitize_filename(
+            "..\\..\\Windows\\System32\\calc.zip"
+        )
         self.assertEqual(sanitized_win, "calc.zip")
 
     def test_file_security_eicar_malware_detection(self):
         """Files containing standard antivirus test signatures are blocked."""
-        eicar_content = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
-        bad_file = SimpleUploadedFile("test_report.pdf", eicar_content, content_type="application/pdf")
+        eicar_content = (
+            b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+        )
+        bad_file = SimpleUploadedFile(
+            "test_report.pdf", eicar_content, content_type="application/pdf"
+        )
 
         self.client.force_authenticate(user=self.user_a)
         res = self.client.post(
@@ -221,16 +241,20 @@ class ProjectSubmissionApiTests(TestCase):
 
     def test_github_url_normalization_and_validation(self):
         """Test valid GitHub URLs are normalized and invalid URLs are rejected."""
-        norm1 = GitHubUrlValidator.normalize_github_url("https://github.com/john_doe/web-app.git/")
+        norm1 = GitHubUrlValidator.normalize_github_url(
+            "https://github.com/john_doe/web-app.git/"
+        )
         self.assertEqual(norm1, "https://github.com/john_doe/web-app")
 
-        norm2 = GitHubUrlValidator.normalize_github_url("http://www.github.com/org-name/repo-name")
+        norm2 = GitHubUrlValidator.normalize_github_url(
+            "http://www.github.com/org-name/repo-name"
+        )
         self.assertEqual(norm2, "https://github.com/org-name/repo-name")
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(DomainException):
             GitHubUrlValidator.normalize_github_url("https://gitlab.com/alice/repo")
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(DomainException):
             GitHubUrlValidator.normalize_github_url("not_a_valid_url")
 
     def test_admin_review_scoring_and_status_update(self):
@@ -248,9 +272,15 @@ class ProjectSubmissionApiTests(TestCase):
         self.client.force_authenticate(user=self.admin_user)
 
         # 1. Admin lists submissions
-        res_list = self.client.get("/api/v1/admin/projects/submissions/?status=SUBMITTED")
+        res_list = self.client.get(
+            "/api/v1/admin/projects/submissions/?status=SUBMITTED"
+        )
         self.assertEqual(res_list.status_code, status.HTTP_200_OK)
-        subs = res_list.json()["data"] if "data" in res_list.json() else res_list.json()["results"]
+        subs = (
+            res_list.json()["data"]
+            if "data" in res_list.json()
+            else res_list.json()["results"]
+        )
         self.assertTrue(len(subs) >= 1)
 
         # 2. Admin reviews and assigns 10.00 marks with feedback
@@ -277,7 +307,9 @@ class ProjectSubmissionApiTests(TestCase):
         # Verify ScoreRecord created
         self.assertTrue(
             ScoreRecord.objects.filter(
-                student=self.student_a, source_type="PROJECT", source_id=str(self.project.id)
+                student=self.student_a,
+                source_type="PROJECT",
+                source_id=str(self.project.id),
             ).exists()
         )
 
@@ -296,7 +328,9 @@ class ProjectSubmissionApiTests(TestCase):
             student=self.student_a,
             github_repository_url="https://github.com/alice/ecommerce-backend",
         )
-        mock_file = SimpleUploadedFile("design_doc.pdf", b"%PDF-1.5 test document", content_type="application/pdf")
+        mock_file = SimpleUploadedFile(
+            "design_doc.pdf", b"%PDF-1.5 test document", content_type="application/pdf"
+        )
         pfile = ProjectFile.objects.create(
             submission=submission,
             file=mock_file,

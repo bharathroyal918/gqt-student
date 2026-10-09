@@ -1,14 +1,12 @@
 """Admin views for querying and filtering the full institutional leaderboard."""
 
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import filters, generics
-from rest_framework.permissions import IsAuthenticated
 
 from apps.common.permissions import IsAdmin
 from apps.leaderboard.serializers import AdminLeaderboardSerializer
 from apps.leaderboard.services import LeaderboardService
-from apps.students.models import StudentProfile
 
 
 class AdminLeaderboardListView(generics.ListAPIView):

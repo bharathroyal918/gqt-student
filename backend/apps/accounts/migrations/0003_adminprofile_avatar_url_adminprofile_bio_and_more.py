@@ -4,35 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0002_loginactivity_otpverification_passwordresetrequest_and_more'),
+        (
+            "accounts",
+            "0002_loginactivity_otpverification_passwordresetrequest_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='adminprofile',
-            name='avatar_url',
-            field=models.CharField(blank=True, default='', max_length=500),
+            model_name="adminprofile",
+            name="avatar_url",
+            field=models.CharField(blank=True, default="", max_length=500),
         ),
         migrations.AddField(
-            model_name='adminprofile',
-            name='bio',
-            field=models.TextField(blank=True, default=''),
+            model_name="adminprofile",
+            name="bio",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='adminprofile',
-            name='designation',
-            field=models.CharField(blank=True, default='Portal Administrator', max_length=100),
+            model_name="adminprofile",
+            name="designation",
+            field=models.CharField(
+                blank=True, default="Portal Administrator", max_length=100
+            ),
         ),
         migrations.AddField(
-            model_name='adminprofile',
-            name='full_name',
-            field=models.CharField(blank=True, default='Administrator', max_length=150),
+            model_name="adminprofile",
+            name="full_name",
+            field=models.CharField(blank=True, default="Administrator", max_length=150),
         ),
         migrations.AddField(
-            model_name='adminprofile',
-            name='phone_number',
-            field=models.CharField(blank=True, default='', max_length=30),
+            model_name="adminprofile",
+            name="phone_number",
+            field=models.CharField(blank=True, default="", max_length=30),
         ),
     ]

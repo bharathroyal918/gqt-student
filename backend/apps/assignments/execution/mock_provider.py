@@ -1,16 +1,21 @@
 """Deterministic, sandboxed Mock Execution Provider for tests and offline evaluation."""
 
-import re
-from typing import Optional
+from typing import ClassVar
 
 from apps.assignments.execution.interfaces import BaseExecutionProvider, ExecutionOutput
-from apps.assignments.models import CodeSubmission, ExecutionResult
+from apps.assignments.models import CodeSubmission
 
 
 class MockExecutionProvider(BaseExecutionProvider):
     """Safe, mock execution provider that guarantees zero untrusted execution on the host Django process."""
 
-    SUPPORTED_LANGUAGES = {"python", "java", "c", "cpp", "javascript"}
+    SUPPORTED_LANGUAGES: ClassVar[set[str]] = {
+        "python",
+        "java",
+        "c",
+        "cpp",
+        "javascript",
+    }
 
     def execute(
         self,
@@ -19,13 +24,13 @@ class MockExecutionProvider(BaseExecutionProvider):
         stdin: str = "",
         time_limit_seconds: float = 2.0,
         memory_limit_mb: int = 128,
-        expected_output: Optional[str] = None,
+        expected_output: str | None = None,
     ) -> ExecutionOutput:
         lang = language.strip().lower()
         if lang not in self.SUPPORTED_LANGUAGES:
             return ExecutionOutput(
                 status=CodeSubmission.SubmissionStatus.COMPILATION_ERROR,
-                stderr=f"Unsupported language '{language}'. Supported: {sorted(list(self.SUPPORTED_LANGUAGES))}",
+                stderr=f"Unsupported language '{language}'. Supported: {sorted(self.SUPPORTED_LANGUAGES)}",
                 exit_code=1,
             )
 
@@ -41,7 +46,11 @@ class MockExecutionProvider(BaseExecutionProvider):
             )
 
         # Simulated Runtime Error
-        if "ERROR: RUNTIME" in code_upper or "EXCEPTION" in code_upper or "DIVISION_BY_ZERO" in code_upper:
+        if (
+            "ERROR: RUNTIME" in code_upper
+            or "EXCEPTION" in code_upper
+            or "DIVISION_BY_ZERO" in code_upper
+        ):
             return ExecutionOutput(
                 status=CodeSubmission.SubmissionStatus.RUNTIME_ERROR,
                 stderr="ZeroDivisionError: integer division or modulo by zero\n  File 'solution', line 4",
@@ -51,7 +60,11 @@ class MockExecutionProvider(BaseExecutionProvider):
             )
 
         # Simulated Timeout (Time Limit Exceeded)
-        if "ERROR: TIMEOUT" in code_upper or "INFINITE_LOOP" in code_upper or "WHILE TRUE" in code_upper:
+        if (
+            "ERROR: TIMEOUT" in code_upper
+            or "INFINITE_LOOP" in code_upper
+            or "WHILE TRUE" in code_upper
+        ):
             return ExecutionOutput(
                 status=CodeSubmission.SubmissionStatus.TIME_LIMIT_EXCEEDED,
                 stderr=f"Time limit exceeded ({time_limit_seconds}s limit)",
@@ -81,7 +94,11 @@ class MockExecutionProvider(BaseExecutionProvider):
             )
 
         # Simulated Partial Failure for specific test input
-        if "FAIL_ON_EVEN" in code_upper and stdin.strip().isdigit() and int(stdin.strip()) % 2 == 0:
+        if (
+            "FAIL_ON_EVEN" in code_upper
+            and stdin.strip().isdigit()
+            and int(stdin.strip()) % 2 == 0
+        ):
             return ExecutionOutput(
                 status=CodeSubmission.SubmissionStatus.WRONG_ANSWER,
                 stdout="False",

@@ -1,7 +1,6 @@
 """High-quality intelligent Smart Tutor provider for programming concepts, debugging, and hints."""
 
-import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from apps.ai_assistant.providers.base import AIProviderResult, BaseAIProvider
 
@@ -14,9 +13,9 @@ class SmartTutorAIProvider(BaseAIProvider):
 
     def generate_response(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         system_prompt: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> AIProviderResult:
         if not messages:
@@ -31,7 +30,9 @@ class SmartTutorAIProvider(BaseAIProvider):
         last_lower = last_message.lower()
 
         # Generate intelligent contextual pedagogical response based on the query
-        response_text = self._synthesize_pedagogical_reply(last_message, last_lower, messages, context)
+        response_text = self._synthesize_pedagogical_reply(
+            last_message, last_lower, messages, context
+        )
         estimated_tokens = max(20, len(response_text.split()) * 2)
 
         return AIProviderResult(
@@ -45,27 +46,83 @@ class SmartTutorAIProvider(BaseAIProvider):
         self,
         query: str,
         q_lower: str,
-        history: List[Dict[str, str]],
-        context: Optional[Dict[str, Any]] = None,
+        history: list[dict[str, str]],
+        context: dict[str, Any] | None = None,
     ) -> str:
         # Check for error tracebacks / debugging queries
-        if any(err in q_lower for err in ["error", "exception", "traceback", "indexerror", "keyerror", "recursionerror", "typeerror", "valueerror", "syntaxerror", "nameerror", "attributeerror", "zerodivisionerror"]):
+        if any(
+            err in q_lower
+            for err in [
+                "error",
+                "exception",
+                "traceback",
+                "indexerror",
+                "keyerror",
+                "recursionerror",
+                "typeerror",
+                "valueerror",
+                "syntaxerror",
+                "nameerror",
+                "attributeerror",
+                "zerodivisionerror",
+            ]
+        ):
             return self._handle_error_debugging(query, q_lower)
 
         # Check for OOP concepts
-        if any(term in q_lower for term in ["polymorphism", "inheritance", "encapsulation", "abstraction", "oop", "class", "object", "dunder", "__init__"]):
+        if any(
+            term in q_lower
+            for term in [
+                "polymorphism",
+                "inheritance",
+                "encapsulation",
+                "abstraction",
+                "oop",
+                "class",
+                "object",
+                "dunder",
+                "__init__",
+            ]
+        ):
             return self._handle_oop_concepts(q_lower)
 
         # Check for Python data structures
-        if any(term in q_lower for term in ["list", "tuple", "set", "dictionary", "dict", "merging collections", "lambda", "comprehension"]):
+        if any(
+            term in q_lower
+            for term in [
+                "list",
+                "tuple",
+                "set",
+                "dictionary",
+                "dict",
+                "merging collections",
+                "lambda",
+                "comprehension",
+            ]
+        ):
             return self._handle_data_structures(q_lower)
 
         # Check for algorithms / complexity
-        if any(term in q_lower for term in ["big o", "time complexity", "space complexity", "binary search", "sorting", "recursion", "dynamic programming", "two pointer"]):
+        if any(
+            term in q_lower
+            for term in [
+                "big o",
+                "time complexity",
+                "space complexity",
+                "binary search",
+                "sorting",
+                "recursion",
+                "dynamic programming",
+                "two pointer",
+            ]
+        ):
             return self._handle_algorithms(q_lower)
 
         # Check for code optimization / best practices
-        if any(term in q_lower for term in ["optimize", "clean code", "refactor", "best practice", "pep 8"]):
+        if any(
+            term in q_lower
+            for term in ["optimize", "clean code", "refactor", "best practice", "pep 8"]
+        ):
             return self._handle_best_practices(query)
 
         # Generic programming mentor guidance
@@ -131,7 +188,7 @@ class SmartTutorAIProvider(BaseAIProvider):
                 "\n"
                 "# Or with index bounds check:\n"
                 "for idx, val in enumerate(items):\n"
-                "    print(f\"Index {idx}: {val}\")\n"
+                '    print(f"Index {idx}: {val}")\n'
                 "```"
             )
         elif "keyerror" in q_lower:
@@ -143,9 +200,9 @@ class SmartTutorAIProvider(BaseAIProvider):
                 "2. Check with `if key in my_dict:` before accessing.\n"
                 "3. Use `collections.defaultdict` if you are aggregating counts or lists.\n\n"
                 "```python\n"
-                "user_data = {\"name\": \"Alice\", \"role\": \"Student\"}\n\n"
+                'user_data = {"name": "Alice", "role": "Student"}\n\n'
                 "# ✅ Safe access with fallback\n"
-                "score = user_data.get(\"score\", 0)\n"
+                'score = user_data.get("score", 0)\n'
                 "print(score)  # Returns 0 without raising KeyError\n"
                 "```"
             )
@@ -168,7 +225,7 @@ class SmartTutorAIProvider(BaseAIProvider):
                 "```python\n"
                 "class Shape:\n"
                 "    def area(self) -> float:\n"
-                "        raise NotImplementedError(\"Subclasses must implement area()\")\n\n"
+                '        raise NotImplementedError("Subclasses must implement area()")\n\n'
                 "class Circle(Shape):\n"
                 "    def __init__(self, radius: float):\n"
                 "        self.radius = radius\n"
@@ -185,9 +242,9 @@ class SmartTutorAIProvider(BaseAIProvider):
                 "# Polymorphic usage:\n"
                 "shapes = [Circle(5), Rectangle(4, 6)]\n"
                 "for s in shapes:\n"
-                "    print(f\"{s.__class__.__name__} area: {s.area():.2f}\")\n"
+                '    print(f"{s.__class__.__name__} area: {s.area():.2f}")\n'
                 "```\n\n"
-                "**Key takeaway**: Python resolves the method at runtime based on the actual object instance (*Duck Typing*: \"If it walks like a duck and quacks like a duck, it's a duck\")."
+                '**Key takeaway**: Python resolves the method at runtime based on the actual object instance (*Duck Typing*: "If it walks like a duck and quacks like a duck, it\'s a duck").'
             )
         elif "encapsulation" in q_lower:
             return (
@@ -203,14 +260,14 @@ class SmartTutorAIProvider(BaseAIProvider):
                 "        self.__balance = max(0.0, initial_balance)  # Private attribute\n\n"
                 "    @property\n"
                 "    def balance(self) -> float:\n"
-                "        \"\"\"Getter method.\"\"\"\n"
+                '        """Getter method."""\n'
                 "        return self.__balance\n\n"
                 "    def deposit(self, amount: float) -> None:\n"
-                "        \"\"\"Controlled setter logic with validation.\"\"\"\n"
+                '        """Controlled setter logic with validation."""\n'
                 "        if amount > 0:\n"
                 "            self.__balance += amount\n"
                 "        else:\n"
-                "            raise ValueError(\"Deposit must be positive\")\n"
+                '            raise ValueError("Deposit must be positive")\n'
                 "```"
             )
         else:
@@ -247,8 +304,8 @@ class SmartTutorAIProvider(BaseAIProvider):
                 "### 🔀 Merging Collections in Python\n\n"
                 "#### 1. Merging Dictionaries (Python 3.9+):\n"
                 "```python\n"
-                "dict1 = {\"a\": 1, \"b\": 2}\n"
-                "dict2 = {\"b\": 99, \"c\": 3}\n\n"
+                'dict1 = {"a": 1, "b": 2}\n'
+                'dict2 = {"b": 99, "c": 3}\n\n'
                 "# Using the union operator (dict2 overwrites keys in dict1):\n"
                 "merged = dict1 | dict2\n"
                 "print(merged)  # {'a': 1, 'b': 99, 'c': 3}\n"
@@ -309,9 +366,9 @@ class SmartTutorAIProvider(BaseAIProvider):
             "```python\n"
             "from typing import Optional\n\n"
             "def calculate_discount(price: float, discount_percent: Optional[float] = None) -> float:\n"
-            "    \"\"\"Calculate final price with safety bounds.\"\"\"\n"
+            '    """Calculate final price with safety bounds."""\n'
             "    if price < 0:\n"
-            "        raise ValueError(\"Price cannot be negative\")\n"
+            '        raise ValueError("Price cannot be negative")\n'
             "    \n"
             "    if not discount_percent:\n"
             "        return price\n"

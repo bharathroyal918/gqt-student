@@ -11,7 +11,9 @@ class AIAssistantModelTests(TestCase):
     """Test suite for AI Conversation and Message models."""
 
     def setUp(self):
-        self.user = User.objects.create_user(email="ai.student@gqt.local", password="Password123!")
+        self.user = User.objects.create_user(
+            email="ai.student@gqt.local", password="Password123!"
+        )
         self.student = StudentProfile.objects.create(
             user=self.user,
             student_id_number="GQT-STU-007",

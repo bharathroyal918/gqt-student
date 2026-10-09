@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('contact', '0001_initial'),
+        ("contact", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='contactinquiry',
-            name='ip_address',
+            model_name="contactinquiry",
+            name="ip_address",
             field=models.GenericIPAddressField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='contactinquiry',
-            name='user_agent',
-            field=models.CharField(blank=True, default='', max_length=500),
+            model_name="contactinquiry",
+            name="user_agent",
+            field=models.CharField(blank=True, default="", max_length=500),
         ),
     ]

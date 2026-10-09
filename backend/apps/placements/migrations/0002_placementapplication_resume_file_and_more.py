@@ -4,20 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('placements', '0001_initial'),
+        ("placements", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='placementapplication',
-            name='resume_file',
-            field=models.FileField(blank=True, help_text='Directly uploaded student resume file (PDF/DOCX)', null=True, upload_to='placement_resumes/%Y/%m/'),
+            model_name="placementapplication",
+            name="resume_file",
+            field=models.FileField(
+                blank=True,
+                help_text="Directly uploaded student resume file (PDF/DOCX)",
+                null=True,
+                upload_to="placement_resumes/%Y/%m/",
+            ),
         ),
         migrations.AddField(
-            model_name='placementapplication',
-            name='resume_filename',
-            field=models.CharField(blank=True, default='', max_length=255),
+            model_name="placementapplication",
+            name="resume_filename",
+            field=models.CharField(blank=True, default="", max_length=255),
         ),
     ]

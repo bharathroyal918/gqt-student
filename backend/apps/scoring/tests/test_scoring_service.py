@@ -15,15 +15,14 @@ Tests:
 
 import uuid
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db import connection, transaction
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 from django.utils import timezone
 
-from apps.accounts.models import User
 from apps.notifications.models import Notification
-from apps.projects.models import Project, ProjectSubmission
+from apps.projects.models import Project
 from apps.scoring.models import LeaderboardSnapshot, ScoreEvent, ScoreRecord
 from apps.scoring.services import ScoringService
 from apps.students.models import StudentProfile
@@ -298,8 +297,12 @@ class ScoringServiceTests(TestCase):
 
         # Verify Leaderboard Snapshots
         today = timezone.localdate()
-        snap1 = LeaderboardSnapshot.objects.get(snapshot_date=today, student=self.student1)
-        snap2 = LeaderboardSnapshot.objects.get(snapshot_date=today, student=self.student2)
+        snap1 = LeaderboardSnapshot.objects.get(
+            snapshot_date=today, student=self.student1
+        )
+        snap2 = LeaderboardSnapshot.objects.get(
+            snapshot_date=today, student=self.student2
+        )
 
         # Student 2 has 200 pts (Rank 1), Student 1 has 100 pts (Rank 2)
         self.assertEqual(snap2.global_rank, 1)

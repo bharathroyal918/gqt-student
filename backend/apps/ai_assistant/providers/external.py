@@ -1,8 +1,11 @@
 """External cloud LLM provider integration adapters (OpenAI, Gemini, Anthropic) with fallback."""
 
+import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+import urllib.error
+import urllib.request
+from typing import Any
 
 from django.conf import settings
 
@@ -24,19 +27,30 @@ class ExternalLLMProvider(BaseAIProvider):
 
     def generate_response(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         system_prompt: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> AIProviderResult:
         # Check if an external provider key is configured
-        openai_key = getattr(settings, "OPENAI_API_KEY", None) or os.getenv("OPENAI_API_KEY")
-        gemini_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
+        openai_key = getattr(settings, "OPENAI_API_KEY", None) or os.getenv(
+            "OPENAI_API_KEY"
+        )
+        gemini_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv(
+            "GEMINI_API_KEY"
+        )
 
         if openai_key and (self.provider_type in ["openai", "auto"]):
             try:
                 return self._call_openai(openai_key, messages, system_prompt, **kwargs)
-            except Exception as exc:
+            except (
+                urllib.error.URLError,
+                OSError,
+                TimeoutError,
+                json.JSONDecodeError,
+                KeyError,
+                ValueError,
+            ) as exc:
                 # Log without exposing API key
                 logger.warning(
                     "OpenAI generation failed; falling back to SmartTutorProvider: %s",
@@ -46,26 +60,31 @@ class ExternalLLMProvider(BaseAIProvider):
         if gemini_key and (self.provider_type in ["gemini", "auto"]):
             try:
                 return self._call_gemini(gemini_key, messages, system_prompt, **kwargs)
-            except Exception as exc:
+            except (
+                urllib.error.URLError,
+                OSError,
+                TimeoutError,
+                json.JSONDecodeError,
+                KeyError,
+                ValueError,
+            ) as exc:
                 logger.warning(
                     "Gemini generation failed; falling back to SmartTutorProvider: %s",
                     str(exc).replace(gemini_key, "***"),
                 )
 
         # Fallback to local high-quality SmartTutor provider
-        return self.fallback_provider.generate_response(messages, system_prompt, context, **kwargs)
+        return self.fallback_provider.generate_response(
+            messages, system_prompt, context, **kwargs
+        )
 
     def _call_openai(
         self,
         api_key: str,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         system_prompt: str,
         **kwargs: Any,
     ) -> AIProviderResult:
-        # Structured payload construction
-        import urllib.request
-        import json
-
         url = "https://api.openai.com/v1/chat/completions"
         formatted_msgs = [{"role": "system", "content": system_prompt}]
         for m in messages:
@@ -104,13 +123,10 @@ class ExternalLLMProvider(BaseAIProvider):
     def _call_gemini(
         self,
         api_key: str,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         system_prompt: str,
         **kwargs: Any,
     ) -> AIProviderResult:
-        import urllib.request
-        import json
-
         model = kwargs.get("model", "gemini-1.5-flash")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 

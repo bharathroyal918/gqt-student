@@ -29,7 +29,12 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
-from apps.accounts.models import AuditLog, LoginActivity, OTPVerification, PasswordResetRequest
+from apps.accounts.models import (
+    AuditLog,
+    LoginActivity,
+    OTPVerification,
+    PasswordResetRequest,
+)
 from apps.accounts.services import AuthService
 from apps.students.models import StudentProfile
 
@@ -197,7 +202,9 @@ class AuthenticationApiTests(TestCase):
     def test_otp_request_and_verify_success(self, mock_otp):
         # 1. Request OTP
         req_url = reverse("api_v1:auth:otp_request")
-        req_resp = self.client.post(req_url, {"mobile_number": "+919876543210"}, format="json")
+        req_resp = self.client.post(
+            req_url, {"mobile_number": "+919876543210"}, format="json"
+        )
         self.assertEqual(req_resp.status_code, status.HTTP_200_OK)
         self.assertTrue(req_resp.data["success"])
 
@@ -295,7 +302,10 @@ class AuthenticationApiTests(TestCase):
         # 6th attempt should be blocked as exceeded
         resp_6 = self.client.post(
             verify_url,
-            {"mobile_number": "+919876543210", "otp": "123456"},  # Even with right OTP now
+            {
+                "mobile_number": "+919876543210",
+                "otp": "123456",
+            },  # Even with right OTP now
             format="json",
         )
         self.assertEqual(resp_6.status_code, status.HTTP_400_BAD_REQUEST)
@@ -305,11 +315,15 @@ class AuthenticationApiTests(TestCase):
     def test_otp_cooldown_enforced(self, mock_otp):
         req_url = reverse("api_v1:auth:otp_request")
         # First request succeeds
-        resp1 = self.client.post(req_url, {"mobile_number": "+919876543210"}, format="json")
+        resp1 = self.client.post(
+            req_url, {"mobile_number": "+919876543210"}, format="json"
+        )
         self.assertEqual(resp1.status_code, status.HTTP_200_OK)
 
         # Immediate second request triggers cooldown
-        resp2 = self.client.post(req_url, {"mobile_number": "+919876543210"}, format="json")
+        resp2 = self.client.post(
+            req_url, {"mobile_number": "+919876543210"}, format="json"
+        )
         self.assertEqual(resp2.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
         self.assertEqual(resp2.data["error"]["code"], "OTP_COOLDOWN")
 
@@ -317,13 +331,17 @@ class AuthenticationApiTests(TestCase):
         """Unregistered or unapproved mobile numbers return generic success without leaking status."""
         req_url = reverse("api_v1:auth:otp_request")
         # Non-existent mobile
-        resp = self.client.post(req_url, {"mobile_number": "+910000000000"}, format="json")
+        resp = self.client.post(
+            req_url, {"mobile_number": "+910000000000"}, format="json"
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertTrue(resp.data["success"])
         self.assertIn("If this mobile number is registered", resp.data["message"])
 
         # Unapproved student mobile
-        resp2 = self.client.post(req_url, {"mobile_number": "+919876543213"}, format="json")
+        resp2 = self.client.post(
+            req_url, {"mobile_number": "+919876543213"}, format="json"
+        )
         self.assertEqual(resp2.status_code, status.HTTP_200_OK)
         self.assertTrue(resp2.data["success"])
 
@@ -335,7 +353,9 @@ class AuthenticationApiTests(TestCase):
         _, refresh_str = AuthService.issue_tokens_for_user(self.student_a)
 
         refresh_url = reverse("api_v1:auth:token_refresh")
-        response = self.client.post(refresh_url, {"refresh": refresh_str}, format="json")
+        response = self.client.post(
+            refresh_url, {"refresh": refresh_str}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data["success"])
         new_access = response.data["data"]["access"]
@@ -345,7 +365,9 @@ class AuthenticationApiTests(TestCase):
         self.assertNotEqual(refresh_str, new_refresh)
 
         # Old refresh token is blacklisted, attempting to use it again fails
-        second_response = self.client.post(refresh_url, {"refresh": refresh_str}, format="json")
+        second_response = self.client.post(
+            refresh_url, {"refresh": refresh_str}, format="json"
+        )
         self.assertEqual(second_response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(second_response.data["error"]["code"], "TOKEN_INVALID")
 
@@ -354,12 +376,16 @@ class AuthenticationApiTests(TestCase):
 
         logout_url = reverse("api_v1:auth:logout")
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_str}")
-        logout_resp = self.client.post(logout_url, {"refresh": refresh_str}, format="json")
+        logout_resp = self.client.post(
+            logout_url, {"refresh": refresh_str}, format="json"
+        )
         self.assertEqual(logout_resp.status_code, status.HTTP_200_OK)
 
         # Now attempting to use the blacklisted refresh token fails
         refresh_url = reverse("api_v1:auth:token_refresh")
-        refresh_resp = self.client.post(refresh_url, {"refresh": refresh_str}, format="json")
+        refresh_resp = self.client.post(
+            refresh_url, {"refresh": refresh_str}, format="json"
+        )
         self.assertEqual(refresh_resp.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(refresh_resp.data["error"]["code"], "TOKEN_INVALID")
 
@@ -388,7 +414,9 @@ class AuthenticationApiTests(TestCase):
         user_data = response.data["data"]["user"]
         self.assertEqual(user_data["email"], "student.a@gqt.edu")
         self.assertEqual(user_data["role"], User.RoleChoices.STUDENT)
-        self.assertEqual(user_data["student_profile"]["student_id_number"], "GQT-STU-001")
+        self.assertEqual(
+            user_data["student_profile"]["student_id_number"], "GQT-STU-001"
+        )
 
     def test_auth_me_unauthenticated_fails(self):
         me_url = reverse("api_v1:auth:me")
@@ -401,10 +429,14 @@ class AuthenticationApiTests(TestCase):
 
     def test_forgot_password_anti_enumeration(self):
         url = reverse("api_v1:auth:password_forgot")
-        response = self.client.post(url, {"email": "nonexistent@gqt.edu"}, format="json")
+        response = self.client.post(
+            url, {"email": "nonexistent@gqt.edu"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data["success"])
-        self.assertIn("password reset instructions have been sent", response.data["message"])
+        self.assertIn(
+            "password reset instructions have been sent", response.data["message"]
+        )
 
     def test_password_reset_flow_success(self):
         # Initiate reset
@@ -490,7 +522,9 @@ class AuthenticationApiTests(TestCase):
         self.assertEqual(response.data["data"]["email"], "carol@gqt.edu")
 
         # Verify AuditLog created
-        audit = AuditLog.objects.filter(actor=self.admin_user, action="STUDENT_PROVISIONED").first()
+        audit = AuditLog.objects.filter(
+            actor=self.admin_user, action="STUDENT_PROVISIONED"
+        ).first()
         self.assertIsNotNone(audit)
 
     def test_admin_can_update_student_status(self):
@@ -511,14 +545,18 @@ class AuthenticationApiTests(TestCase):
 
         self.student_a.refresh_from_db()
         self.assertFalse(self.student_a.is_active)
-        self.assertEqual(self.student_a.onboarding_status, User.OnboardingStatusChoices.SUSPENDED)
+        self.assertEqual(
+            self.student_a.onboarding_status, User.OnboardingStatusChoices.SUSPENDED
+        )
 
     def test_student_cannot_access_another_students_resource(self):
         """Student A must NEVER be able to access Student B's profile (IsOwnerOrAdmin)."""
         student_a_token = self._get_student_a_token()
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {student_a_token}")
 
-        url = reverse("api_v1:students:student_profile_detail", kwargs={"pk": self.profile_b.id})
+        url = reverse(
+            "api_v1:students:student_profile_detail", kwargs={"pk": self.profile_b.id}
+        )
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -526,7 +564,9 @@ class AuthenticationApiTests(TestCase):
         student_a_token = self._get_student_a_token()
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {student_a_token}")
 
-        url = reverse("api_v1:students:student_profile_detail", kwargs={"pk": self.profile_a.id})
+        url = reverse(
+            "api_v1:students:student_profile_detail", kwargs={"pk": self.profile_a.id}
+        )
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["data"]["student_id_number"], "GQT-STU-001")
@@ -535,7 +575,9 @@ class AuthenticationApiTests(TestCase):
         admin_token = self._get_admin_token()
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {admin_token}")
 
-        url = reverse("api_v1:students:student_profile_detail", kwargs={"pk": self.profile_b.id})
+        url = reverse(
+            "api_v1:students:student_profile_detail", kwargs={"pk": self.profile_b.id}
+        )
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["data"]["student_id_number"], "GQT-STU-002")

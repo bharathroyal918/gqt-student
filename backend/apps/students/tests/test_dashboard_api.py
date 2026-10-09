@@ -12,7 +12,6 @@ Tests:
 """
 
 from decimal import Decimal
-from concurrent.futures import ThreadPoolExecutor
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -21,14 +20,10 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.accounts.models import User
-from apps.assignments.models import CodingQuestion, CodeSubmission
 from apps.courses.models import Course, CourseEnrollment
 from apps.modules.models import Module, StudentModuleProgress
 from apps.notifications.models import Notification
-from apps.scoring.models import ScoreEvent, ScoreRecord
 from apps.students.models import StudentProfile
-from apps.tasks.models import Task, StudentTask
 
 User = get_user_model()
 
@@ -185,7 +180,6 @@ class StudentDashboardApiTests(TestCase):
         )
         self.assertEqual(login_res_b.status_code, status.HTTP_200_OK)
         token_b = login_res_b.data["data"]["access"]
-        
 
         # Fetch dashboard with Student B's token
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {token_b}")
@@ -193,7 +187,9 @@ class StudentDashboardApiTests(TestCase):
         self.assertEqual(dash_b.status_code, status.HTTP_200_OK)
         self.assertEqual(dash_b.data["data"]["profile"]["full_name"], "Bob Learner")
         self.assertEqual(dash_b.data["data"]["profile"]["total_score"], 600.0)
-        self.assertEqual(dash_b.data["data"]["leaderboard"]["current_student"]["rank"], 1)
+        self.assertEqual(
+            dash_b.data["data"]["leaderboard"]["current_student"]["rank"], 1
+        )
 
     def test_refresh_dashboard_live_score(self):
         """When student score updates, refetched dashboard immediately reflects new score and rank."""
@@ -210,7 +206,10 @@ class StudentDashboardApiTests(TestCase):
         self.assertEqual(refreshed_dash.status_code, status.HTTP_200_OK)
         self.assertEqual(refreshed_dash.data["data"]["profile"]["total_score"], 850.0)
         self.assertEqual(refreshed_dash.data["data"]["profile"]["current_rank"], 1)
-        self.assertEqual(refreshed_dash.data["data"]["leaderboard"]["top_10"][0]["student_id"], str(self.profile_a.id))
+        self.assertEqual(
+            refreshed_dash.data["data"]["leaderboard"]["top_10"][0]["student_id"],
+            str(self.profile_a.id),
+        )
 
     def test_browser_reopen_and_session_continuity(self):
         """Simulates browser reopen: client reuses valid token and hydrates /me and dashboard."""

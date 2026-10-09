@@ -23,7 +23,9 @@ class ContactModuleApiTests(APITestCase):
 
         # 2. Student User
         self.student_user = User.objects.create_user(
-            email="student.contact@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="student.contact@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
 
     def test_get_company_info_public(self):
@@ -91,7 +93,9 @@ class ContactModuleApiTests(APITestCase):
 
         res = self.client.post("/api/v1/contact/inquiries/", payload, format="json")
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertFalse(ContactInquiry.objects.filter(email="spammer@botnet.test").exists())
+        self.assertFalse(
+            ContactInquiry.objects.filter(email="spammer@botnet.test").exists()
+        )
 
     def test_submission_rate_limiting(self):
         """Rate limiting restricts more than 5 submissions within the 10-minute window."""
@@ -105,13 +109,19 @@ class ContactModuleApiTests(APITestCase):
         # First 5 submissions succeed
         for i in range(5):
             res = self.client.post(
-                "/api/v1/contact/inquiries/", payload, format="json", REMOTE_ADDR="198.51.100.1"
+                "/api/v1/contact/inquiries/",
+                payload,
+                format="json",
+                REMOTE_ADDR="198.51.100.1",
             )
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         # 6th submission is throttled
         res_blocked = self.client.post(
-            "/api/v1/contact/inquiries/", payload, format="json", REMOTE_ADDR="198.51.100.1"
+            "/api/v1/contact/inquiries/",
+            payload,
+            format="json",
+            REMOTE_ADDR="198.51.100.1",
         )
         self.assertEqual(res_blocked.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(res_blocked.json()["error"]["code"], "SUBMISSION_BLOCKED")
@@ -150,7 +160,9 @@ class ContactModuleApiTests(APITestCase):
         self.assertEqual(inquiry.status, ContactInquiry.InquiryStatus.RESOLVED)
         self.assertEqual(inquiry.resolved_by, self.admin_user)
         self.assertIsNotNone(inquiry.resolved_at)
-        self.assertEqual(inquiry.admin_notes, "Replied via email explaining Monaco editor settings.")
+        self.assertEqual(
+            inquiry.admin_notes, "Replied via email explaining Monaco editor settings."
+        )
 
     def test_student_cannot_access_admin_contact_inquiries(self):
         """Students are strictly forbidden from accessing admin contact tickets."""

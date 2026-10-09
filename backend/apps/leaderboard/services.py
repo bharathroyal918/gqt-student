@@ -10,14 +10,12 @@ Handles:
 - Privacy enforcement (no leakage of email, phone, or private student info)
 """
 
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from django.core.cache import cache
-from django.db.models import Count, F, Q, Window
-from django.db.models.functions import RowNumber
+from django.db.models import Count, Q
 
 from apps.courses.models import CourseEnrollment
-from apps.scoring.models import LeaderboardSnapshot
 from apps.students.models import StudentProfile
 
 
@@ -40,7 +38,7 @@ class LeaderboardService:
 
     @classmethod
     def invalidate_cache(
-        cls, batch_code: Optional[str] = None, course_id: Optional[str] = None
+        cls, batch_code: str | None = None, course_id: str | None = None
     ) -> None:
         """Flushes leaderboard caches whenever scores or enrollments change."""
         cache.delete(cls.CACHE_KEY_TOP10)
@@ -52,7 +50,7 @@ class LeaderboardService:
 
     @classmethod
     def get_base_queryset(
-        cls, batch_code: Optional[str] = None, course_id: Optional[str] = None
+        cls, batch_code: str | None = None, course_id: str | None = None
     ):
         """Returns student profiles annotated with solved questions count and filtered cleanly."""
         qs = (
@@ -87,10 +85,10 @@ class LeaderboardService:
     def get_top_performers(
         cls,
         limit: int = 10,
-        batch_code: Optional[str] = None,
-        course_id: Optional[str] = None,
-        current_student: Optional[StudentProfile] = None,
-    ) -> List[Dict[str, Any]]:
+        batch_code: str | None = None,
+        course_id: str | None = None,
+        current_student: StudentProfile | None = None,
+    ) -> list[dict[str, Any]]:
         """Retrieves top N performers formatted safely for student visibility."""
         cache_key = cls.CACHE_KEY_TOP10
         if batch_code:
@@ -100,7 +98,9 @@ class LeaderboardService:
 
         cached_data = cache.get(cache_key)
         if cached_data is None:
-            qs = cls.get_base_queryset(batch_code=batch_code, course_id=course_id)[:limit]
+            qs = cls.get_base_queryset(batch_code=batch_code, course_id=course_id)[
+                :limit
+            ]
             results = []
             for rank, sp in enumerate(qs, start=1):
                 results.append(
@@ -113,7 +113,9 @@ class LeaderboardService:
                         "batch_code": sp.batch_code,
                         "total_points": float(sp.total_points),
                         "current_streak_days": sp.current_streak_days,
-                        "solved_questions_count": getattr(sp, "solved_questions_count", 0),
+                        "solved_questions_count": getattr(
+                            sp, "solved_questions_count", 0
+                        ),
                         "is_top_3": rank <= 3,
                     }
                 )
@@ -134,9 +136,9 @@ class LeaderboardService:
     def calculate_exact_student_rank(
         cls,
         student: StudentProfile,
-        batch_code: Optional[str] = None,
-        course_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        batch_code: str | None = None,
+        course_id: str | None = None,
+    ) -> dict[str, Any]:
         """Calculates precise rank for a student following deterministic tie-breaking rules."""
         qs = cls.get_base_queryset(batch_code=batch_code, course_id=course_id)
 
@@ -197,9 +199,9 @@ class LeaderboardService:
         cls,
         student: StudentProfile,
         delta: int = 2,
-        batch_code: Optional[str] = None,
-        course_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        batch_code: str | None = None,
+        course_id: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Returns students ranked directly above and below the target student (nearby range)."""
         qs = list(cls.get_base_queryset(batch_code=batch_code, course_id=course_id))
         target_idx = None
@@ -240,12 +242,15 @@ class LeaderboardService:
     def get_full_leaderboard_for_student(
         cls,
         student: StudentProfile,
-        batch_code: Optional[str] = None,
-        course_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        batch_code: str | None = None,
+        course_id: str | None = None,
+    ) -> dict[str, Any]:
         """Assembles top 10, authenticated student's exact rank, and nearby standing."""
         top_10 = cls.get_top_performers(
-            limit=10, batch_code=batch_code, course_id=course_id, current_student=student
+            limit=10,
+            batch_code=batch_code,
+            course_id=course_id,
+            current_student=student,
         )
         my_standing = cls.calculate_exact_student_rank(
             student=student, batch_code=batch_code, course_id=course_id
@@ -270,9 +275,9 @@ class LeaderboardService:
     @classmethod
     def get_admin_leaderboard_queryset(
         cls,
-        batch_code: Optional[str] = None,
-        course_id: Optional[str] = None,
-        search: Optional[str] = None,
+        batch_code: str | None = None,
+        course_id: str | None = None,
+        search: str | None = None,
     ):
         """Admin leaderboard queryset supporting deep filtering and student information."""
         qs = cls.get_base_queryset(batch_code=batch_code, course_id=course_id)

@@ -1,6 +1,6 @@
 """Test settings for GQT Student Portal."""
 
-from .base import *  # noqa: F403
+from .base import *
 
 DEBUG = False
 ENVIRONMENT = "test"
@@ -38,3 +38,15 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "submissions": "1000/minute",
     "ai": "1000/minute",
 }
+
+
+# Disable production HTTPS enforcement during tests.
+# Django's test client uses HTTP by default.
+SECURE_SSL_REDIRECT = False
+SECURE_PROXY_SSL_HEADER = None
+
+# Test requests must not require secure cookies.
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]

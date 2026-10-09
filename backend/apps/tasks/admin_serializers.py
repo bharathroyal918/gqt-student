@@ -10,8 +10,12 @@ class TaskAdminListSerializer(serializers.ModelSerializer):
     question_title = serializers.CharField(source="question.title", allow_null=True)
     course_id = serializers.UUIDField(source="course.id", allow_null=True)
     course_title = serializers.CharField(source="course.title", allow_null=True)
-    assigned_student_id = serializers.UUIDField(source="assigned_student.id", allow_null=True)
-    assigned_student_name = serializers.CharField(source="assigned_student.full_name", allow_null=True)
+    assigned_student_id = serializers.UUIDField(
+        source="assigned_student.id", allow_null=True
+    )
+    assigned_student_name = serializers.CharField(
+        source="assigned_student.full_name", allow_null=True
+    )
     completions_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -52,8 +56,12 @@ class TaskAdminCreateSerializer(serializers.Serializer):
     question_id = serializers.UUIDField(required=False, allow_null=True)
     course_id = serializers.UUIDField(required=False, allow_null=True)
     assigned_student_id = serializers.UUIDField(required=False, allow_null=True)
-    batch_code = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
-    points = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default=20.00)
+    batch_code = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, default=""
+    )
+    points = serializers.DecimalField(
+        max_digits=5, decimal_places=2, required=False, default=20.00
+    )
     is_active = serializers.BooleanField(required=False, default=True)
 
 

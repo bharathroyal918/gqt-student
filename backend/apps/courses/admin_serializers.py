@@ -30,7 +30,9 @@ class CourseAdminSerializer(serializers.ModelSerializer):
         return obj.modules.count()
 
     def get_enrolled_students_count(self, obj) -> int:
-        return obj.enrollments.filter(status=CourseEnrollment.EnrollmentStatus.ACTIVE).count()
+        return obj.enrollments.filter(
+            status=CourseEnrollment.EnrollmentStatus.ACTIVE
+        ).count()
 
 
 class CourseAdminCreateSerializer(serializers.Serializer):
@@ -48,7 +50,9 @@ class CourseAdminUpdateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=200, required=False)
     slug = serializers.SlugField(max_length=220, required=False)
     description = serializers.CharField(required=False, allow_blank=True)
-    thumbnail_url = serializers.URLField(max_length=500, required=False, allow_blank=True)
+    thumbnail_url = serializers.URLField(
+        max_length=500, required=False, allow_blank=True
+    )
     is_published = serializers.BooleanField(required=False)
     order = serializers.IntegerField(required=False, min_value=0)
 
@@ -107,16 +111,26 @@ class RecordedClassAdminCreateUpdateSerializer(serializers.Serializer):
         choices=RecordedClass.VideoSourceType.choices,
         default=RecordedClass.VideoSourceType.YOUTUBE,
     )
-    youtube_url = serializers.URLField(max_length=500, required=False, allow_blank=True, default="")
+    youtube_url = serializers.URLField(
+        max_length=500, required=False, allow_blank=True, default=""
+    )
     video_file = serializers.FileField(required=False, allow_null=True)
-    video_url = serializers.URLField(max_length=1000, required=False, allow_blank=True, default="")
+    video_url = serializers.URLField(
+        max_length=1000, required=False, allow_blank=True, default=""
+    )
     duration_seconds = serializers.IntegerField(required=False, default=0, min_value=0)
-    duration_formatted = serializers.CharField(max_length=20, required=False, allow_blank=True, default="")
-    thumbnail_url = serializers.URLField(max_length=500, required=False, allow_blank=True, default="")
+    duration_formatted = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, default=""
+    )
+    thumbnail_url = serializers.URLField(
+        max_length=500, required=False, allow_blank=True, default=""
+    )
     is_preview = serializers.BooleanField(required=False, default=False)
     is_published = serializers.BooleanField(required=False, default=True)
     notes = serializers.CharField(required=False, allow_blank=True, default="")
-    resources_url = serializers.URLField(max_length=500, required=False, allow_blank=True, default="")
+    resources_url = serializers.URLField(
+        max_length=500, required=False, allow_blank=True, default=""
+    )
     module_id = serializers.UUIDField(required=False, allow_null=True)
 
 
@@ -129,7 +143,9 @@ class RecordedClassesReorderSerializer(serializers.Serializer):
 
 class CourseEnrollmentAdminSerializer(serializers.ModelSerializer):
     student_id = serializers.CharField(source="student.id", read_only=True)
-    student_id_number = serializers.CharField(source="student.student_id_number", read_only=True)
+    student_id_number = serializers.CharField(
+        source="student.student_id_number", read_only=True
+    )
     full_name = serializers.CharField(source="student.full_name", read_only=True)
     email = serializers.CharField(source="student.user.email", read_only=True)
     batch_code = serializers.CharField(source="student.batch_code", read_only=True)
@@ -160,4 +176,3 @@ class CourseEnrollmentAllocateSerializer(serializers.Serializer):
         choices=CourseEnrollment.EnrollmentStatus.choices,
         default=CourseEnrollment.EnrollmentStatus.ACTIVE,
     )
-

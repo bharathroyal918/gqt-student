@@ -6,7 +6,7 @@ from apps.assignments.execution.service import CodeExecutionService
 
 __all__ = [
     "BaseExecutionProvider",
+    "CodeExecutionService",
     "ExecutionOutput",
     "MockExecutionProvider",
-    "CodeExecutionService",
 ]

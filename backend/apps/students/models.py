@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 
 from django.conf import settings
@@ -5,16 +6,51 @@ from django.db import models
 
 from apps.common.models import BaseModel, TimeStampedModel, UUIDModel
 
+logger = logging.getLogger(__name__)
+
+
+logger = logging.getLogger(__name__)
+
+
+class College(BaseModel):
+    """Institutional college / university options configured and managed by administrators."""
+
+    name = models.CharField(max_length=255, unique=True, db_index=True)
+    code = models.CharField(max_length=50, blank=True, default="", db_index=True)
+    city = models.CharField(max_length=100, blank=True, default="")
+    state = models.CharField(max_length=100, blank=True, default="")
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    class Meta:
+        verbose_name = "College"
+        verbose_name_plural = "Colleges"
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name", "is_active"], name="college_name_active_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.code})" if self.code else self.name
+
 
 class StudentProfile(BaseModel):
     """Core academic profile for enrolled students."""
 
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="student_profile"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="student_profile",
     )
     student_id_number = models.CharField(max_length=50, unique=True, db_index=True)
     full_name = models.CharField(max_length=150)
     batch_code = models.CharField(max_length=50, db_index=True)
+    college = models.ForeignKey(
+        College,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="students",
+    )
     college_name = models.CharField(max_length=255, blank=True, default="")
     graduation_year = models.PositiveIntegerField(null=True, blank=True)
 
@@ -40,7 +76,11 @@ class StudentProfile(BaseModel):
     # Gamification & Progress
     current_streak_days = models.PositiveIntegerField(default=0)
     highest_streak_days = models.PositiveIntegerField(default=0)
-    last_activity_date = models.DateField(null=True, blank=True, help_text="Date of last solved problem for streak tracking")
+    last_activity_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of last solved problem for streak tracking",
+    )
     total_points = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal("0.00"), db_index=True
     )
@@ -50,7 +90,9 @@ class StudentProfile(BaseModel):
         verbose_name = "Student Profile"
         verbose_name_plural = "Student Profiles"
         indexes = [
-            models.Index(fields=["batch_code", "-total_points"], name="batch_points_idx"),
+            models.Index(
+                fields=["batch_code", "-total_points"], name="batch_points_idx"
+            ),
             models.Index(fields=["-total_points"], name="global_points_idx"),
             models.Index(fields=["user", "batch_code"], name="student_user_batch_idx"),
         ]
@@ -60,7 +102,9 @@ class StudentProfile(BaseModel):
                 name="non_negative_student_points",
             ),
             models.CheckConstraint(
-                condition=models.Q(current_streak_days__lte=models.F("highest_streak_days")),
+                condition=models.Q(
+                    current_streak_days__lte=models.F("highest_streak_days")
+                ),
                 name="current_streak_lte_highest",
             ),
         ]
@@ -68,8 +112,12 @@ class StudentProfile(BaseModel):
     def recalculate_attendance(self):
         """Calculate live attendance percentage based on total and attended sessions."""
         if self.total_classes > 0:
-            pct = (Decimal(self.attended_classes) / Decimal(self.total_classes)) * Decimal("100.00")
-            self.attendance_percentage = min(Decimal("100.00"), max(Decimal("0.00"), round(pct, 2)))
+            pct = (
+                Decimal(self.attended_classes) / Decimal(self.total_classes)
+            ) * Decimal("100.00")
+            self.attendance_percentage = min(
+                Decimal("100.00"), max(Decimal("0.00"), round(pct, 2))
+            )
         else:
             self.attendance_percentage = Decimal("100.00")
 
@@ -81,6 +129,7 @@ class StudentProfile(BaseModel):
         - Update highest streak if current exceeds it.
         """
         from datetime import timedelta
+
         from django.utils import timezone
 
         if activity_date is None:
@@ -98,15 +147,24 @@ class StudentProfile(BaseModel):
             self.current_streak_days = 1
 
         self.last_activity_date = activity_date
-        if self.current_streak_days > self.highest_streak_days:
-            self.highest_streak_days = self.current_streak_days
+        self.highest_streak_days = max(
+            self.highest_streak_days, self.current_streak_days
+        )
 
-        self.save(update_fields=["current_streak_days", "highest_streak_days", "last_activity_date", "updated_at"])
+        self.save(
+            update_fields=[
+                "current_streak_days",
+                "highest_streak_days",
+                "last_activity_date",
+                "updated_at",
+            ]
+        )
         return self.current_streak_days
 
     def get_effective_streak(self, current_date=None):
         """Calculate effective streak. If user missed yesterday and today, returns 0."""
         from datetime import timedelta
+
         from django.utils import timezone
 
         if current_date is None:
@@ -116,14 +174,18 @@ class StudentProfile(BaseModel):
             return 0
 
         yesterday = current_date - timedelta(days=1)
-        if self.last_activity_date == current_date or self.last_activity_date == yesterday:
+        if (
+            self.last_activity_date == current_date
+            or self.last_activity_date == yesterday
+        ):
             return self.current_streak_days
         return 0
 
     def clean(self):
         super().clean()
-        if self.current_streak_days > self.highest_streak_days:
-            self.highest_streak_days = self.current_streak_days
+        self.highest_streak_days = max(
+            self.highest_streak_days, self.current_streak_days
+        )
         self.recalculate_attendance()
 
     def save(self, *args, **kwargs):
@@ -131,9 +193,13 @@ class StudentProfile(BaseModel):
         super().save(*args, **kwargs)
         try:
             from apps.leaderboard.services import LeaderboardService
+
             LeaderboardService.invalidate_cache(batch_code=self.batch_code)
         except Exception:
-            pass
+            logger.exception(
+                "Failed to invalidate leaderboard cache for batch_code=%s",
+                self.batch_code,
+            )
 
     def __str__(self):
         return f"{self.full_name} ({self.student_id_number})"
@@ -152,10 +218,16 @@ class AttendanceRecord(UUIDModel, TimeStampedModel):
         StudentProfile, on_delete=models.CASCADE, related_name="attendance_records"
     )
     date = models.DateField(db_index=True)
-    session_title = models.CharField(max_length=200, default="Daily Training & Coding Lab")
-    technology = models.CharField(max_length=100, blank=True, default="Full Stack Development", db_index=True)
+    session_title = models.CharField(
+        max_length=200, default="Daily Training & Coding Lab"
+    )
+    technology = models.CharField(
+        max_length=100, blank=True, default="Full Stack Development", db_index=True
+    )
     status = models.CharField(
-        max_length=20, choices=AttendanceStatus.choices, default=AttendanceStatus.PRESENT
+        max_length=20,
+        choices=AttendanceStatus.choices,
+        default=AttendanceStatus.PRESENT,
     )
     remarks = models.CharField(max_length=255, blank=True, default="")
 
@@ -164,7 +236,9 @@ class AttendanceRecord(UUIDModel, TimeStampedModel):
         verbose_name_plural = "Attendance Records"
         ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=["student_profile", "date"], name="attendance_stud_date_idx"),
+            models.Index(
+                fields=["student_profile", "date"], name="attendance_stud_date_idx"
+            ),
             models.Index(fields=["date", "status"], name="attendance_date_status_idx"),
         ]
 

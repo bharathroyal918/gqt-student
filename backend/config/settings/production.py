@@ -1,23 +1,26 @@
 """Production settings for GQT Student Portal."""
 
-from .base import *  # noqa: F403
+from .base import *
 from .base import env
 
 DEBUG = False
 ENVIRONMENT = "production"
 
 # Database Configuration (Supabase PostgreSQL / Render PostgreSQL)
-raw_db_url = env("DATABASE_URL", default="").strip() or env("DJANGO_DATABASE_URL", default="").strip()
+raw_db_url = (
+    env("DATABASE_URL", default="").strip()
+    or env("DJANGO_DATABASE_URL", default="").strip()
+)
 if raw_db_url:
-    DATABASES = {
-        "default": env.db_url_config(raw_db_url)
-    }
+    DATABASES = {"default": env.db_url_config(raw_db_url)}
     if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
         DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=600)
         DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
         if "OPTIONS" not in DATABASES["default"]:
             DATABASES["default"]["OPTIONS"] = {}
-        DATABASES["default"]["OPTIONS"].setdefault("sslmode", env("DB_SSLMODE", default="require"))
+        DATABASES["default"]["OPTIONS"].setdefault(
+            "sslmode", env("DB_SSLMODE", default="require")
+        )
 else:
     # Fallback to base or local SQLite if running build checks without database attached
     DATABASES = {

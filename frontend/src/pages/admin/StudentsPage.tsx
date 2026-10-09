@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   UserPlus,
   Eye,
@@ -13,6 +13,7 @@ import {
   MailCheck,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { collegesApi } from "../../api/collegesApi";
 import { StudentListItem } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
@@ -131,6 +132,11 @@ export const StudentsPage: React.FC = () => {
   });
 
   // Grant Access Direct Mutation
+  const { data: colleges = [] } = useQuery({
+    queryKey: ["admin-colleges"],
+    queryFn: () => collegesApi.adminGetColleges(),
+  });
+
   const grantAccessMutation = useMutation({
     mutationFn: (id: string) => adminApi.grantStudentAccess(id),
     onSuccess: (res) => {
@@ -627,13 +633,39 @@ export const StudentsPage: React.FC = () => {
             </FormField>
           </div>
 
-          <FormField label="College / Institute Name">
-            <Input
-              placeholder="e.g. National Institute of Engineering"
-              value={formData.college_name}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                College / Institution Name
+              </label>
+              <Link
+                to="/admin/colleges"
+                className="text-[11px] text-brand-600 dark:text-brand-400 hover:underline font-medium"
+              >
+                Manage Colleges &rarr;
+              </Link>
+            </div>
+            <select
+              value={formData.college_name || ""}
               onChange={(e) => setFormData({ ...formData, college_name: e.target.value })}
-            />
-          </FormField>
+              className="w-full rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-950 p-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="">-- Select Approved College / University --</option>
+              {colleges.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name} {c.code ? `(${c.code})` : ""} {c.city ? `— ${c.city}` : ""}
+                </option>
+              ))}
+              {formData.college_name &&
+                !colleges.some(
+                  (c) => c.name.toLowerCase() === formData.college_name?.toLowerCase()
+                ) && (
+                  <option value={formData.college_name}>
+                    {formData.college_name} (Current)
+                  </option>
+                )}
+            </select>
+          </div>
 
           <FormField label="Initial Password (Optional)">
             <Input
@@ -751,12 +783,39 @@ export const StudentsPage: React.FC = () => {
             </FormField>
           </div>
 
-          <FormField label="College / Institute Name">
-            <Input
-              value={formData.college_name}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                College / Institution Name
+              </label>
+              <Link
+                to="/admin/colleges"
+                className="text-[11px] text-brand-600 dark:text-brand-400 hover:underline font-medium"
+              >
+                Manage Colleges &rarr;
+              </Link>
+            </div>
+            <select
+              value={formData.college_name || ""}
               onChange={(e) => setFormData({ ...formData, college_name: e.target.value })}
-            />
-          </FormField>
+              className="w-full rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-950 p-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="">-- Select Approved College / University --</option>
+              {colleges.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name} {c.code ? `(${c.code})` : ""} {c.city ? `— ${c.city}` : ""}
+                </option>
+              ))}
+              {formData.college_name &&
+                !colleges.some(
+                  (c) => c.name.toLowerCase() === formData.college_name?.toLowerCase()
+                ) && (
+                  <option value={formData.college_name}>
+                    {formData.college_name} (Current)
+                  </option>
+                )}
+            </select>
+          </div>
 
           <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-surface-800">
             <Button variant="secondary" type="button" onClick={() => setEditingStudent(null)}>

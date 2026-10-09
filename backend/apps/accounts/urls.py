@@ -38,7 +38,11 @@ urlpatterns = [
     path("token/refresh/", RefreshTokenView.as_view(), name="token_refresh"),
     path("logout/", LogoutView.as_view(), name="logout"),
     # OTP & Token Password Reset
-    path("password/forgot-otp/", ForgotPasswordOTPRequestView.as_view(), name="password_forgot_otp"),
+    path(
+        "password/forgot-otp/",
+        ForgotPasswordOTPRequestView.as_view(),
+        name="password_forgot_otp",
+    ),
     path(
         "password/verify-reset-otp/",
         ForgotPasswordOTPVerifyView.as_view(),

@@ -1,9 +1,9 @@
-from datetime import date
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.analytics.models import ActivityEvent, DailyStudentAnalytics
 from apps.students.models import StudentProfile
@@ -37,7 +37,7 @@ class AnalyticsModelTests(TestCase):
         self.assertEqual(event.properties["language"], "python")
 
     def test_daily_student_analytics_uniqueness(self):
-        today = date.today()
+        today = timezone.localdate()
         DailyStudentAnalytics.objects.create(
             student=self.student,
             date=today,

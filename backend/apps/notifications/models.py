@@ -28,7 +28,9 @@ class Notification(BaseModel):
     title = models.CharField(max_length=200)
     body = models.TextField()
     notification_type = models.CharField(
-        max_length=40, choices=NotificationType.choices, default=NotificationType.SYSTEM_NOTICE
+        max_length=40,
+        choices=NotificationType.choices,
+        default=NotificationType.SYSTEM_NOTICE,
     )
     is_read = models.BooleanField(default=False, db_index=True)
     read_at = models.DateTimeField(null=True, blank=True)
@@ -46,7 +48,8 @@ class Notification(BaseModel):
         ordering = ["-created_at"]
         indexes = [
             models.Index(
-                fields=["recipient", "is_read", "-created_at"], name="notif_recip_read_idx"
+                fields=["recipient", "is_read", "-created_at"],
+                name="notif_recip_read_idx",
             ),
             models.Index(fields=["idempotency_key"], name="notif_idem_idx"),
         ]
@@ -118,13 +121,23 @@ class Announcement(BaseModel):
         ordering = ["-created_at"]
         indexes = [
             models.Index(
-                fields=["is_active", "is_published", "-created_at"], name="ann_active_pub_idx"
+                fields=["is_active", "is_published", "-created_at"],
+                name="ann_active_pub_idx",
             ),
             models.Index(
-                fields=["target_audience", "target_batch", "-created_at"], name="ann_aud_batch_idx"
+                fields=["target_audience", "target_batch", "-created_at"],
+                name="ann_aud_batch_idx",
             ),
         ]
 
     def __str__(self):
-        scope = self.target_batch if self.target_batch else ("Global" if self.target_audience == self.TargetAudienceChoices.ALL else self.target_audience)
+        scope = (
+            self.target_batch
+            if self.target_batch
+            else (
+                "Global"
+                if self.target_audience == self.TargetAudienceChoices.ALL
+                else self.target_audience
+            )
+        )
         return f"{self.title} ({scope}) [{self.priority}]"

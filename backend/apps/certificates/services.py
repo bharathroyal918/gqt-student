@@ -2,10 +2,10 @@
 
 import hashlib
 import logging
-from typing import Any, Dict, List, Optional
 import uuid
+from typing import Any
 
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -32,15 +32,15 @@ class AchievementService:
     def evaluate_achievements(
         cls,
         student: StudentProfile,
-        event_type: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
-    ) -> List[StudentBadge]:
+        event_type: str | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> list[StudentBadge]:
         """Evaluate all active milestone rules against student telemetry and unlock badges."""
         # Ensure default system badges exist
         cls.ensure_default_badges()
 
         active_badges = Badge.objects.filter(is_active=True)
-        newly_unlocked: List[StudentBadge] = []
+        newly_unlocked: list[StudentBadge] = []
 
         # Gather student progress telemetry
         completed_modules_count = StudentModuleProgress.objects.filter(
@@ -110,10 +110,14 @@ class AchievementService:
         return newly_unlocked
 
     @classmethod
-    def get_student_badges_summary(cls, student: StudentProfile) -> List[Dict[str, Any]]:
+    def get_student_badges_summary(
+        cls, student: StudentProfile
+    ) -> list[dict[str, Any]]:
         """Return list of all badges annotated with student unlock status and progress."""
         cls.ensure_default_badges()
-        active_badges = Badge.objects.filter(is_active=True).order_by("criteria_threshold", "name")
+        active_badges = Badge.objects.filter(is_active=True).order_by(
+            "criteria_threshold", "name"
+        )
         earned_map = {
             sb.badge_id: sb.awarded_at
             for sb in StudentBadge.objects.filter(student=student)
@@ -137,13 +141,18 @@ class AchievementService:
                 current_val = total_points
             elif b.criteria_type == Badge.CriteriaType.STREAK_MILESTONE:
                 current_val = streak_days
-            elif b.criteria_type in [Badge.CriteriaType.PROJECT_COMPLETION, Badge.CriteriaType.PROJECT_EXCELLENCE]:
+            elif b.criteria_type in [
+                Badge.CriteriaType.PROJECT_COMPLETION,
+                Badge.CriteriaType.PROJECT_EXCELLENCE,
+            ]:
                 current_val = ProjectSubmission.objects.filter(
                     student=student, status=ProjectSubmission.SubmissionStatus.APPROVED
                 ).count()
 
             progress_percent = (
-                100.0 if is_unlocked else min(100.0, (current_val / max(1, b.criteria_threshold)) * 100.0)
+                100.0
+                if is_unlocked
+                else min(100.0, (current_val / max(1, b.criteria_threshold)) * 100.0)
             )
 
             results.append(
@@ -233,7 +242,9 @@ class CertificateService:
     ) -> Certificate:
         """Issue an institutional certificate upon verified course completion (idempotent)."""
         # 1. Idempotency Check: Prevent duplicate certificate generation
-        existing_cert = Certificate.objects.filter(student=student, course=course).first()
+        existing_cert = Certificate.objects.filter(
+            student=student, course=course
+        ).first()
         if existing_cert:
             logger.info(
                 "Certificate already exists for student %s and course %s. Returning existing.",
@@ -260,7 +271,9 @@ class CertificateService:
         unique_suffix = uuid.uuid4().hex[:8].upper()
         certificate_id = f"GQT-CERT-{year}-{unique_suffix}"
 
-        raw_hash_str = f"{student.id}:{course.id}:{certificate_id}:{timezone.now().isoformat()}"
+        raw_hash_str = (
+            f"{student.id}:{course.id}:{certificate_id}:{timezone.now().isoformat()}"
+        )
         verification_hash = hashlib.sha256(raw_hash_str.encode("utf-8")).hexdigest()
 
         # 4. Create Certificate Record with snapshot details
@@ -296,24 +309,31 @@ class CertificateService:
         )
 
         # Also evaluate Course Completion badge
-        AchievementService.evaluate_achievements(student, event_type="COURSE_COMPLETION")
+        AchievementService.evaluate_achievements(
+            student, event_type="COURSE_COMPLETION"
+        )
 
         return certificate
 
     @classmethod
-    def verify_certificate(cls, certificate_identifier: str) -> Dict[str, Any]:
+    def verify_certificate(cls, certificate_identifier: str) -> dict[str, Any]:
         """Public verification endpoint resolving certificate authenticity."""
         clean_id = certificate_identifier.strip()
         from django.db.models import Q
 
         cert = (
             Certificate.objects.select_related("student", "course")
-            .filter(Q(certificate_id__iexact=clean_id) | Q(verification_hash__iexact=clean_id))
+            .filter(
+                Q(certificate_id__iexact=clean_id)
+                | Q(verification_hash__iexact=clean_id)
+            )
             .first()
         )
 
         if not cert:
-            raise NotFound("Certificate record not found. Please verify the identifier.")
+            raise NotFound(
+                "Certificate record not found. Please verify the identifier."
+            )
 
         if cert.is_revoked:
             return {
@@ -340,19 +360,24 @@ class CertificateService:
     @classmethod
     def list_student_certificates(cls, student: StudentProfile):
         """List verified certificates earned by the student."""
-        return Certificate.objects.filter(student=student, is_revoked=False).order_by("-issued_at")
+        return Certificate.objects.filter(student=student, is_revoked=False).order_by(
+            "-issued_at"
+        )
 
     @classmethod
     def list_admin_certificates(
         cls,
-        search: Optional[str] = None,
-        course_id: Optional[uuid.UUID] = None,
-        is_revoked: Optional[bool] = None,
+        search: str | None = None,
+        course_id: uuid.UUID | None = None,
+        is_revoked: bool | None = None,
     ):
         """Admin listing with filtering."""
-        qs = Certificate.objects.select_related("student", "course").order_by("-issued_at")
+        qs = Certificate.objects.select_related("student", "course").order_by(
+            "-issued_at"
+        )
         if search:
             from django.db.models import Q
+
             qs = qs.filter(
                 Q(certificate_id__icontains=search)
                 | Q(student_name__icontains=search)
@@ -372,7 +397,7 @@ class CertificateService:
         certificate_id: uuid.UUID,
         admin_user: User,
         reason: str = "",
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> Certificate:
         """Revoke a certificate."""
         cert = get_object_or_404(Certificate, id=certificate_id)

@@ -1,8 +1,9 @@
 """Serializers for Student Coding Practice Platform."""
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.assignments.models import CodingQuestion, CodeSubmission, TestCase
+from apps.assignments.models import CodeSubmission, CodingQuestion, TestCase
 
 
 class StudentTestCaseSerializer(serializers.ModelSerializer):
@@ -24,7 +25,9 @@ class StudentQuestionListSerializer(serializers.ModelSerializer):
     best_score = serializers.FloatField(default=0.0, read_only=True)
     attempts_count = serializers.IntegerField(default=0, read_only=True)
     is_module_locked = serializers.BooleanField(default=False, read_only=True)
-    module_unlock_requirement = serializers.CharField(default=None, allow_null=True, read_only=True)
+    module_unlock_requirement = serializers.CharField(
+        default=None, allow_null=True, read_only=True
+    )
 
     class Meta:
         model = CodingQuestion
@@ -60,9 +63,15 @@ class StudentQuestionDetailSerializer(serializers.ModelSerializer):
     best_score = serializers.FloatField(default=0.0, read_only=True)
     attempts_count = serializers.IntegerField(default=0, read_only=True)
     is_module_locked = serializers.BooleanField(default=False, read_only=True)
-    module_unlock_requirement = serializers.CharField(default=None, allow_null=True, read_only=True)
-    last_submission_code = serializers.CharField(default=None, allow_null=True, read_only=True)
-    last_submission_language = serializers.CharField(default=None, allow_null=True, read_only=True)
+    module_unlock_requirement = serializers.CharField(
+        default=None, allow_null=True, read_only=True
+    )
+    last_submission_code = serializers.CharField(
+        default=None, allow_null=True, read_only=True
+    )
+    last_submission_language = serializers.CharField(
+        default=None, allow_null=True, read_only=True
+    )
     submissions_by_language = serializers.DictField(default=dict, read_only=True)
 
     class Meta:
@@ -93,6 +102,7 @@ class StudentQuestionDetailSerializer(serializers.ModelSerializer):
             "submissions_by_language",
         ]
 
+    @extend_schema_field(StudentTestCaseSerializer(many=True))
     def get_visible_test_cases(self, obj):
         # Strict security rule: Only query and expose visible testcases
         visible_qs = obj.test_cases.filter(is_visible=True).order_by("order")

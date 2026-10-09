@@ -1,6 +1,6 @@
 """Student views for browsing, inspecting, and completing daily practice tasks."""
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -48,7 +48,9 @@ class StudentTaskListView(APIView):
             )
 
         status_filter = request.query_params.get("status")
-        tasks = StudentTaskService.get_student_tasks(student=student, status_filter=status_filter)
+        tasks = StudentTaskService.get_student_tasks(
+            student=student, status_filter=status_filter
+        )
 
         return api_success(
             data={"tasks": tasks, "count": len(tasks)},
@@ -80,7 +82,9 @@ class StudentTaskDetailView(APIView):
                 status_code=status.HTTP_403_FORBIDDEN,
             )
 
-        task_detail = StudentTaskService.get_student_task_detail(student=student, task_id=str(task_id))
+        task_detail = StudentTaskService.get_student_task_detail(
+            student=student, task_id=str(task_id)
+        )
         return api_success(
             data=task_detail,
             message="Task detail retrieved successfully.",

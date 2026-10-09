@@ -1,7 +1,8 @@
 """Domain services for administrative curriculum module management and sequential ordering."""
 
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -36,33 +37,33 @@ class ModuleAdminService:
         title: str,
         summary: str = "",
         lecture_content: str = "",
-        slug: Optional[str] = None,
-        order_index: Optional[int] = None,
+        slug: str | None = None,
+        order_index: int | None = None,
         passing_percentage: Decimal = Decimal("80.00"),
         is_published: bool = True,
-        prerequisite_ids: Optional[List[str]] = None,
-        ip_address: Optional[str] = None,
+        prerequisite_ids: list[str] | None = None,
+        ip_address: str | None = None,
     ) -> Module:
         course = get_object_or_404(Course, id=course_id, is_deleted=False)
 
-        if order_index is None or order_index <= 0:
+        if (
+            order_index is None
+            or order_index <= 0
+            or Module.objects.filter(course=course, order_index=order_index).exists()
+        ):
             max_order = (
-                Module.objects.filter(course=course).aggregate(max_order=models.Max("order_index"))[
-                    "max_order"
-                ]
-                or 0
-            )
-            order_index = max_order + 1
-        elif Module.objects.filter(course=course, order_index=order_index).exists():
-            max_order = (
-                Module.objects.filter(course=course).aggregate(max_order=models.Max("order_index"))[
-                    "max_order"
-                ]
+                Module.objects.filter(course=course).aggregate(
+                    max_order=models.Max("order_index")
+                )["max_order"]
                 or 0
             )
             order_index = max_order + 1
 
-        module_slug = slug.strip().lower() if slug else slugify(f"{course.slug}-{order_index}-{title[:40]}")
+        module_slug = (
+            slug.strip().lower()
+            if slug
+            else slugify(f"{course.slug}-{order_index}-{title[:40]}")
+        )
         base_slug = module_slug
         counter = 1
         while Module.objects.filter(course=course, slug=module_slug).exists():
@@ -100,7 +101,7 @@ class ModuleAdminService:
     @classmethod
     @transaction.atomic
     def delete_module(
-        cls, module_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, module_id: str, admin_user: User, ip_address: str | None = None
     ) -> None:
         module = cls.get_module(module_id)
         module_id_str = str(module.id)
@@ -123,15 +124,15 @@ class ModuleAdminService:
         cls,
         module_id: str,
         admin_user: User,
-        title: Optional[str] = None,
-        slug: Optional[str] = None,
-        order_index: Optional[int] = None,
-        summary: Optional[str] = None,
-        lecture_content: Optional[str] = None,
-        passing_percentage: Optional[Decimal] = None,
-        is_published: Optional[bool] = None,
-        prerequisite_ids: Optional[List[str]] = None,
-        ip_address: Optional[str] = None,
+        title: str | None = None,
+        slug: str | None = None,
+        order_index: int | None = None,
+        summary: str | None = None,
+        lecture_content: str | None = None,
+        passing_percentage: Decimal | None = None,
+        is_published: bool | None = None,
+        prerequisite_ids: list[str] | None = None,
+        ip_address: str | None = None,
     ) -> Module:
         module = cls.get_module(module_id)
         update_fields = ["updated_at"]
@@ -147,7 +148,9 @@ class ModuleAdminService:
                 .exclude(id=module.id)
                 .exists()
             ):
-                raise DomainException("A module with this slug already exists in this course.")
+                raise DomainException(
+                    "A module with this slug already exists in this course."
+                )
             module.slug = module_slug
             update_fields.append("slug")
 
@@ -199,19 +202,24 @@ class ModuleAdminService:
     def reorder_modules(
         cls,
         course_id: str,
-        order_mappings: List[Dict[str, Any]],
+        order_mappings: list[dict[str, Any]],
         admin_user: User,
-        ip_address: Optional[str] = None,
-    ) -> List[Module]:
+        ip_address: str | None = None,
+    ) -> list[Module]:
         """Atomically reorders modules in a course.
         order_mappings: [{'id': '<uuid>', 'order_index': 1}, ...]
         """
         course = get_object_or_404(Course, id=course_id, is_deleted=False)
         module_ids = [m["id"] for m in order_mappings]
-        modules = {str(m.id): m for m in Module.objects.filter(course=course, id__in=module_ids)}
+        modules = {
+            str(m.id): m
+            for m in Module.objects.filter(course=course, id__in=module_ids)
+        }
 
         if len(modules) != len(order_mappings):
-            raise DomainException("One or more modules do not belong to the specified course.")
+            raise DomainException(
+                "One or more modules do not belong to the specified course."
+            )
 
         # To avoid temporary unique constraint violation on (course, order_index), offset first
         for i, mapping in enumerate(order_mappings):
@@ -239,7 +247,7 @@ class ModuleAdminService:
     @classmethod
     @transaction.atomic
     def set_prerequisites(
-        cls, module_id: str, prerequisite_ids: List[str], admin_user: User
+        cls, module_id: str, prerequisite_ids: list[str], admin_user: User
     ) -> None:
         module = cls.get_module(module_id)
         # Clear existing
@@ -259,7 +267,11 @@ class ModuleAdminService:
     @classmethod
     @transaction.atomic
     def set_publish_status(
-        cls, module_id: str, is_published: bool, admin_user: User, ip_address: Optional[str] = None
+        cls,
+        module_id: str,
+        is_published: bool,
+        admin_user: User,
+        ip_address: str | None = None,
     ) -> Module:
         module = cls.get_module(module_id)
         module.is_published = is_published
@@ -403,7 +415,7 @@ class StudentModuleService:
     """Service governing student sequential curriculum unlocking, completion, and course progression."""
 
     @classmethod
-    def ensure_default_curriculum(cls, course: Course) -> List[Module]:
+    def ensure_default_curriculum(cls, course: Course) -> list[Module]:
         """Seeds or ensures all 17 sequential curriculum modules exist for a course."""
         created_modules = []
         for item in CURRICULUM_17_MODULES:
@@ -423,21 +435,32 @@ class StudentModuleService:
         return sorted(created_modules, key=lambda m: m.order_index)
 
     @classmethod
-    def get_student_courses(cls, student_profile: StudentProfile) -> List[Dict[str, Any]]:
+    def get_student_courses(
+        cls, student_profile: StudentProfile
+    ) -> list[dict[str, Any]]:
         """List all courses with student-specific enrollment status, progress, and continue pointers."""
-        courses = Course.objects.filter(is_deleted=False, is_published=True).order_by("order", "title")
+        courses = Course.objects.filter(is_deleted=False, is_published=True).order_by(
+            "order", "title"
+        )
         results = []
 
         enrollments_by_course = {
             e.course_id: e
-            for e in CourseEnrollment.objects.filter(student=student_profile).select_related("course")
+            for e in CourseEnrollment.objects.filter(
+                student=student_profile
+            ).select_related("course")
         }
 
         for course in courses:
             enrollment = enrollments_by_course.get(course.id)
-            is_enrolled = bool(enrollment and enrollment.status == CourseEnrollment.EnrollmentStatus.ACTIVE)
+            is_enrolled = bool(
+                enrollment
+                and enrollment.status == CourseEnrollment.EnrollmentStatus.ACTIVE
+            )
 
-            total_modules = Module.objects.filter(course=course, is_published=True).count()
+            total_modules = Module.objects.filter(
+                course=course, is_published=True
+            ).count()
             completed_modules = (
                 StudentModuleProgress.objects.filter(
                     student=student_profile,
@@ -449,7 +472,9 @@ class StudentModuleService:
             )
 
             progress_percentage = (
-                round((completed_modules / total_modules) * 100, 1) if total_modules > 0 else 0.0
+                round((completed_modules / total_modules) * 100, 1)
+                if total_modules > 0
+                else 0.0
             )
 
             # Find continue module
@@ -500,7 +525,7 @@ class StudentModuleService:
     @classmethod
     def get_student_course_detail(
         cls, student_profile: StudentProfile, course_id: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Retrieve course details along with the full sequential roadmap of modules and their access states."""
         course = get_object_or_404(Course, id=course_id, is_deleted=False)
 
@@ -508,13 +533,22 @@ class StudentModuleService:
             student=student_profile, course=course
         ).first()
 
-        if not enrollment or enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE:
+        if (
+            not enrollment
+            or enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE
+        ):
             raise DomainException(
-                "You are not actively enrolled in this course.", code="NOT_ENROLLED", status_code=403
+                "You are not actively enrolled in this course.",
+                code="NOT_ENROLLED",
+                status_code=403,
             )
 
         # Ensure default curriculum if course has 0 modules
-        modules = list(Module.objects.filter(course=course, is_published=True).order_by("order_index"))
+        modules = list(
+            Module.objects.filter(course=course, is_published=True).order_by(
+                "order_index"
+            )
+        )
         if not modules:
             modules = cls.ensure_default_curriculum(course)
 
@@ -557,11 +591,14 @@ class StudentModuleService:
             elif prog and prog.unlocked_by_override:
                 mod_status = prog.status or StudentModuleProgress.ModuleStatus.UNLOCKED
             elif idx == 0:
-                mod_status = prog.status if prog else StudentModuleProgress.ModuleStatus.UNLOCKED
+                mod_status = (
+                    prog.status if prog else StudentModuleProgress.ModuleStatus.UNLOCKED
+                )
             else:
                 # Strictly requires preceding module to be COMPLETED
                 is_prev_completed = bool(
-                    prev_prog and prev_prog.status == StudentModuleProgress.ModuleStatus.COMPLETED
+                    prev_prog
+                    and prev_prog.status == StudentModuleProgress.ModuleStatus.COMPLETED
                 )
                 if is_prev_completed:
                     if not prog:
@@ -583,7 +620,11 @@ class StudentModuleService:
                 StudentModuleProgress.ModuleStatus.COMPLETED,
             ]
 
-            if is_accessible and mod_status != StudentModuleProgress.ModuleStatus.COMPLETED and not continue_module_id:
+            if (
+                is_accessible
+                and mod_status != StudentModuleProgress.ModuleStatus.COMPLETED
+                and not continue_module_id
+            ):
                 continue_module_id = str(mod.id)
 
             module_items.append(
@@ -597,7 +638,9 @@ class StudentModuleService:
                     "status": mod_status,
                     "is_accessible": is_accessible,
                     "score_percentage": float(prog.score_percentage) if prog else 0.0,
-                    "completed_at": prog.completed_at.isoformat() if prog and prog.completed_at else None,
+                    "completed_at": prog.completed_at.isoformat()
+                    if prog and prog.completed_at
+                    else None,
                 }
             )
 
@@ -606,7 +649,9 @@ class StudentModuleService:
 
         total_modules = len(modules)
         progress_percentage = (
-            round((completed_count / total_modules) * 100, 1) if total_modules > 0 else 0.0
+            round((completed_count / total_modules) * 100, 1)
+            if total_modules > 0
+            else 0.0
         )
 
         return {
@@ -627,7 +672,7 @@ class StudentModuleService:
     @classmethod
     def get_student_module_detail(
         cls, student_profile: StudentProfile, module_id: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Fetch individual module lecture notes and assessment details with backend sequential lock enforcement."""
         module = get_object_or_404(
             Module.objects.select_related("course"), id=module_id, is_published=True
@@ -638,9 +683,14 @@ class StudentModuleService:
             student=student_profile, course=module.course
         ).first()
 
-        if not enrollment or enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE:
+        if (
+            not enrollment
+            or enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE
+        ):
             raise DomainException(
-                "You are not actively enrolled in this course.", code="NOT_ENROLLED", status_code=403
+                "You are not actively enrolled in this course.",
+                code="NOT_ENROLLED",
+                status_code=403,
             )
 
         # Sequential authorization check
@@ -655,7 +705,9 @@ class StudentModuleService:
         if not is_first:
             prev_mod = (
                 Module.objects.filter(
-                    course=module.course, is_published=True, order_index__lt=module.order_index
+                    course=module.course,
+                    is_published=True,
+                    order_index__lt=module.order_index,
                 )
                 .order_by("-order_index")
                 .first()
@@ -669,7 +721,8 @@ class StudentModuleService:
             )
 
             is_prev_completed = bool(
-                prev_prog and prev_prog.status == StudentModuleProgress.ModuleStatus.COMPLETED
+                prev_prog
+                and prev_prog.status == StudentModuleProgress.ModuleStatus.COMPLETED
             )
             is_unlocked_or_override = bool(
                 prog
@@ -706,14 +759,18 @@ class StudentModuleService:
         # Navigation helpers
         prev_module = (
             Module.objects.filter(
-                course=module.course, is_published=True, order_index__lt=module.order_index
+                course=module.course,
+                is_published=True,
+                order_index__lt=module.order_index,
             )
             .order_by("-order_index")
             .first()
         )
         next_module = (
             Module.objects.filter(
-                course=module.course, is_published=True, order_index__gt=module.order_index
+                course=module.course,
+                is_published=True,
+                order_index__gt=module.order_index,
             )
             .order_by("order_index")
             .first()
@@ -751,7 +808,9 @@ class StudentModuleService:
             "passing_percentage": float(module.passing_percentage),
             "status": prog.status,
             "score_percentage": float(prog.score_percentage),
-            "completed_at": prog.completed_at.isoformat() if prog.completed_at else None,
+            "completed_at": prog.completed_at.isoformat()
+            if prog.completed_at
+            else None,
             "prev_module_id": str(prev_module.id) if prev_module else None,
             "next_module_id": str(next_module.id) if next_module else None,
             "is_next_unlocked": is_next_unlocked,
@@ -760,10 +819,13 @@ class StudentModuleService:
     @classmethod
     @transaction.atomic
     def complete_module(
-        cls, student_profile: StudentProfile, module_id: str, score_percentage: Optional[Decimal] = None
-    ) -> Dict[str, Any]:
+        cls,
+        student_profile: StudentProfile,
+        module_id: str,
+        score_percentage: Decimal | None = None,
+    ) -> dict[str, Any]:
         """Atomically complete a module, sequentially unlock the next module, and recalculate course progress.
-        
+
         Concurrency Safety:
         Uses select_for_update() on StudentModuleProgress to avoid race conditions.
         Repeated completions are idempotent.
@@ -776,9 +838,14 @@ class StudentModuleService:
             student=student_profile, course=module.course
         ).first()
 
-        if not enrollment or enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE:
+        if (
+            not enrollment
+            or enrollment.status != CourseEnrollment.EnrollmentStatus.ACTIVE
+        ):
             raise DomainException(
-                "You are not actively enrolled in this course.", code="NOT_ENROLLED", status_code=403
+                "You are not actively enrolled in this course.",
+                code="NOT_ENROLLED",
+                status_code=403,
             )
 
         # Sequential check: Cannot complete a locked module
@@ -789,7 +856,9 @@ class StudentModuleService:
         if not is_first:
             prev_mod = (
                 Module.objects.filter(
-                    course=module.course, is_published=True, order_index__lt=module.order_index
+                    course=module.course,
+                    is_published=True,
+                    order_index__lt=module.order_index,
                 )
                 .order_by("-order_index")
                 .first()
@@ -802,7 +871,8 @@ class StudentModuleService:
                 else None
             )
             is_prev_completed = bool(
-                prev_prog and prev_prog.status == StudentModuleProgress.ModuleStatus.COMPLETED
+                prev_prog
+                and prev_prog.status == StudentModuleProgress.ModuleStatus.COMPLETED
             )
             prog_check = StudentModuleProgress.objects.filter(
                 student=student_profile, module=module
@@ -828,22 +898,33 @@ class StudentModuleService:
                 )
 
         # Lock progress record for update
-        progress, created = StudentModuleProgress.objects.select_for_update().get_or_create(
-            student=student_profile,
-            module=module,
-            defaults={
-                "status": StudentModuleProgress.ModuleStatus.UNLOCKED,
-                "unlocked_at": timezone.now(),
-            },
+        progress, _created = (
+            StudentModuleProgress.objects.select_for_update().get_or_create(
+                student=student_profile,
+                module=module,
+                defaults={
+                    "status": StudentModuleProgress.ModuleStatus.UNLOCKED,
+                    "unlocked_at": timezone.now(),
+                },
+            )
         )
 
         # Idempotent: If already completed, return without double-counting points
-        already_completed = progress.status == StudentModuleProgress.ModuleStatus.COMPLETED
+        already_completed = (
+            progress.status == StudentModuleProgress.ModuleStatus.COMPLETED
+        )
         if not already_completed:
             progress.status = StudentModuleProgress.ModuleStatus.COMPLETED
             progress.completed_at = timezone.now()
             progress.score_percentage = score_percentage or Decimal("100.00")
-            progress.save(update_fields=["status", "completed_at", "score_percentage", "updated_at"])
+            progress.save(
+                update_fields=[
+                    "status",
+                    "completed_at",
+                    "score_percentage",
+                    "updated_at",
+                ]
+            )
 
             # Award module completion points
             completion_pts = Decimal("50.00")
@@ -860,20 +941,24 @@ class StudentModuleService:
         # Sequentially unlock the next module
         next_module = (
             Module.objects.filter(
-                course=module.course, is_published=True, order_index__gt=module.order_index
+                course=module.course,
+                is_published=True,
+                order_index__gt=module.order_index,
             )
             .order_by("order_index")
             .first()
         )
 
         if next_module:
-            next_prog, _ = StudentModuleProgress.objects.select_for_update().get_or_create(
-                student=student_profile,
-                module=next_module,
-                defaults={
-                    "status": StudentModuleProgress.ModuleStatus.UNLOCKED,
-                    "unlocked_at": timezone.now(),
-                },
+            next_prog, _ = (
+                StudentModuleProgress.objects.select_for_update().get_or_create(
+                    student=student_profile,
+                    module=next_module,
+                    defaults={
+                        "status": StudentModuleProgress.ModuleStatus.UNLOCKED,
+                        "unlocked_at": timezone.now(),
+                    },
+                )
             )
             if next_prog.status == StudentModuleProgress.ModuleStatus.LOCKED:
                 next_prog.status = StudentModuleProgress.ModuleStatus.UNLOCKED
@@ -881,7 +966,9 @@ class StudentModuleService:
                 next_prog.save(update_fields=["status", "unlocked_at", "updated_at"])
 
         # Recalculate course completion percentage
-        total_published = Module.objects.filter(course=module.course, is_published=True).count()
+        total_published = Module.objects.filter(
+            course=module.course, is_published=True
+        ).count()
         completed_count = StudentModuleProgress.objects.filter(
             student=student_profile,
             module__course=module.course,
@@ -889,11 +976,15 @@ class StudentModuleService:
         ).count()
 
         course_progress_percentage = (
-            round((completed_count / total_published) * 100, 1) if total_published > 0 else 0.0
+            round((completed_count / total_published) * 100, 1)
+            if total_published > 0
+            else 0.0
         )
 
         if completed_count == total_published and total_published > 0:
-            CourseEnrollment.objects.filter(student=student_profile, course=module.course).update(
+            CourseEnrollment.objects.filter(
+                student=student_profile, course=module.course
+            ).update(
                 status=CourseEnrollment.EnrollmentStatus.COMPLETED,
                 completed_at=timezone.now(),
             )
@@ -904,7 +995,9 @@ class StudentModuleService:
             "title": module.title,
             "status": progress.status,
             "score_percentage": float(progress.score_percentage),
-            "completed_at": progress.completed_at.isoformat() if progress.completed_at else None,
+            "completed_at": progress.completed_at.isoformat()
+            if progress.completed_at
+            else None,
             "course_id": str(module.course.id),
             "course_progress_percentage": course_progress_percentage,
             "completed_modules_count": completed_count,
@@ -918,4 +1011,3 @@ class StudentModuleService:
             if next_module
             else None,
         }
-

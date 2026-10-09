@@ -22,7 +22,9 @@ class AssignmentModelTests(TestCase):
     """Test suite for coding assignment models, submissions, and execution results."""
 
     def setUp(self):
-        self.user = User.objects.create_user(email="coder@gqt.local", password="Password123!")
+        self.user = User.objects.create_user(
+            email="coder@gqt.local", password="Password123!"
+        )
         self.student = StudentProfile.objects.create(
             user=self.user,
             student_id_number="GQT-STU-003",

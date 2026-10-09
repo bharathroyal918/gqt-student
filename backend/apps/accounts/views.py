@@ -2,8 +2,10 @@ import logging
 import os
 import time
 import uuid
+
 from django.conf import settings
 from django.core.files.storage import default_storage
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -11,11 +13,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.accounts.models import AdminProfile, LoginActivity, User
-from apps.students.models import StudentProfile
 from apps.accounts.serializers import (
     AdminLoginSerializer,
     AdminProfileNestedSerializer,
     AdminProfileUpdateSerializer,
+    AvatarUploadSerializer,
     ChangePasswordSerializer,
     EmailLoginSerializer,
     ForgotPasswordOTPRequestSerializer,
@@ -37,6 +39,7 @@ from apps.accounts.services import AuthService, StudentProvisioningService
 from apps.common.permissions import IsAdmin
 from apps.common.responses import api_error, api_success
 from apps.common.utils import get_client_ip, mask_email, mask_phone
+from apps.students.models import StudentProfile
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +65,7 @@ class StudentRegisterView(APIView):
         ip_address = get_client_ip(request)
         user_agent = request.META.get("HTTP_USER_AGENT", "")
 
-        user, access_token, refresh_token, user_data = AuthService.register_student(
+        _user, access_token, refresh_token, user_data = AuthService.register_student(
             full_name=serializer.validated_data["full_name"],
             email=serializer.validated_data["email"],
             mobile_number=serializer.validated_data["mobile_number"],
@@ -110,7 +113,7 @@ class StudentLoginView(APIView):
         ip_address = get_client_ip(request)
         user_agent = request.META.get("HTTP_USER_AGENT", "")
 
-        user, access_token, refresh_token, user_data = AuthService.login_as_student(
+        _user, access_token, refresh_token, user_data = AuthService.login_as_student(
             email=email,
             password=password,
             ip_address=ip_address,
@@ -152,7 +155,7 @@ class AdminLoginView(APIView):
         ip_address = get_client_ip(request)
         user_agent = request.META.get("HTTP_USER_AGENT", "")
 
-        user, access_token, refresh_token, user_data = AuthService.login_as_admin(
+        _user, access_token, refresh_token, user_data = AuthService.login_as_admin(
             email=email,
             password=password,
             ip_address=ip_address,
@@ -194,7 +197,7 @@ class EmailLoginView(APIView):
         ip_address = get_client_ip(request)
         user_agent = request.META.get("HTTP_USER_AGENT", "")
 
-        user, access_token, refresh_token, user_data = AuthService.login_with_email(
+        _user, access_token, refresh_token, user_data = AuthService.login_with_email(
             email=email,
             password=password,
             ip_address=ip_address,
@@ -253,7 +256,9 @@ class VerifyOTPView(APIView):
         request=VerifyOTPSerializer,
         responses={
             200: OpenApiResponse(description="OTP verified successfully"),
-            400: OpenApiResponse(description="Invalid, expired, or maximum attempts exceeded"),
+            400: OpenApiResponse(
+                description="Invalid, expired, or maximum attempts exceeded"
+            ),
             403: OpenApiResponse(description="Account inactive or unapproved"),
         },
         summary="Verify Login OTP",
@@ -268,11 +273,13 @@ class VerifyOTPView(APIView):
         ip_address = get_client_ip(request)
         user_agent = request.META.get("HTTP_USER_AGENT", "")
 
-        user, access_token, refresh_token, user_data = AuthService.verify_otp_and_login(
-            mobile_number=mobile_number,
-            otp=otp,
-            ip_address=ip_address,
-            user_agent=user_agent,
+        _user, access_token, refresh_token, user_data = (
+            AuthService.verify_otp_and_login(
+                mobile_number=mobile_number,
+                otp=otp,
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
         )
 
         return api_success(
@@ -371,7 +378,9 @@ class ForgotPasswordOTPRequestView(APIView):
         identifier = serializer.validated_data["identifier"].strip()
         ip_address = get_client_ip(request)
 
-        result = AuthService.request_password_reset_otp(identifier=identifier, ip_address=ip_address)
+        result = AuthService.request_password_reset_otp(
+            identifier=identifier, ip_address=ip_address
+        )
 
         return api_success(
             data=result,
@@ -388,8 +397,12 @@ class ForgotPasswordOTPVerifyView(APIView):
     @extend_schema(
         request=ForgotPasswordOTPVerifySerializer,
         responses={
-            200: OpenApiResponse(description="OTP verified successfully, returns reset token"),
-            400: OpenApiResponse(description="Invalid, expired, or maximum attempts exceeded"),
+            200: OpenApiResponse(
+                description="OTP verified successfully, returns reset token"
+            ),
+            400: OpenApiResponse(
+                description="Invalid, expired, or maximum attempts exceeded"
+            ),
         },
         summary="Verify Password Reset OTP",
         tags=["Authentication"],
@@ -421,7 +434,9 @@ class ForgotPasswordView(APIView):
     @extend_schema(
         request=ForgotPasswordSerializer,
         responses={
-            200: OpenApiResponse(description="Instructions dispatched if account exists"),
+            200: OpenApiResponse(
+                description="Instructions dispatched if account exists"
+            ),
         },
         summary="Forgot Password Request",
         tags=["Authentication"],
@@ -435,7 +450,7 @@ class ForgotPasswordView(APIView):
 
         # Triggers both email token and OTP records for seamless client compatibility
         AuthService.request_password_reset(email=email, ip_address=ip_address)
-        otp_info = AuthService.request_password_reset_otp(identifier=email, ip_address=ip_address)
+        AuthService.request_password_reset_otp(identifier=email, ip_address=ip_address)
 
         return api_success(
             data={
@@ -506,11 +521,18 @@ class MeView(APIView):
         )
 
 
+@extend_schema(
+    summary="Admin Profile Detail & Update",
+    responses={200: OpenApiTypes.OBJECT},
+    tags=["Admin Management"],
+)
 class AdminProfileView(APIView):
     """View and update authenticated admin's profile and system preferences."""
 
     permission_classes = [IsAdmin]
+    serializer_class = AdminProfileUpdateSerializer
 
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
     def get(self, request):
         admin_profile, _ = AdminProfile.objects.get_or_create(user=request.user)
         user_data = AuthService.get_user_profile_data(request.user)
@@ -524,7 +546,9 @@ class AdminProfileView(APIView):
                 "user_agent": act.user_agent,
                 "created_at": act.created_at,
             }
-            for act in LoginActivity.objects.filter(user=request.user).order_by("-created_at")[:10]
+            for act in LoginActivity.objects.filter(user=request.user).order_by(
+                "-created_at"
+            )[:10]
         ]
 
         return api_success(
@@ -564,7 +588,11 @@ class AdminProfileView(APIView):
 
         if "mobile_number" in data and data["mobile_number"].strip():
             mob = data["mobile_number"].strip()
-            if User.objects.filter(mobile_number=mob).exclude(id=request.user.id).exists():
+            if (
+                User.objects.filter(mobile_number=mob)
+                .exclude(id=request.user.id)
+                .exists()
+            ):
                 return api_error(
                     code="MOBILE_EXISTS",
                     message="This mobile number is already in use by another account.",
@@ -588,9 +616,12 @@ class AvatarUploadView(APIView):
 
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    serializer_class = AvatarUploadSerializer
 
     @extend_schema(
+        request=AvatarUploadSerializer,
         summary="Upload Profile Avatar Image",
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Authentication"],
     )
     def post(self, request):
@@ -674,7 +705,14 @@ class ChangePasswordView(APIView):
     """Secure endpoint for authenticated users to change their account password."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
 
+    @extend_schema(
+        request=ChangePasswordSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+        summary="Change Account Password",
+        tags=["Authentication"],
+    )
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -712,7 +750,9 @@ class AdminStudentProvisionView(APIView):
 
     @extend_schema(
         request=StudentProvisionSerializer,
-        responses={201: OpenApiResponse(description="Student provisioned successfully")},
+        responses={
+            201: OpenApiResponse(description="Student provisioned successfully")
+        },
         summary="Admin Provision Student",
         tags=["Admin Student Management"],
     )
@@ -758,7 +798,9 @@ class AdminStudentStatusView(APIView):
 
     @extend_schema(
         request=StudentStatusUpdateSerializer,
-        responses={200: OpenApiResponse(description="Student status updated successfully")},
+        responses={
+            200: OpenApiResponse(description="Student status updated successfully")
+        },
         summary="Admin Update Student Status",
         tags=["Admin Student Management"],
     )

@@ -1,10 +1,10 @@
 """Domain services for Notification management, Announcements, and Audience Resolution."""
 
 import logging
-from typing import Any, Dict, List, Optional
 import uuid
+from typing import Any
 
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -31,14 +31,16 @@ class NotificationService:
         body: str,
         notification_type: str = Notification.NotificationType.SYSTEM_NOTICE,
         action_url: str = "",
-        idempotency_key: Optional[str] = None,
+        idempotency_key: str | None = None,
         send_email: bool = False,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Notification:
         """Create a targeted in-app notification with duplicate prevention via idempotency."""
         # 1. Idempotency Check
         if idempotency_key:
-            existing = Notification.objects.filter(idempotency_key=idempotency_key).first()
+            existing = Notification.objects.filter(
+                idempotency_key=idempotency_key
+            ).first()
             if existing:
                 logger.info(
                     "Notification with idempotency_key '%s' already exists. Returning existing.",
@@ -71,8 +73,8 @@ class NotificationService:
     def list_user_notifications(
         cls,
         user: User,
-        is_read: Optional[bool] = None,
-        notification_type: Optional[str] = None,
+        is_read: bool | None = None,
+        notification_type: str | None = None,
     ):
         """Retrieve notifications for the authenticated user with optional filters."""
         qs = Notification.objects.filter(recipient=user).order_by("-created_at")
@@ -97,7 +99,9 @@ class NotificationService:
             raise NotFound("Notification not found.")
 
         if notification.recipient_id != user.id:
-            raise PermissionDenied("You do not have permission to modify this notification.")
+            raise PermissionDenied(
+                "You do not have permission to modify this notification."
+            )
 
         if not notification.is_read:
             notification.is_read = True
@@ -128,7 +132,9 @@ class NotificationService:
             raise NotFound("Notification not found.")
 
         if notification.recipient_id != user.id:
-            raise PermissionDenied("You do not have permission to delete this notification.")
+            raise PermissionDenied(
+                "You do not have permission to delete this notification."
+            )
 
         notification.delete()
 
@@ -152,12 +158,12 @@ class AnnouncementAdminService:
         content: str,
         target_audience: str = Announcement.TargetAudienceChoices.ALL,
         target_batch: str = "",
-        target_course_id: Optional[uuid.UUID] = None,
+        target_course_id: uuid.UUID | None = None,
         priority: str = Announcement.PriorityChoices.NORMAL,
         is_published: bool = True,
-        expires_at: Optional[timezone.datetime] = None,
+        expires_at: timezone.datetime | None = None,
         send_email: bool = False,
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> Announcement:
         if priority not in Announcement.PriorityChoices.values:
             raise DomainException(
@@ -214,9 +220,9 @@ class AnnouncementAdminService:
     def publish_announcement(
         cls,
         announcement: Announcement,
-        admin_user: Optional[User] = None,
+        admin_user: User | None = None,
         send_email: bool = False,
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> int:
         """Resolve target audience and fan-out in-app notifications and async emails."""
         # 1. Resolve Target Audience
@@ -227,7 +233,7 @@ class AnnouncementAdminService:
         users = User.objects.filter(id__in=user_ids)
         for user in users:
             idempotency_key = f"announcement_{announcement.id}_{user.id}"
-            notif = NotificationService.send_notification(
+            NotificationService.send_notification(
                 recipient=user,
                 title=f"📢 {announcement.title}",
                 body=announcement.content,
@@ -235,7 +241,10 @@ class AnnouncementAdminService:
                 action_url="/notifications",
                 idempotency_key=idempotency_key,
                 send_email=send_email,
-                metadata={"announcement_id": str(announcement.id), "priority": announcement.priority},
+                metadata={
+                    "announcement_id": str(announcement.id),
+                    "priority": announcement.priority,
+                },
             )
             delivery_count += 1
             if send_email and user.email:
@@ -247,7 +256,13 @@ class AnnouncementAdminService:
         announcement.delivery_count = delivery_count
         announcement.email_sent_count = email_count
         announcement.save(
-            update_fields=["is_published", "published_at", "delivery_count", "email_sent_count", "updated_at"]
+            update_fields=[
+                "is_published",
+                "published_at",
+                "delivery_count",
+                "email_sent_count",
+                "updated_at",
+            ]
         )
 
         if admin_user:
@@ -266,17 +281,21 @@ class AnnouncementAdminService:
         return delivery_count
 
     @classmethod
-    def _resolve_audience_users(cls, announcement: Announcement) -> List[uuid.UUID]:
+    def _resolve_audience_users(cls, announcement: Announcement) -> list[uuid.UUID]:
         """Resolve list of user IDs targeted by the announcement scope."""
         if announcement.target_audience == Announcement.TargetAudienceChoices.ALL:
             return list(
-                StudentProfile.objects.filter(user__is_active=True).values_list("user_id", flat=True)
+                StudentProfile.objects.filter(user__is_active=True).values_list(
+                    "user_id", flat=True
+                )
             )
 
         elif announcement.target_audience == Announcement.TargetAudienceChoices.BATCH:
             if not announcement.target_batch:
                 return list(
-                    StudentProfile.objects.filter(user__is_active=True).values_list("user_id", flat=True)
+                    StudentProfile.objects.filter(user__is_active=True).values_list(
+                        "user_id", flat=True
+                    )
                 )
             return list(
                 StudentProfile.objects.filter(
@@ -284,7 +303,10 @@ class AnnouncementAdminService:
                 ).values_list("user_id", flat=True)
             )
 
-        elif announcement.target_audience == Announcement.TargetAudienceChoices.COURSE and announcement.target_course:
+        elif (
+            announcement.target_audience == Announcement.TargetAudienceChoices.COURSE
+            and announcement.target_course
+        ):
             return list(
                 CourseEnrollment.objects.filter(
                     course=announcement.target_course,
@@ -293,7 +315,9 @@ class AnnouncementAdminService:
             )
 
         return list(
-            StudentProfile.objects.filter(user__is_active=True).values_list("user_id", flat=True)
+            StudentProfile.objects.filter(user__is_active=True).values_list(
+                "user_id", flat=True
+            )
         )
 
     @classmethod
@@ -302,15 +326,15 @@ class AnnouncementAdminService:
         cls,
         announcement_id: str,
         admin_user: User,
-        title: Optional[str] = None,
-        content: Optional[str] = None,
-        target_audience: Optional[str] = None,
-        target_batch: Optional[str] = None,
-        target_course_id: Optional[uuid.UUID] = None,
-        priority: Optional[str] = None,
-        expires_at: Optional[timezone.datetime] = None,
-        is_active: Optional[bool] = None,
-        ip_address: Optional[str] = None,
+        title: str | None = None,
+        content: str | None = None,
+        target_audience: str | None = None,
+        target_batch: str | None = None,
+        target_course_id: uuid.UUID | None = None,
+        priority: str | None = None,
+        expires_at: timezone.datetime | None = None,
+        is_active: bool | None = None,
+        ip_address: str | None = None,
     ) -> Announcement:
         announcement = cls.get_announcement(announcement_id)
         update_fields = ["updated_at"]
@@ -332,7 +356,9 @@ class AnnouncementAdminService:
             update_fields.append("target_batch")
 
         if target_course_id is not None:
-            announcement.target_course = Course.objects.filter(id=target_course_id).first()
+            announcement.target_course = Course.objects.filter(
+                id=target_course_id
+            ).first()
             update_fields.append("target_course")
 
         if priority is not None:
@@ -364,7 +390,7 @@ class AnnouncementAdminService:
     @classmethod
     @transaction.atomic
     def delete_announcement(
-        cls, announcement_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, announcement_id: str, admin_user: User, ip_address: str | None = None
     ) -> None:
         announcement = cls.get_announcement(announcement_id)
         announcement.is_active = False
@@ -384,15 +410,19 @@ class AnnouncementAdminService:
         student = StudentProfile.objects.filter(user=user).first()
         now = timezone.now()
 
-        base_qs = Announcement.objects.filter(
-            is_active=True,
-            is_published=True,
-        ).filter(
-            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now)
-        ).select_related("published_by")
+        base_qs = (
+            Announcement.objects.filter(
+                is_active=True,
+                is_published=True,
+            )
+            .filter(models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now))
+            .select_related("published_by")
+        )
 
         if not student:
-            return base_qs.filter(target_audience=Announcement.TargetAudienceChoices.ALL)
+            return base_qs.filter(
+                target_audience=Announcement.TargetAudienceChoices.ALL
+            )
 
         enrolled_course_ids = CourseEnrollment.objects.filter(
             student=student, status=CourseEnrollment.EnrollmentStatus.ACTIVE

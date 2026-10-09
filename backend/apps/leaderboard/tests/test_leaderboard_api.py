@@ -18,6 +18,7 @@ Tests:
 
 from datetime import timedelta
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
@@ -25,10 +26,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.accounts.models import User
 from apps.assignments.models import CodingQuestion, StudentQuestionProgress
 from apps.courses.models import Course, CourseEnrollment
-from apps.leaderboard.services import LeaderboardService
 from apps.modules.models import Module
 from apps.scoring.services import ScoringService
 from apps.students.models import StudentProfile
@@ -84,6 +83,7 @@ class LeaderboardApiTests(TestCase):
             is_active=True,
         )
         from apps.projects.models import Project
+
         self.project = Project.objects.create(
             course=self.course,
             title="Capstone E-Commerce Platform",
@@ -187,17 +187,31 @@ class LeaderboardApiTests(TestCase):
         Tier 4: created_at ASC
         """
         # 4 students with identical total_points = 50.0
-        u1, p1 = self._create_student("tie1", "Student Alpha", 50.0, streak_days=2, created_delta_minutes=0)
-        u2, p2 = self._create_student("tie2", "Student Beta", 50.0, streak_days=5, created_delta_minutes=0)
-        u3, p3 = self._create_student("tie3", "Student Gamma", 50.0, streak_days=2, created_delta_minutes=-30)  # Registered earlier
-        u4, p4 = self._create_student("tie4", "Student Delta", 50.0, streak_days=2, created_delta_minutes=30)   # Registered later
+        u1, p1 = self._create_student(
+            "tie1", "Student Alpha", 50.0, streak_days=2, created_delta_minutes=0
+        )
+        _u2, p2 = self._create_student(
+            "tie2", "Student Beta", 50.0, streak_days=5, created_delta_minutes=0
+        )
+        _u3, p3 = self._create_student(
+            "tie3", "Student Gamma", 50.0, streak_days=2, created_delta_minutes=-30
+        )  # Registered earlier
+        _u4, p4 = self._create_student(
+            "tie4", "Student Delta", 50.0, streak_days=2, created_delta_minutes=30
+        )  # Registered later
 
         # Student Alpha solved 2 questions
         StudentQuestionProgress.objects.create(
-            student=p1, question=self.question1, is_solved=True, best_score=Decimal("10.0")
+            student=p1,
+            question=self.question1,
+            is_solved=True,
+            best_score=Decimal("10.0"),
         )
         StudentQuestionProgress.objects.create(
-            student=p1, question=self.question2, is_solved=True, best_score=Decimal("20.0")
+            student=p1,
+            question=self.question2,
+            is_solved=True,
+            best_score=Decimal("20.0"),
         )
 
         # Student Beta, Gamma, Delta solved 0 questions
@@ -221,8 +235,8 @@ class LeaderboardApiTests(TestCase):
 
     def test_student_privacy_isolation(self):
         """Ensure Student A cannot access private fields (email, phone, etc.) of Student B in leaderboard."""
-        u1, p1 = self._create_student("alice", "Alice Wonder", 100.0)
-        u2, p2 = self._create_student("bob", "Bob Builder", 90.0)
+        u1, _p1 = self._create_student("alice", "Alice Wonder", 100.0)
+        _u2, _p2 = self._create_student("bob", "Bob Builder", 90.0)
 
         self.client.force_authenticate(user=u1)
         response = self.client.get("/api/v1/leaderboard/")
@@ -255,8 +269,12 @@ class LeaderboardApiTests(TestCase):
 
     def test_batch_and_course_filtering(self):
         """Test filtering by batch code and course."""
-        u_a1, p_a1 = self._create_student("a1", "Batch A Top", 100.0, batch_code="BATCH-ALPHA")
-        u_b1, p_b1 = self._create_student("b1", "Batch B Top", 200.0, batch_code="BATCH-BETA")
+        u_a1, p_a1 = self._create_student(
+            "a1", "Batch A Top", 100.0, batch_code="BATCH-ALPHA"
+        )
+        _u_b1, _p_b1 = self._create_student(
+            "b1", "Batch B Top", 200.0, batch_code="BATCH-BETA"
+        )
 
         # Request with batch_code filter BATCH-ALPHA
         self.client.force_authenticate(user=u_a1)
@@ -282,7 +300,7 @@ class LeaderboardApiTests(TestCase):
         response_admin = self.client.get("/api/v1/admin/leaderboard/?search=Target")
         self.assertEqual(response_admin.status_code, status.HTTP_200_OK)
         results = response_admin.json()
-        
+
         # Paginated standardized response envelope
         items = results.get("data", results)
         self.assertTrue(len(items) >= 1)
@@ -291,7 +309,7 @@ class LeaderboardApiTests(TestCase):
 
     def test_cache_invalidation_after_score_change(self):
         """Ensure leaderboard updates immediately in real-time when a score change occurs."""
-        u1, p1 = self._create_student("c1", "Rank 1 Initially", 100.0)
+        _u1, p1 = self._create_student("c1", "Rank 1 Initially", 100.0)
         u2, p2 = self._create_student("c2", "Rank 2 Initially", 50.0)
 
         self.client.force_authenticate(user=u2)

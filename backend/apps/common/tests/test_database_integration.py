@@ -9,8 +9,9 @@ Verifies:
 6. Database health check metrics and latency reporting.
 """
 
-from decimal import Decimal
 import uuid
+from decimal import Decimal
+
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from rest_framework import status
@@ -66,19 +67,18 @@ class DatabaseArchitectureIntegrationTests(TestCase):
 
     def test_unique_constraint_enforcement(self):
         """Duplicate academic IDs or unique constraint violations must raise IntegrityError."""
-        with self.assertRaises(IntegrityError):
-            with transaction.atomic():
-                duplicate_user = User.objects.create_user(
-                    email="duplicate@gqt.local",
-                    password="Password123!",
-                    role="STUDENT",
-                )
-                StudentProfile.objects.create(
-                    user=duplicate_user,
-                    student_id_number="GQT-DB-001",  # Duplicate ID
-                    full_name="Duplicate Student",
-                    batch_code="BATCH-2026-TEST",
-                )
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            duplicate_user = User.objects.create_user(
+                email="duplicate@gqt.local",
+                password="Password123!",
+                role="STUDENT",
+            )
+            StudentProfile.objects.create(
+                user=duplicate_user,
+                student_id_number="GQT-DB-001",  # Duplicate ID
+                full_name="Duplicate Student",
+                batch_code="BATCH-2026-TEST",
+            )
 
     def test_course_enrollment_unique_constraint(self):
         """A student cannot have multiple concurrent enrollment records for the exact same course."""
@@ -88,13 +88,12 @@ class DatabaseArchitectureIntegrationTests(TestCase):
             status="ACTIVE",
         )
 
-        with self.assertRaises(IntegrityError):
-            with transaction.atomic():
-                CourseEnrollment.objects.create(
-                    student=self.student,
-                    course=self.course,
-                    status="ACTIVE",
-                )
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            CourseEnrollment.objects.create(
+                student=self.student,
+                course=self.course,
+                status="ACTIVE",
+            )
 
     def test_transaction_atomic_rollback(self):
         """Database transactions must roll back cleanly on exception without partial commits."""
@@ -114,7 +113,11 @@ class DatabaseArchitectureIntegrationTests(TestCase):
             pass
 
         final_count = ScoreRecord.objects.count()
-        self.assertEqual(initial_count, final_count, "Rolled back transaction must leave no orphan records")
+        self.assertEqual(
+            initial_count,
+            final_count,
+            "Rolled back transaction must leave no orphan records",
+        )
 
     def test_foreign_key_cascade_behavior(self):
         """Deleting a User cascades to StudentProfile and related CourseEnrollment records."""
@@ -128,7 +131,9 @@ class DatabaseArchitectureIntegrationTests(TestCase):
         self.user.delete()
 
         self.assertFalse(StudentProfile.objects.filter(id=student_id).exists())
-        self.assertFalse(CourseEnrollment.objects.filter(student_id=student_id).exists())
+        self.assertFalse(
+            CourseEnrollment.objects.filter(student_id=student_id).exists()
+        )
 
 
 class DatabaseHealthEndpointTests(APITestCase):

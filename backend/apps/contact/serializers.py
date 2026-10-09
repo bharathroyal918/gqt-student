@@ -64,7 +64,9 @@ class ContactInquiryAdminSerializer(serializers.ModelSerializer):
     """Full administrative serializer for support staff inspection."""
 
     user_email = serializers.CharField(source="user.email", read_only=True)
-    resolved_by_email = serializers.CharField(source="resolved_by.email", read_only=True)
+    resolved_by_email = serializers.CharField(
+        source="resolved_by.email", read_only=True
+    )
 
     class Meta:
         model = ContactInquiry

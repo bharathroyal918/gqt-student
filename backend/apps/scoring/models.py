@@ -21,9 +21,13 @@ class ScoreRecord(BaseModel):
         MANUAL = "MANUAL", "Manual Review"
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="score_records"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="score_records",
     )
-    source_type = models.CharField(max_length=30, choices=SourceType.choices, db_index=True)
+    source_type = models.CharField(
+        max_length=30, choices=SourceType.choices, db_index=True
+    )
     source_id = models.UUIDField(
         db_index=True, help_text="ID of QuestionSubmission, TaskCompletion, etc."
     )
@@ -45,8 +49,12 @@ class ScoreRecord(BaseModel):
         verbose_name_plural = "Score Records"
         ordering = ["-awarded_at"]
         indexes = [
-            models.Index(fields=["student", "source_type"], name="score_student_src_idx"),
-            models.Index(fields=["source_type", "source_id"], name="score_source_lookup_idx"),
+            models.Index(
+                fields=["student", "source_type"], name="score_student_src_idx"
+            ),
+            models.Index(
+                fields=["source_type", "source_id"], name="score_source_lookup_idx"
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -73,9 +81,15 @@ class ScoreEvent(BaseModel):
         "students.StudentProfile", on_delete=models.CASCADE, related_name="score_events"
     )
     score_record = models.ForeignKey(
-        ScoreRecord, null=True, blank=True, on_delete=models.CASCADE, related_name="events"
+        ScoreRecord,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="events",
     )
-    event_type = models.CharField(max_length=30, choices=EventType.choices, db_index=True)
+    event_type = models.CharField(
+        max_length=30, choices=EventType.choices, db_index=True
+    )
     delta = models.DecimalField(max_digits=7, decimal_places=2)
     reason = models.CharField(max_length=255)
     created_by = models.ForeignKey(
@@ -87,7 +101,9 @@ class ScoreEvent(BaseModel):
         verbose_name_plural = "Score Events"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["student", "created_at"], name="score_event_student_date_idx"),
+            models.Index(
+                fields=["student", "created_at"], name="score_event_student_date_idx"
+            ),
         ]
 
     def __str__(self):
@@ -99,7 +115,9 @@ class LeaderboardSnapshot(BaseModel):
 
     snapshot_date = models.DateField(db_index=True)
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="leaderboard_snapshots"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="leaderboard_snapshots",
     )
     batch_code = models.CharField(max_length=50, db_index=True)
     total_score = models.DecimalField(max_digits=10, decimal_places=2)

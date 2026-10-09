@@ -2,10 +2,6 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
-
-from apps.assignments.models import CodeSubmission, ExecutionResult
 
 
 @dataclass
@@ -17,7 +13,7 @@ class ExecutionOutput:
     stderr: str = ""
     execution_time_seconds: float = 0.0
     memory_kb: int = 0
-    exit_code: Optional[int] = 0
+    exit_code: int | None = 0
     compilation_output: str = ""
 
 
@@ -32,7 +28,6 @@ class BaseExecutionProvider(ABC):
         stdin: str = "",
         time_limit_seconds: float = 2.0,
         memory_limit_mb: int = 128,
-        expected_output: Optional[str] = None,
+        expected_output: str | None = None,
     ) -> ExecutionOutput:
         """Execute a single snippet of code against standard input."""
-        pass

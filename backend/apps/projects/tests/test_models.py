@@ -6,7 +6,12 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from apps.courses.models import Course
-from apps.projects.models import Project, ProjectFeedback, ProjectFile, ProjectSubmission
+from apps.projects.models import (
+    Project,
+    ProjectFeedback,
+    ProjectFile,
+    ProjectSubmission,
+)
 from apps.students.models import StudentProfile
 
 User = get_user_model()
@@ -28,7 +33,9 @@ class ProjectModelTests(TestCase):
             full_name="Project Student",
             batch_code="BATCH-2026-A",
         )
-        self.course = Course.objects.create(title="Full Stack Python", slug="full-stack-python")
+        self.course = Course.objects.create(
+            title="Full Stack Python", slug="full-stack-python"
+        )
         self.project = Project.objects.create(
             title="E-Commerce API Capstone",
             slug="ecommerce-api-capstone",

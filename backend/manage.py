@@ -7,7 +7,10 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
+    if "--deploy" in sys.argv and not any(arg.startswith("--settings") for arg in sys.argv):
+        os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings.production"
+    else:
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

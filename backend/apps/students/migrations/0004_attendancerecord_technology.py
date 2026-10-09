@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('students', '0003_studentprofile_last_activity_date'),
+        ("students", "0003_studentprofile_last_activity_date"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='attendancerecord',
-            name='technology',
-            field=models.CharField(blank=True, db_index=True, default='Full Stack Development', max_length=100),
+            model_name="attendancerecord",
+            name="technology",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                default="Full Stack Development",
+                max_length=100,
+            ),
         ),
     ]

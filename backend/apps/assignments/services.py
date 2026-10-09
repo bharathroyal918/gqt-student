@@ -1,7 +1,8 @@
 """Domain services for administrative coding challenge and test case management."""
 
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
@@ -18,9 +19,9 @@ class AssignmentAdminService:
     @classmethod
     def get_question(cls, question_id: str) -> CodingQuestion:
         return get_object_or_404(
-            CodingQuestion.objects.select_related("module", "module__course").prefetch_related(
-                "test_cases"
-            ),
+            CodingQuestion.objects.select_related(
+                "module", "module__course"
+            ).prefetch_related("test_cases"),
             id=question_id,
         )
 
@@ -33,22 +34,24 @@ class AssignmentAdminService:
         title: str,
         problem_statement: str,
         difficulty: str = CodingQuestion.DifficultyChoices.EASY,
-        allowed_languages: Optional[List[str]] = None,
-        starter_code: Optional[Dict[str, str]] = None,
+        allowed_languages: list[str] | None = None,
+        starter_code: dict[str, str] | None = None,
         time_limit_seconds: Decimal = Decimal("2.00"),
         memory_limit_mb: int = 128,
         points: Decimal = Decimal("100.00"),
         order: int = 0,
         is_active: bool = True,
-        slug: Optional[str] = None,
-        test_cases_data: Optional[List[Dict[str, Any]]] = None,
-        ip_address: Optional[str] = None,
+        slug: str | None = None,
+        test_cases_data: list[dict[str, Any]] | None = None,
+        ip_address: str | None = None,
     ) -> CodingQuestion:
         module = get_object_or_404(Module, id=module_id)
 
         q_slug = slug.strip().lower() if slug else slugify(title)
         if CodingQuestion.objects.filter(module=module, slug=q_slug).exists():
-            raise DomainException("A question with this slug already exists in this module.")
+            raise DomainException(
+                "A question with this slug already exists in this module."
+            )
 
         if difficulty not in CodingQuestion.DifficultyChoices.values:
             raise DomainException(
@@ -105,18 +108,18 @@ class AssignmentAdminService:
         cls,
         question_id: str,
         admin_user: User,
-        title: Optional[str] = None,
-        slug: Optional[str] = None,
-        difficulty: Optional[str] = None,
-        problem_statement: Optional[str] = None,
-        allowed_languages: Optional[List[str]] = None,
-        starter_code: Optional[Dict[str, str]] = None,
-        time_limit_seconds: Optional[Decimal] = None,
-        memory_limit_mb: Optional[int] = None,
-        points: Optional[Decimal] = None,
-        order: Optional[int] = None,
-        is_active: Optional[bool] = None,
-        ip_address: Optional[str] = None,
+        title: str | None = None,
+        slug: str | None = None,
+        difficulty: str | None = None,
+        problem_statement: str | None = None,
+        allowed_languages: list[str] | None = None,
+        starter_code: dict[str, str] | None = None,
+        time_limit_seconds: Decimal | None = None,
+        memory_limit_mb: int | None = None,
+        points: Decimal | None = None,
+        order: int | None = None,
+        is_active: bool | None = None,
+        ip_address: str | None = None,
     ) -> CodingQuestion:
         question = cls.get_question(question_id)
         update_fields = ["updated_at"]
@@ -132,7 +135,9 @@ class AssignmentAdminService:
                 .exclude(id=question.id)
                 .exists()
             ):
-                raise DomainException("A question with this slug already exists in this module.")
+                raise DomainException(
+                    "A question with this slug already exists in this module."
+                )
             question.slug = q_slug
             update_fields.append("slug")
 
@@ -189,7 +194,7 @@ class AssignmentAdminService:
     @classmethod
     @transaction.atomic
     def archive_question(
-        cls, question_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, question_id: str, admin_user: User, ip_address: str | None = None
     ) -> CodingQuestion:
         question = cls.get_question(question_id)
         question.is_active = False
@@ -214,8 +219,8 @@ class AssignmentAdminService:
         is_visible: bool,
         admin_user: User,
         weight: Decimal = Decimal("1.00"),
-        order: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        order: int | None = None,
+        ip_address: str | None = None,
     ) -> TestCase:
         question = cls.get_question(question_id)
 
@@ -248,14 +253,16 @@ class AssignmentAdminService:
         cls,
         test_case_id: str,
         admin_user: User,
-        input_data: Optional[str] = None,
-        expected_output: Optional[str] = None,
-        is_visible: Optional[bool] = None,
-        weight: Optional[Decimal] = None,
-        order: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        input_data: str | None = None,
+        expected_output: str | None = None,
+        is_visible: bool | None = None,
+        weight: Decimal | None = None,
+        order: int | None = None,
+        ip_address: str | None = None,
     ) -> TestCase:
-        test_case = get_object_or_404(TestCase.objects.select_related("question"), id=test_case_id)
+        test_case = get_object_or_404(
+            TestCase.objects.select_related("question"), id=test_case_id
+        )
         update_fields = ["updated_at"]
 
         if input_data is not None:
@@ -293,7 +300,7 @@ class AssignmentAdminService:
     @classmethod
     @transaction.atomic
     def delete_test_case(
-        cls, test_case_id: str, admin_user: User, ip_address: Optional[str] = None
+        cls, test_case_id: str, admin_user: User, ip_address: str | None = None
     ) -> None:
         test_case = get_object_or_404(TestCase, id=test_case_id)
         q_id = str(test_case.question_id)

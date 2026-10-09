@@ -3,12 +3,14 @@
 import logging
 from functools import lru_cache
 from typing import Optional
+
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 try:
     from supabase import Client, create_client
+
     SUPABASE_AVAILABLE = True
 except ImportError:
     SUPABASE_AVAILABLE = False
@@ -33,7 +35,7 @@ def get_supabase_client() -> Optional["Client"]:
 
     try:
         return create_client(url, key)
-    except Exception as exc:
+    except (ValueError, TypeError, KeyError, RuntimeError, OSError) as exc:
         logger.error(f"Failed to initialize Supabase client: {exc}")
         return None
 
@@ -60,6 +62,6 @@ def get_supabase_admin_client() -> Optional["Client"]:
 
     try:
         return create_client(url, service_key)
-    except Exception as exc:
+    except (ValueError, TypeError, KeyError, RuntimeError, OSError) as exc:
         logger.error(f"Failed to initialize Supabase admin client: {exc}")
         return None

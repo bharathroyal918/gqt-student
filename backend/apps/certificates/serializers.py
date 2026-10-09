@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.certificates.models import Badge, Certificate, StudentBadge
+from apps.certificates.models import Certificate
 
 
 class BadgeSummarySerializer(serializers.Serializer):

@@ -1,10 +1,10 @@
 import uuid
-from datetime import date
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.scoring.models import LeaderboardSnapshot, ScoreEvent, ScoreRecord
 from apps.students.models import StudentProfile
@@ -64,7 +64,7 @@ class ScoringModelTests(TestCase):
         self.assertEqual(event.delta, Decimal("25.00"))
 
     def test_leaderboard_snapshot_uniqueness(self):
-        today = date.today()
+        today = timezone.localdate()
         LeaderboardSnapshot.objects.create(
             snapshot_date=today,
             student=self.student,

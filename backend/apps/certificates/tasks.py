@@ -3,13 +3,12 @@
 import concurrent.futures
 import io
 import logging
-import uuid
-from typing import Optional
 
 from django.core.files.base import ContentFile
+from django.db import DatabaseError
 from django.utils import timezone
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.pagesizes import landscape, letter
 from reportlab.pdfgen import canvas
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,9 @@ def _generate_certificate_pdf_worker(certificate_id: str) -> bool:
     from apps.certificates.models import Certificate
 
     try:
-        certificate = Certificate.objects.select_related("student", "course").get(id=certificate_id)
+        certificate = Certificate.objects.select_related("student", "course").get(
+            id=certificate_id
+        )
     except Certificate.DoesNotExist:
         logger.warning("Certificate %s not found for PDF generation.", certificate_id)
         return False
@@ -47,7 +48,9 @@ def _generate_certificate_pdf_worker(certificate_id: str) -> bool:
         # 2. Institutional Header & Logo Representation
         p.setFont("Helvetica-Bold", 16)
         p.setFillColor(colors.HexColor("#6366f1"))  # Indigo 500
-        p.drawCentredString(width / 2.0, height - 65, "GQT ADVANCED LEARNING & ASSESSMENT PORTAL")
+        p.drawCentredString(
+            width / 2.0, height - 65, "GQT ADVANCED LEARNING & ASSESSMENT PORTAL"
+        )
 
         p.setFont("Helvetica-Bold", 28)
         p.setFillColor(colors.HexColor("#0f172a"))  # Deep slate
@@ -56,10 +59,14 @@ def _generate_certificate_pdf_worker(certificate_id: str) -> bool:
         # 3. Subtitle / Presentation text
         p.setFont("Helvetica-Oblique", 13)
         p.setFillColor(colors.HexColor("#64748b"))  # Slate 500
-        p.drawCentredString(width / 2.0, height - 145, "This is to officially certify that")
+        p.drawCentredString(
+            width / 2.0, height - 145, "This is to officially certify that"
+        )
 
         # 4. Student Name
-        student_display_name = certificate.student_name or certificate.student.full_name or "Student"
+        student_display_name = (
+            certificate.student_name or certificate.student.full_name or "Student"
+        )
         p.setFont("Helvetica-Bold", 26)
         p.setFillColor(colors.HexColor("#1d4ed8"))  # Vibrant Blue
         p.drawCentredString(width / 2.0, height - 195, student_display_name.upper())
@@ -68,7 +75,12 @@ def _generate_certificate_pdf_worker(certificate_id: str) -> bool:
         name_width = p.stringWidth(student_display_name.upper(), "Helvetica-Bold", 26)
         p.setStrokeColor(colors.HexColor("#cbd5e1"))
         p.setLineWidth(1)
-        p.line((width - name_width) / 2.0 - 20, height - 205, (width + name_width) / 2.0 + 20, height - 205)
+        p.line(
+            (width - name_width) / 2.0 - 20,
+            height - 205,
+            (width + name_width) / 2.0 + 20,
+            height - 205,
+        )
 
         # 5. Program & Course Description
         p.setFont("Helvetica", 13)
@@ -85,8 +97,12 @@ def _generate_certificate_pdf_worker(certificate_id: str) -> bool:
         p.drawCentredString(width / 2.0, height - 280, course_title)
 
         # 6. Verification Details & Metadata
-        issue_date_str = certificate.issued_at.strftime("%B %d, %Y") if certificate.issued_at else timezone.now().strftime("%B %d, %Y")
-        
+        issue_date_str = (
+            certificate.issued_at.strftime("%B %d, %Y")
+            if certificate.issued_at
+            else timezone.now().strftime("%B %d, %Y")
+        )
+
         # Left signature / date column
         p.setFont("Helvetica-Bold", 10)
         p.setFillColor(colors.HexColor("#475569"))
@@ -94,9 +110,15 @@ def _generate_certificate_pdf_worker(certificate_id: str) -> bool:
         p.drawString(60, 90, f"Student ID: {certificate.student.student_id_number}")
 
         # Right signature / verification column
-        p.drawRightString(width - 60, 110, f"Certificate ID: {certificate.certificate_id}")
+        p.drawRightString(
+            width - 60, 110, f"Certificate ID: {certificate.certificate_id}"
+        )
         p.setFont("Helvetica", 8)
-        p.drawRightString(width - 60, 90, f"Verification Hash: {certificate.verification_hash[:24]}...")
+        p.drawRightString(
+            width - 60,
+            90,
+            f"Verification Hash: {certificate.verification_hash[:24]}...",
+        )
 
         # Center Academic Authority
         p.setFont("Helvetica-Bold", 11)
@@ -113,14 +135,21 @@ def _generate_certificate_pdf_worker(certificate_id: str) -> bool:
         buffer.seek(0)
         file_name = f"{certificate.certificate_id}.pdf"
         certificate.pdf_file.save(file_name, ContentFile(buffer.getvalue()), save=True)
-        logger.info("Successfully generated PDF document for certificate %s", certificate.certificate_id)
+        logger.info(
+            "Successfully generated PDF document for certificate %s",
+            certificate.certificate_id,
+        )
         return True
 
-    except Exception as exc:
-        logger.error("Failed to generate PDF for certificate %s: %s", certificate_id, str(exc))
+    except (OSError, ValueError, TypeError, RuntimeError, DatabaseError) as exc:
+        logger.error(
+            "Failed to generate PDF for certificate %s: %s", certificate_id, str(exc)
+        )
         return False
 
 
-def dispatch_async_certificate_generation(certificate_id: str) -> concurrent.futures.Future:
+def dispatch_async_certificate_generation(
+    certificate_id: str,
+) -> concurrent.futures.Future:
     """Submit PDF document generation to background worker non-blockingly."""
     return _cert_executor.submit(_generate_certificate_pdf_worker, certificate_id)

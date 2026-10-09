@@ -65,7 +65,9 @@ def custom_exception_handler(exc, context):
         return response
 
     # Catch unhandled server exceptions (500)
-    logger.exception(f"Unhandled Server Error [request_id={request_id}]: {exc}", exc_info=exc)
+    logger.exception(
+        f"Unhandled Server Error [request_id={request_id}]: {exc}", exc_info=exc
+    )
     return Response(
         {
             "success": False,

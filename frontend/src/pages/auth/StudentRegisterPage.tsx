@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import * as z from "zod";
 import {
   User,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { authApi } from "../../api/authApi";
+import { collegesApi } from "../../api/collegesApi";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { useToast } from "../../context/ToastContext";
@@ -61,6 +63,11 @@ export const StudentRegisterPage: React.FC = () => {
   const { theme, toggleTheme } = useThemeStore();
   const { success, error: toastError } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: colleges = [] } = useQuery({
+    queryKey: ["student-colleges"],
+    queryFn: () => collegesApi.getColleges(),
+  });
 
   const {
     register,
@@ -224,14 +231,22 @@ export const StudentRegisterPage: React.FC = () => {
               <FormField label="College / University" error={errors.college_name?.message}>
                 <div className="relative">
                   <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                  <Input
+                  <select
                     {...register("college_name")}
-                    autoComplete="organization"
-                    placeholder="e.g. Global Institute of Tech"
-                    className="pl-10"
-                    error={!!errors.college_name}
                     disabled={isSubmitting}
-                  />
+                    className={`w-full rounded-xl border bg-slate-50 dark:bg-surface-950 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition-all ${
+                      errors.college_name
+                        ? "border-rose-500 focus:ring-rose-500"
+                        : "border-slate-200 dark:border-surface-700"
+                    }`}
+                  >
+                    <option value="">-- Select Your College / Campus --</option>
+                    {colleges.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name} {c.code ? `(${c.code})` : ""} {c.city ? `— ${c.city}` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </FormField>
 

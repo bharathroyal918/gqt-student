@@ -1,5 +1,6 @@
 from django.contrib import admin
-from apps.placements.models import PlacementDrive, PlacementApplication
+
+from apps.placements.models import PlacementApplication, PlacementDrive
 
 
 @admin.register(PlacementDrive)

@@ -2,8 +2,8 @@
 
 import os
 import sys
-from pathlib import Path
 from decimal import Decimal
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -11,10 +11,12 @@ sys.path.insert(0, str(BASE_DIR))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 
 import django
+
 django.setup()
 
-from apps.accounts.models import User, AdminProfile
+from apps.accounts.models import AdminProfile, User
 from apps.students.models import StudentProfile
+
 
 def create_credentials():
     print("Connecting to Supabase PostgreSQL database...", flush=True)
@@ -34,7 +36,7 @@ def create_credentials():
             "is_active": True,
             "is_staff": True,
             "is_superuser": True,
-        }
+        },
     )
     if admin_pass:
         admin_user.set_password(admin_pass)
@@ -51,13 +53,15 @@ def create_credentials():
             "department": "Academic Operations & Curriculum Management",
             "can_review_projects": True,
             "can_manage_curriculum": True,
-        }
+        },
     )
     admin_profile.can_review_projects = True
     admin_profile.can_manage_curriculum = True
     admin_profile.save()
 
-    print(f"[{'CREATED' if created else 'UPDATED'}] Admin User: {admin_email}", flush=True)
+    print(
+        f"[{'CREATED' if created else 'UPDATED'}] Admin User: {admin_email}", flush=True
+    )
 
     # 2. Student Account
     student_email = os.environ.get("INITIAL_STUDENT_EMAIL", "student@gqt.edu")
@@ -74,7 +78,7 @@ def create_credentials():
             "is_active": True,
             "is_staff": False,
             "is_superuser": False,
-        }
+        },
     )
     if student_pass:
         student_user.set_password(student_pass)
@@ -94,19 +98,23 @@ def create_credentials():
             "total_points": Decimal("150.00"),
             "current_streak_days": 5,
             "highest_streak_days": 7,
-        }
+        },
     )
     student_profile.full_name = "Rahul Sharma"
     student_profile.batch_code = "BATCH-2026-A"
     student_profile.save()
 
-    print(f"[{'CREATED' if created_student else 'UPDATED'}] Student User: {student_email}", flush=True)
+    print(
+        f"[{'CREATED' if created_student else 'UPDATED'}] Student User: {student_email}",
+        flush=True,
+    )
     print(f"   Student ID: {student_profile.student_id_number}", flush=True)
     print(f"   Full Name:  {student_profile.full_name}", flush=True)
     print(f"   Batch:      {student_profile.batch_code}", flush=True)
     print(f"   Mobile:     {student_mobile}\n", flush=True)
 
     print(">>> Accounts provisioned successfully in database! <<<", flush=True)
+
 
 if __name__ == "__main__":
     create_credentials()

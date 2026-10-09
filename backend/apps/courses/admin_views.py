@@ -7,7 +7,7 @@ from rest_framework import filters, generics, status
 from rest_framework.views import APIView
 
 from apps.common.permissions import IsAdmin
-from apps.common.responses import api_error, api_success
+from apps.common.responses import api_success
 from apps.common.utils import get_client_ip
 from apps.courses.admin_serializers import (
     CourseAdminCreateSerializer,
@@ -42,14 +42,20 @@ class CourseAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = CourseAdminSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = CourseFilter
     search_fields = ["title", "slug", "description"]
     ordering_fields = ["order", "title", "created_at"]
     ordering = ["order", "title"]
 
     def get_queryset(self):
-        return Course.objects.prefetch_related("modules", "enrollments", "recorded_classes").all()
+        return Course.objects.prefetch_related(
+            "modules", "enrollments", "recorded_classes"
+        ).all()
 
     @extend_schema(
         request=CourseAdminCreateSerializer,
@@ -198,7 +204,9 @@ class CourseRecordedClassAdminListCreateView(APIView):
         ip_address = get_client_ip(request)
 
         # Handle video file from request.FILES if uploaded
-        video_file = request.FILES.get("video_file") or serializer.validated_data.get("video_file")
+        video_file = request.FILES.get("video_file") or serializer.validated_data.get(
+            "video_file"
+        )
 
         data = serializer.validated_data.copy()
         data["video_file"] = video_file
@@ -220,6 +228,7 @@ class CourseRecordedClassAdminDetailView(APIView):
     """Admin endpoint to retrieve, edit, or delete an individual recorded class."""
 
     permission_classes = [IsAdmin]
+    serializer_class = RecordedClassAdminSerializer
 
     @extend_schema(
         responses={200: RecordedClassAdminSerializer},
@@ -240,11 +249,15 @@ class CourseRecordedClassAdminDetailView(APIView):
         tags=["Admin Recorded Classes"],
     )
     def patch(self, request, course_id, video_id):
-        serializer = RecordedClassAdminCreateUpdateSerializer(data=request.data, partial=True)
+        serializer = RecordedClassAdminCreateUpdateSerializer(
+            data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         ip_address = get_client_ip(request)
 
-        video_file = request.FILES.get("video_file") or serializer.validated_data.get("video_file")
+        video_file = request.FILES.get("video_file") or serializer.validated_data.get(
+            "video_file"
+        )
         data = serializer.validated_data.copy()
         if video_file:
             data["video_file"] = video_file
@@ -262,6 +275,7 @@ class CourseRecordedClassAdminDetailView(APIView):
 
     @extend_schema(
         summary="Admin Delete Recorded Class Video",
+        responses={200: RecordedClassAdminSerializer},
         tags=["Admin Recorded Classes"],
     )
     def delete(self, request, course_id, video_id):
@@ -280,9 +294,11 @@ class CourseRecordedClassReorderView(APIView):
     """Admin endpoint to bulk reorder recorded classes sequence."""
 
     permission_classes = [IsAdmin]
+    serializer_class = RecordedClassesReorderSerializer
 
     @extend_schema(
         request=RecordedClassesReorderSerializer,
+        responses={200: RecordedClassesReorderSerializer},
         summary="Admin Bulk Reorder Recorded Classes",
         tags=["Admin Recorded Classes"],
     )
@@ -345,7 +361,9 @@ class CourseEnrollmentAdminAllocateView(APIView):
             admin_user=request.user,
             course_id=str(course_id),
             student_id=str(serializer.validated_data["student_id"]),
-            status=serializer.validated_data.get("status", CourseEnrollment.EnrollmentStatus.ACTIVE),
+            status=serializer.validated_data.get(
+                "status", CourseEnrollment.EnrollmentStatus.ACTIVE
+            ),
             ip_address=ip_address,
         )
         return api_success(
@@ -359,9 +377,11 @@ class CourseEnrollmentAdminRevokeView(APIView):
     """Admin endpoint to revoke / suspend course access for a student."""
 
     permission_classes = [IsAdmin]
+    serializer_class = CourseEnrollmentAdminSerializer
 
     @extend_schema(
         summary="Admin Revoke Student Course Access",
+        responses={200: CourseEnrollmentAdminSerializer},
         tags=["Admin Course Enrollment"],
     )
     def post(self, request, course_id, student_id):
@@ -375,136 +395,4 @@ class CourseEnrollmentAdminRevokeView(APIView):
         return api_success(
             data=CourseEnrollmentAdminSerializer(enrollment).data,
             message="Student course enrollment revoked successfully.",
-        )
-
-
-
-class CourseFilter(django_filters.FilterSet):
-    is_published = django_filters.BooleanFilter()
-    is_deleted = django_filters.BooleanFilter()
-
-    class Meta:
-        model = Course
-        fields = ["is_published", "is_deleted"]
-
-
-class CourseAdminListCreateView(generics.ListCreateAPIView):
-    """Admin endpoint to list courses with filtering or create a new curriculum course."""
-
-    permission_classes = [IsAdmin]
-    serializer_class = CourseAdminSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_class = CourseFilter
-    search_fields = ["title", "slug", "description"]
-    ordering_fields = ["order", "title", "created_at"]
-    ordering = ["order", "title"]
-
-    def get_queryset(self):
-        return Course.objects.prefetch_related("modules", "enrollments").all()
-
-    @extend_schema(
-        request=CourseAdminCreateSerializer,
-        responses={201: CourseAdminSerializer},
-        summary="Admin Create Course",
-        tags=["Admin Course Management"],
-    )
-    def post(self, request, *args, **kwargs):
-        serializer = CourseAdminCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ip_address = get_client_ip(request)
-
-        course = CourseAdminService.create_course(
-            admin_user=request.user,
-            ip_address=ip_address,
-            **serializer.validated_data,
-        )
-        return api_success(
-            data=CourseAdminSerializer(course).data,
-            message="Course created successfully.",
-            status_code=status.HTTP_201_CREATED,
-        )
-
-
-class CourseAdminDetailUpdateDeleteView(APIView):
-    """Admin endpoint to retrieve, edit, or safely archive a course."""
-
-    permission_classes = [IsAdmin]
-
-    @extend_schema(
-        responses={200: CourseAdminSerializer},
-        summary="Admin Retrieve Course Detail",
-        tags=["Admin Course Management"],
-    )
-    def get(self, request, pk):
-        course = CourseAdminService.get_course(str(pk))
-        return api_success(
-            data=CourseAdminSerializer(course).data,
-            message="Course retrieved successfully.",
-        )
-
-    @extend_schema(
-        request=CourseAdminUpdateSerializer,
-        responses={200: CourseAdminSerializer},
-        summary="Admin Update Course",
-        tags=["Admin Course Management"],
-    )
-    def patch(self, request, pk):
-        serializer = CourseAdminUpdateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ip_address = get_client_ip(request)
-
-        course = CourseAdminService.update_course(
-            course_id=str(pk),
-            admin_user=request.user,
-            ip_address=ip_address,
-            **serializer.validated_data,
-        )
-        return api_success(
-            data=CourseAdminSerializer(course).data,
-            message="Course updated successfully.",
-        )
-
-    @extend_schema(
-        responses={200: CourseAdminSerializer},
-        summary="Admin Safely Archive Course",
-        tags=["Admin Course Management"],
-    )
-    def delete(self, request, pk):
-        ip_address = get_client_ip(request)
-        course = CourseAdminService.archive_course(
-            course_id=str(pk),
-            admin_user=request.user,
-            ip_address=ip_address,
-        )
-        return api_success(
-            data=CourseAdminSerializer(course).data,
-            message="Course safely archived.",
-        )
-
-
-class CourseAdminPublishView(APIView):
-    """Admin endpoint to publish or unpublish a course."""
-
-    permission_classes = [IsAdmin]
-
-    @extend_schema(
-        request=CoursePublishSerializer,
-        responses={200: CourseAdminSerializer},
-        summary="Admin Publish/Unpublish Course",
-        tags=["Admin Course Management"],
-    )
-    def post(self, request, pk):
-        serializer = CoursePublishSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ip_address = get_client_ip(request)
-
-        course = CourseAdminService.set_publish_status(
-            course_id=str(pk),
-            is_published=serializer.validated_data["is_published"],
-            admin_user=request.user,
-            ip_address=ip_address,
-        )
-        return api_success(
-            data=CourseAdminSerializer(course).data,
-            message="Course publish status updated successfully.",
         )

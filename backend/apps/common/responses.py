@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from django.utils import timezone
 from rest_framework import status
@@ -9,8 +9,8 @@ from apps.common.middleware import get_current_request_id
 
 def api_success(
     data: Any = None,
-    message: Optional[str] = None,
-    meta: Optional[Dict[str, Any]] = None,
+    message: str | None = None,
+    meta: dict[str, Any] | None = None,
     status_code: int = status.HTTP_200_OK,
 ) -> Response:
     """Standardized API success response constructor.
@@ -47,9 +47,9 @@ def api_success(
 def api_error(
     code: str,
     message: str,
-    details: Optional[Dict[str, Any]] = None,
+    details: dict[str, Any] | None = None,
     status_code: int = status.HTTP_400_BAD_REQUEST,
-    request_id: Optional[str] = None,
+    request_id: str | None = None,
 ) -> Response:
     """Standardized API error response constructor.
 

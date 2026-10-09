@@ -1,11 +1,10 @@
 import uuid
 from contextvars import ContextVar
-from typing import Optional
 
-_request_id_ctx: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+_request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 
-def get_current_request_id() -> Optional[str]:
+def get_current_request_id() -> str | None:
     """Retrieve the current request's unique ID from contextvars."""
     return _request_id_ctx.get()
 

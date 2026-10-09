@@ -2,7 +2,6 @@
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
 import uuid
 
 from django.core.cache import cache
@@ -50,7 +49,7 @@ def safe_scrub_secrets(text: str) -> str:
 class AIService:
     """Core domain service for Student AI consultations."""
 
-    def __init__(self, provider: Optional[BaseAIProvider] = None):
+    def __init__(self, provider: BaseAIProvider | None = None):
         self.provider = provider or get_ai_provider()
 
     def check_rate_limit(self, student_id: uuid.UUID) -> None:
@@ -68,23 +67,29 @@ class AIService:
                 cache.set(cache_key, 1, timeout=RATE_LIMIT_WINDOW_SECONDS)
             else:
                 cache.incr(cache_key)
-        except Exception:
+        except (ValueError, TypeError, KeyError, OSError):
             # Fallback if incr fails
             cache.set(cache_key, current_count + 1, timeout=RATE_LIMIT_WINDOW_SECONDS)
 
     def list_conversations(self, student: StudentProfile):
         """Retrieve all active conversations belonging to the student."""
-        return AIConversation.objects.filter(
-            student=student,
-            is_archived=False,
-        ).prefetch_related("messages").order_by("-updated_at")
+        return (
+            AIConversation.objects.filter(
+                student=student,
+                is_archived=False,
+            )
+            .prefetch_related("messages")
+            .order_by("-updated_at")
+        )
 
     def get_conversation_for_student(
         self, student: StudentProfile, conversation_id: uuid.UUID
     ) -> AIConversation:
         """Fetch a specific conversation ensuring strict ownership authorization."""
         try:
-            conv = AIConversation.objects.prefetch_related("messages").get(id=conversation_id)
+            conv = AIConversation.objects.prefetch_related("messages").get(
+                id=conversation_id
+            )
         except AIConversation.DoesNotExist:
             raise NotFound("AI consultation session not found.")
 
@@ -94,7 +99,9 @@ class AIService:
                 student.id,
                 conversation_id,
             )
-            raise PermissionDenied("You do not have permission to access this consultation session.")
+            raise PermissionDenied(
+                "You do not have permission to access this consultation session."
+            )
 
         if conv.is_archived:
             raise NotFound("AI consultation session has been archived.")
@@ -105,12 +112,14 @@ class AIService:
     def create_conversation(
         self,
         student: StudentProfile,
-        title: Optional[str] = None,
-        context_question_id: Optional[uuid.UUID] = None,
-        initial_message: Optional[str] = None,
+        title: str | None = None,
+        context_question_id: uuid.UUID | None = None,
+        initial_message: str | None = None,
     ) -> AIConversation:
         """Create a new AI conversation session and optionally process an initial prompt."""
-        conv_title = (title.strip() if title and title.strip() else "New Consultation")[:200]
+        conv_title = (title.strip() if title and title.strip() else "New Consultation")[
+            :200
+        ]
         conversation = AIConversation.objects.create(
             student=student,
             title=conv_title,
@@ -142,7 +151,9 @@ class AIService:
         cleaned_content = content.strip()
         if len(cleaned_content) > MAX_MESSAGE_LENGTH:
             raise ValidationError(
-                {"content": f"Message exceeds maximum length of {MAX_MESSAGE_LENGTH} characters."}
+                {
+                    "content": f"Message exceeds maximum length of {MAX_MESSAGE_LENGTH} characters."
+                }
             )
 
         # 2. Authorization check
@@ -152,7 +163,7 @@ class AIService:
         self.check_rate_limit(student.id)
 
         # 4. Save student message
-        student_msg = AIMessage.objects.create(
+        AIMessage.objects.create(
             conversation=conversation,
             sender=AIMessage.SenderChoices.STUDENT,
             content=cleaned_content,
@@ -167,7 +178,9 @@ class AIService:
 
         messages_payload = []
         for msg in recent_messages:
-            role = "user" if msg.sender == AIMessage.SenderChoices.STUDENT else "assistant"
+            role = (
+                "user" if msg.sender == AIMessage.SenderChoices.STUDENT else "assistant"
+            )
             messages_payload.append({"role": role, "content": msg.content})
 
         # 6. Query AI Provider safely
@@ -177,7 +190,14 @@ class AIService:
                 system_prompt=SYSTEM_PEDAGOGICAL_PROMPT,
                 context={"student_id": str(student.id), "title": conversation.title},
             )
-        except Exception as exc:
+        except (
+            RuntimeError,
+            ValueError,
+            TypeError,
+            OSError,
+            TimeoutError,
+            KeyError,
+        ) as exc:
             safe_err = safe_scrub_secrets(str(exc))
             logger.error("AI Provider error during message generation: %s", safe_err)
             provider_result = self.provider.generate_response(
@@ -227,15 +247,17 @@ class AIService:
 
         # Build context history up to that point
         history_msgs = list(
-            conversation.messages.filter(created_at__lte=last_student_msg.created_at).order_by(
-                "-created_at"
-            )[:MAX_CONTEXT_MESSAGES]
+            conversation.messages.filter(
+                created_at__lte=last_student_msg.created_at
+            ).order_by("-created_at")[:MAX_CONTEXT_MESSAGES]
         )
         history_msgs.reverse()
 
         messages_payload = [
             {
-                "role": "user" if m.sender == AIMessage.SenderChoices.STUDENT else "assistant",
+                "role": "user"
+                if m.sender == AIMessage.SenderChoices.STUDENT
+                else "assistant",
                 "content": m.content,
             }
             for m in history_msgs

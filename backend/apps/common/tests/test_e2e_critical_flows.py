@@ -35,22 +35,22 @@ Plus Comprehensive Security Tests:
 """
 
 from decimal import Decimal
-import io
-import time
+
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.accounts.models import AuditLog, Role, User
+from apps.accounts.models import User
 from apps.accounts.services import AuthService, StudentProvisioningService
-from apps.ai_assistant.models import AIConversation, AIMessage
+from apps.ai_assistant.models import AIMessage
 from apps.ai_assistant.providers.base import AIProviderResult, BaseAIProvider
 from apps.ai_assistant.services import AIService
 from apps.assignments.execution.mock_provider import MockExecutionProvider
 from apps.assignments.execution.service import CodeExecutionService
-from apps.assignments.models import CodingQuestion, TestCase as AssignmentTestCase
+from apps.assignments.models import CodingQuestion
+from apps.assignments.models import TestCase as AssignmentTestCase
 from apps.common.exceptions import DomainException
 from apps.courses.models import Course, CourseEnrollment
 from apps.leaderboard.services import LeaderboardService
@@ -59,12 +59,10 @@ from apps.modules.services import StudentModuleService
 from apps.notifications.models import Notification
 from apps.projects.models import Project, ProjectSubmission
 from apps.projects.services import ProjectAdminService, StudentProjectService
-from apps.scoring.models import ScoreEvent, ScoreRecord
-from apps.scoring.services import ScoringService
-from apps.students.models import StudentProfile
+from apps.scoring.models import ScoreRecord
 from apps.students.services import StudentDashboardService
-from apps.tasks.models import StudentTask, Task
-from apps.tasks.services import StudentTaskService, TaskAdminService
+from apps.tasks.models import Task
+from apps.tasks.services import StudentTaskService
 
 
 class MockCustomAIProvider(BaseAIProvider):
@@ -124,15 +122,19 @@ class CriticalEndToEndLifecycleTests(TestCase):
         # STEP 2: Student receives access
         # ----------------------------------------------------------------------
         self.assertTrue(student_user.is_active)
-        self.assertEqual(student_user.onboarding_status, User.OnboardingStatusChoices.ACTIVE)
+        self.assertEqual(
+            student_user.onboarding_status, User.OnboardingStatusChoices.ACTIVE
+        )
 
         # ----------------------------------------------------------------------
         # STEP 3: Student logs in
         # ----------------------------------------------------------------------
-        user_auth, access_token, refresh_token, user_data = AuthService.login_with_email(
-            email="student.hero@gqt.local",
-            password="StudentPass123!",
-            ip_address="127.0.0.1",
+        user_auth, access_token, refresh_token, _user_data = (
+            AuthService.login_with_email(
+                email="student.hero@gqt.local",
+                password="StudentPass123!",
+                ip_address="127.0.0.1",
+            )
         )
         self.assertEqual(user_auth.id, student_user.id)
         self.assertTrue(len(access_token) > 20)
@@ -169,7 +171,7 @@ class CriticalEndToEndLifecycleTests(TestCase):
             order_index=1,
             is_published=True,
         )
-        mod2 = Module.objects.create(
+        _mod2 = Module.objects.create(
             course=course,
             title="Module 2: Advanced OOP",
             slug="advanced-oop-e2e",
@@ -177,7 +179,9 @@ class CriticalEndToEndLifecycleTests(TestCase):
             is_published=True,
         )
 
-        curriculum = StudentModuleService.get_student_course_detail(student_profile, str(course.id))
+        curriculum = StudentModuleService.get_student_course_detail(
+            student_profile, str(course.id)
+        )
         self.assertEqual(len(curriculum["modules"]), 2)
 
         # ----------------------------------------------------------------------
@@ -186,7 +190,9 @@ class CriticalEndToEndLifecycleTests(TestCase):
         m1_data = curriculum["modules"][0]
         m2_data = curriculum["modules"][1]
 
-        self.assertTrue(m1_data["is_accessible"], "First module must be accessible/unlocked")
+        self.assertTrue(
+            m1_data["is_accessible"], "First module must be accessible/unlocked"
+        )
         self.assertEqual(m1_data["status"], "UNLOCKED")
         self.assertFalse(m2_data["is_accessible"], "Subsequent module must be locked")
         self.assertEqual(m2_data["status"], "LOCKED")
@@ -194,7 +200,9 @@ class CriticalEndToEndLifecycleTests(TestCase):
         # ----------------------------------------------------------------------
         # STEP 8: Student completes Module 1
         # ----------------------------------------------------------------------
-        StudentModuleProgress.objects.filter(student=student_profile, module=mod1).update(
+        StudentModuleProgress.objects.filter(
+            student=student_profile, module=mod1
+        ).update(
             status=StudentModuleProgress.ModuleStatus.COMPLETED,
             completed_at=timezone.now(),
         )
@@ -206,7 +214,10 @@ class CriticalEndToEndLifecycleTests(TestCase):
             student_profile, str(course.id)
         )
         m2_updated = updated_curriculum["modules"][1]
-        self.assertTrue(m2_updated["is_accessible"], "Module 2 should unlock upon Module 1 completion")
+        self.assertTrue(
+            m2_updated["is_accessible"],
+            "Module 2 should unlock upon Module 1 completion",
+        )
         self.assertEqual(m2_updated["status"], "UNLOCKED")
 
         # ----------------------------------------------------------------------
@@ -224,14 +235,14 @@ class CriticalEndToEndLifecycleTests(TestCase):
             allowed_languages=["python", "java"],
             is_active=True,
         )
-        tc1 = AssignmentTestCase.objects.create(
+        _tc1 = AssignmentTestCase.objects.create(
             question=question,
             input_data="2 7 11 15\n9",
             expected_output="0 1",
             is_visible=True,
             order=1,
         )
-        tc2 = AssignmentTestCase.objects.create(
+        _tc2 = AssignmentTestCase.objects.create(
             question=question,
             input_data="3 2 4\n6",
             expected_output="1 2",
@@ -300,7 +311,11 @@ class CriticalEndToEndLifecycleTests(TestCase):
             is_active=True,
         )
 
-        mock_zip = SimpleUploadedFile("banking_project.zip", b"PK\x03\x04mockzipcontent", content_type="application/zip")
+        mock_zip = SimpleUploadedFile(
+            "banking_project.zip",
+            b"PK\x03\x04mockzipcontent",
+            content_type="application/zip",
+        )
         project_submission = StudentProjectService.submit_project(
             student=student_profile,
             project_id=str(project.id),
@@ -310,7 +325,9 @@ class CriticalEndToEndLifecycleTests(TestCase):
             uploaded_files=[mock_zip],
             ip_address="127.0.0.1",
         )
-        self.assertEqual(project_submission.status, ProjectSubmission.SubmissionStatus.SUBMITTED)
+        self.assertEqual(
+            project_submission.status, ProjectSubmission.SubmissionStatus.SUBMITTED
+        )
 
         # ----------------------------------------------------------------------
         # STEP 17 & 18: Admin reviews project and gives marks (10 pts)
@@ -323,7 +340,9 @@ class CriticalEndToEndLifecycleTests(TestCase):
             feedback_text="Outstanding architecture and complete test coverage!",
             ip_address="127.0.0.1",
         )
-        self.assertEqual(reviewed_sub.status, ProjectSubmission.SubmissionStatus.APPROVED)
+        self.assertEqual(
+            reviewed_sub.status, ProjectSubmission.SubmissionStatus.APPROVED
+        )
 
         # ----------------------------------------------------------------------
         # STEP 19: Score updates with project score (10 code + 20 task + 10 project = 40 pts)
@@ -341,7 +360,10 @@ class CriticalEndToEndLifecycleTests(TestCase):
         # STEP 20: Notification appears
         # ----------------------------------------------------------------------
         notifications = Notification.objects.filter(recipient=student_user)
-        self.assertTrue(notifications.exists(), "Student should have notifications for project review/submission")
+        self.assertTrue(
+            notifications.exists(),
+            "Student should have notifications for project review/submission",
+        )
 
         # ----------------------------------------------------------------------
         # STEP 21 & 22: Student uses Help AI & Chat history persists
@@ -363,7 +385,9 @@ class CriticalEndToEndLifecycleTests(TestCase):
         self.assertIsNotNone(reply.id)
 
         # Verify chat history persistence
-        history = AIMessage.objects.filter(conversation=conversation).order_by("created_at")
+        history = AIMessage.objects.filter(conversation=conversation).order_by(
+            "created_at"
+        )
         self.assertEqual(history.count(), 4)  # 2 user messages + 2 AI responses
 
 
@@ -441,7 +465,11 @@ class SecurityHardeningTests(TestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token_a}")
 
         response = self.client.get(f"/api/v1/students/ai/conversations/{conv_b.id}/")
-        self.assertIn(response.status_code, [403, 404], "Access to foreign conversation must be denied")
+        self.assertIn(
+            response.status_code,
+            [403, 404],
+            "Access to foreign conversation must be denied",
+        )
 
     def test_inactive_account_login_blocked(self):
         """Inactive accounts cannot authenticate."""
@@ -449,7 +477,9 @@ class SecurityHardeningTests(TestCase):
         self.student_a.save(update_fields=["is_active"])
 
         with self.assertRaises(DomainException) as ctx:
-            AuthService.login_with_email(email="student.a@gqt.local", password="PasswordA123!")
+            AuthService.login_with_email(
+                email="student.a@gqt.local", password="PasswordA123!"
+            )
         self.assertEqual(ctx.exception.status_code, 403)
 
     def test_invalid_executable_upload_rejected(self):
@@ -462,7 +492,9 @@ class SecurityHardeningTests(TestCase):
             is_active=True,
         )
 
-        fake_exe = SimpleUploadedFile("payload.exe", b"MZexecutabledata", content_type="application/x-msdownload")
+        fake_exe = SimpleUploadedFile(
+            "payload.exe", b"MZexecutabledata", content_type="application/x-msdownload"
+        )
         with self.assertRaises(DomainException):
             StudentProjectService.submit_project(
                 student=self.profile_a,

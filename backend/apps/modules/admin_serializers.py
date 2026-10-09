@@ -19,6 +19,7 @@ class ModuleAdminSerializer(serializers.ModelSerializer):
     course_id = serializers.UUIDField(source="course.id")
     course_title = serializers.CharField(source="course.title")
     questions_count = serializers.SerializerMethodField()
+    videos_count = serializers.SerializerMethodField()
     prerequisites = PrerequisiteBriefSerializer(many=True, read_only=True)
 
     class Meta:
@@ -54,7 +55,9 @@ class ModuleAdminCreateSerializer(serializers.Serializer):
     slug = serializers.SlugField(max_length=180, required=False)
     order_index = serializers.IntegerField(required=False, min_value=1)
     summary = serializers.CharField(required=False, allow_blank=True, default="")
-    lecture_content = serializers.CharField(required=False, allow_blank=True, default="")
+    lecture_content = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
     passing_percentage = serializers.DecimalField(
         max_digits=5, decimal_places=2, required=False, default=80.00
     )
@@ -70,9 +73,13 @@ class ModuleAdminUpdateSerializer(serializers.Serializer):
     order_index = serializers.IntegerField(required=False, min_value=1)
     summary = serializers.CharField(required=False, allow_blank=True)
     lecture_content = serializers.CharField(required=False, allow_blank=True)
-    passing_percentage = serializers.DecimalField(max_digits=5, decimal_places=2, required=False)
+    passing_percentage = serializers.DecimalField(
+        max_digits=5, decimal_places=2, required=False
+    )
     is_published = serializers.BooleanField(required=False)
-    prerequisite_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
+    prerequisite_ids = serializers.ListField(
+        child=serializers.UUIDField(), required=False
+    )
 
 
 class ModuleReorderItemSerializer(serializers.Serializer):
@@ -82,7 +89,9 @@ class ModuleReorderItemSerializer(serializers.Serializer):
 
 class ModuleReorderSerializer(serializers.Serializer):
     course_id = serializers.UUIDField()
-    orders = serializers.ListField(child=ModuleReorderItemSerializer(), allow_empty=False)
+    orders = serializers.ListField(
+        child=ModuleReorderItemSerializer(), allow_empty=False
+    )
 
 
 class ModulePublishSerializer(serializers.Serializer):

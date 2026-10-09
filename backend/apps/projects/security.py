@@ -12,8 +12,8 @@ Implements:
 
 import os
 import re
-from typing import Tuple
-from urllib.parse import urlparse
+from typing import ClassVar
+
 from django.core.files.uploadedfile import UploadedFile
 
 from apps.common.exceptions import DomainException
@@ -24,7 +24,7 @@ class FileSecurityValidator:
 
     MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024  # 25 Megabytes
 
-    ALLOWED_EXTENSIONS = {
+    ALLOWED_EXTENSIONS: ClassVar[set[str]] = {
         ".zip",
         ".tar",
         ".gz",
@@ -56,7 +56,7 @@ class FileSecurityValidator:
         ".jpeg",
     }
 
-    DISALLOWED_EXECUTABLE_EXTENSIONS = {
+    DISALLOWED_EXECUTABLE_EXTENSIONS: ClassVar[set[str]] = {
         ".exe",
         ".bat",
         ".cmd",
@@ -77,7 +77,7 @@ class FileSecurityValidator:
     }
 
     # Binary executable signatures (Magic numbers) to block disguised executables
-    DANGEROUS_MAGIC_HEADERS = [
+    DANGEROUS_MAGIC_HEADERS: ClassVar[list[bytes]] = [
         b"MZ",  # Windows DOS/PE Executable
         b"\x7fELF",  # Linux ELF Executable
         b"\xca\xfe\xba\xbe",  # Mach-O Universal / Java class
@@ -99,7 +99,7 @@ class FileSecurityValidator:
         return clean_name
 
     @classmethod
-    def validate_file(cls, uploaded_file: UploadedFile) -> Tuple[str, int, str]:
+    def validate_file(cls, uploaded_file: UploadedFile) -> tuple[str, int, str]:
         """Validates uploaded file size, extension, magic bytes, and malware signatures.
 
         Returns:
@@ -119,7 +119,9 @@ class FileSecurityValidator:
         ext = os.path.splitext(sanitized_name)[1].lower()
 
         if ext in cls.DISALLOWED_EXECUTABLE_EXTENSIONS:
-            raise DomainException(f"Executable file types ({ext}) are strictly prohibited.")
+            raise DomainException(
+                f"Executable file types ({ext}) are strictly prohibited."
+            )
 
         if ext not in cls.ALLOWED_EXTENSIONS:
             raise DomainException(
@@ -132,7 +134,9 @@ class FileSecurityValidator:
 
         for dangerous_magic in cls.DANGEROUS_MAGIC_HEADERS:
             if header.startswith(dangerous_magic):
-                raise DomainException("Disguised binary executables are strictly prohibited.")
+                raise DomainException(
+                    "Disguised binary executables are strictly prohibited."
+                )
 
         # 4. Antivirus / Malware Scan Integration Hook
         cls.scan_for_malware(uploaded_file)
@@ -147,9 +151,13 @@ class FileSecurityValidator:
         uploaded_file.seek(0)
 
         # EICAR standard antivirus test signature
-        EICAR_SIGNATURE = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+        EICAR_SIGNATURE = (
+            b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+        )
         if EICAR_SIGNATURE in sample_chunk:
-            raise DomainException("Malicious payload or malware signature detected in upload.")
+            raise DomainException(
+                "Malicious payload or malware signature detected in upload."
+            )
 
 
 class GitHubUrlValidator:
@@ -177,8 +185,7 @@ class GitHubUrlValidator:
         repo = match.group("repo")
 
         # Strip trailing .git or trailing slash
-        if repo.endswith(".git"):
-            repo = repo[:-4]
+        repo = repo.removesuffix(".git")
         repo = repo.rstrip("/")
 
         return f"https://github.com/{owner}/{repo}"

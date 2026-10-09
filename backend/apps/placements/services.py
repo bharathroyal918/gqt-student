@@ -1,7 +1,8 @@
 """Placement drive business services and Supabase synchronization logic."""
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
+
 from django.db.models import Count, Q
 from django.utils import timezone
 
@@ -36,16 +37,20 @@ class PlacementService:
                 "min_cgpa": float(drive.min_cgpa),
                 "eligible_batches": drive.eligible_batches,
                 "job_description": drive.job_description,
-                "application_deadline": drive.application_deadline.isoformat() if drive.application_deadline else None,
+                "application_deadline": drive.application_deadline.isoformat()
+                if drive.application_deadline
+                else None,
                 "status": drive.status,
                 "is_active": drive.is_active,
                 "updated_at": timezone.now().isoformat(),
             }
             # Upsert into placement_drives table
             client.table("placement_drives").upsert(payload).execute()
-            logger.info(f"Synced Placement Drive {drive.id} ({drive.company_name}) to Supabase")
+            logger.info(
+                f"Synced Placement Drive {drive.id} ({drive.company_name}) to Supabase"
+            )
             return True
-        except Exception as exc:
+        except (ValueError, TypeError, KeyError, RuntimeError, OSError) as exc:
             logger.warning(f"Supabase drive sync skipped or not ready: {exc}")
             return False
 
@@ -78,25 +83,37 @@ class PlacementService:
                 "status": application.status,
                 "admin_notes": application.admin_notes,
                 "rejection_reason": application.rejection_reason,
-                "submitted_at": application.submitted_at.isoformat() if application.submitted_at else timezone.now().isoformat(),
+                "submitted_at": application.submitted_at.isoformat()
+                if application.submitted_at
+                else timezone.now().isoformat(),
                 "updated_at": timezone.now().isoformat(),
             }
             client.table("placement_applications").upsert(payload).execute()
-            logger.info(f"Synced Placement Application {application.id} for student {application.student_name} to Supabase")
+            logger.info(
+                f"Synced Placement Application {application.id} for student {application.student_name} to Supabase"
+            )
             return True
-        except Exception as exc:
+        except (ValueError, TypeError, KeyError, RuntimeError, OSError) as exc:
             logger.warning(f"Supabase application sync skipped or not ready: {exc}")
             return False
 
     @staticmethod
-    def get_admin_metrics() -> Dict[str, Any]:
+    def get_admin_metrics() -> dict[str, Any]:
         """Aggregate high-level metrics for admin dashboard."""
         total_drives = PlacementDrive.objects.count()
-        active_drives = PlacementDrive.objects.filter(is_active=True, status=PlacementDrive.DriveStatus.ONGOING).count()
+        active_drives = PlacementDrive.objects.filter(
+            is_active=True, status=PlacementDrive.DriveStatus.ONGOING
+        ).count()
         total_applications = PlacementApplication.objects.count()
-        selected_candidates = PlacementApplication.objects.filter(status=PlacementApplication.ApplicationStatus.SELECTED).count()
-        shortlisted_candidates = PlacementApplication.objects.filter(status=PlacementApplication.ApplicationStatus.SHORTLISTED).count()
-        rejected_candidates = PlacementApplication.objects.filter(status=PlacementApplication.ApplicationStatus.REJECTED).count()
+        selected_candidates = PlacementApplication.objects.filter(
+            status=PlacementApplication.ApplicationStatus.SELECTED
+        ).count()
+        shortlisted_candidates = PlacementApplication.objects.filter(
+            status=PlacementApplication.ApplicationStatus.SHORTLISTED
+        ).count()
+        rejected_candidates = PlacementApplication.objects.filter(
+            status=PlacementApplication.ApplicationStatus.REJECTED
+        ).count()
 
         return {
             "total_drives": total_drives,
@@ -108,15 +125,27 @@ class PlacementService:
         }
 
     @staticmethod
-    def get_drive_stats(drive: PlacementDrive) -> Dict[str, int]:
+    def get_drive_stats(drive: PlacementDrive) -> dict[str, int]:
         """Get application breakdown for a specific drive."""
         stats = drive.applications.aggregate(
             total=Count("id"),
-            applied=Count("id", filter=Q(status=PlacementApplication.ApplicationStatus.APPLIED)),
-            under_review=Count("id", filter=Q(status=PlacementApplication.ApplicationStatus.UNDER_REVIEW)),
-            shortlisted=Count("id", filter=Q(status=PlacementApplication.ApplicationStatus.SHORTLISTED)),
-            selected=Count("id", filter=Q(status=PlacementApplication.ApplicationStatus.SELECTED)),
-            rejected=Count("id", filter=Q(status=PlacementApplication.ApplicationStatus.REJECTED)),
+            applied=Count(
+                "id", filter=Q(status=PlacementApplication.ApplicationStatus.APPLIED)
+            ),
+            under_review=Count(
+                "id",
+                filter=Q(status=PlacementApplication.ApplicationStatus.UNDER_REVIEW),
+            ),
+            shortlisted=Count(
+                "id",
+                filter=Q(status=PlacementApplication.ApplicationStatus.SHORTLISTED),
+            ),
+            selected=Count(
+                "id", filter=Q(status=PlacementApplication.ApplicationStatus.SELECTED)
+            ),
+            rejected=Count(
+                "id", filter=Q(status=PlacementApplication.ApplicationStatus.REJECTED)
+            ),
         )
         return {
             "total": stats["total"] or 0,

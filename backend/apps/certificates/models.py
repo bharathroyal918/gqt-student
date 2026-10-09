@@ -39,9 +39,13 @@ class StudentBadge(BaseModel):
     """Junction table recording badges unlocked by students."""
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="earned_badges"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="earned_badges",
     )
-    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name="awarded_students")
+    badge = models.ForeignKey(
+        Badge, on_delete=models.CASCADE, related_name="awarded_students"
+    )
     awarded_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -49,7 +53,9 @@ class StudentBadge(BaseModel):
         verbose_name_plural = "Student Badges"
         ordering = ["-awarded_at"]
         constraints = [
-            models.UniqueConstraint(fields=["student", "badge"], name="unique_student_badge")
+            models.UniqueConstraint(
+                fields=["student", "badge"], name="unique_student_badge"
+            )
         ]
 
     def __str__(self):

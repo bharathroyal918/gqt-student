@@ -6,14 +6,13 @@ idempotency, automated notifications, and real-time leaderboard recalculations.
 """
 
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any
+
 from django.core.cache import cache
-from django.db import models, transaction
-from django.shortcuts import get_object_or_404
+from django.db import transaction
 from django.utils import timezone
 
-from apps.accounts.models import AuditLog, User
-from apps.common.exceptions import DomainException
+from apps.accounts.models import User
 from apps.notifications.models import Notification
 from apps.scoring.models import LeaderboardSnapshot, ScoreEvent, ScoreRecord
 from apps.students.models import StudentProfile
@@ -54,13 +53,13 @@ class ScoringService:
         new_points: Decimal,
         policy_applied: str,
         reason: str,
-        awarded_by: Optional[User] = None,
+        awarded_by: User | None = None,
         event_type: str = ScoreEvent.EventType.SUBMISSION_EVALUATED,
-        notification_title: Optional[str] = None,
-        notification_body: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        notification_title: str | None = None,
+        notification_body: str | None = None,
+    ) -> dict[str, Any]:
         """Atomically processes any score-altering event across the portal.
-        
+
         Guarantees:
         1. Row-level locks (select_for_update) to prevent concurrency races.
         2. Idempotency: Duplicate calls for the same score produce 0 delta.
@@ -74,11 +73,15 @@ class ScoringService:
         locked_student = StudentProfile.objects.select_for_update().get(id=student.id)
 
         # Lock or fetch existing score record
-        score_record = ScoreRecord.objects.select_for_update().filter(
-            student=locked_student,
-            source_type=source_type,
-            source_id=source_id,
-        ).first()
+        score_record = (
+            ScoreRecord.objects.select_for_update()
+            .filter(
+                student=locked_student,
+                source_type=source_type,
+                source_id=source_id,
+            )
+            .first()
+        )
 
         prev_points = score_record.points if score_record else Decimal("0.00")
         score_delta = Decimal("0.00")
@@ -103,7 +106,9 @@ class ScoringService:
             score_record.points = new_points
             score_record.policy_applied = policy_applied
             score_record.awarded_by = awarded_by
-            score_record.save(update_fields=["points", "policy_applied", "awarded_by", "updated_at"])
+            score_record.save(
+                update_fields=["points", "policy_applied", "awarded_by", "updated_at"]
+            )
         else:
             # Idempotent or lower score -> do not decrement points or duplicate
             score_delta = Decimal("0.00")
@@ -129,7 +134,10 @@ class ScoringService:
 
             # Dispatch Student Notification
             title = notification_title or f"Score Awarded: +{score_delta} Points!"
-            body = notification_body or f"You earned {score_delta} points for {reason}. Total score is now {locked_student.total_points}."
+            body = (
+                notification_body
+                or f"You earned {score_delta} points for {reason}. Total score is now {locked_student.total_points}."
+            )
             Notification.objects.create(
                 recipient=locked_student.user,
                 title=title,
@@ -138,7 +146,9 @@ class ScoringService:
             )
 
         # Update streak for problem solving/assignment activity
-        if score_delta > Decimal("0.00") or (score_record and score_record.points > Decimal("0.00")):
+        if score_delta > Decimal("0.00") or (
+            score_record and score_record.points > Decimal("0.00")
+        ):
             locked_student.record_activity_and_update_streak()
 
         return {
@@ -162,8 +172,8 @@ class ScoringService:
         passed_test_cases: int,
         total_test_cases: int,
         max_points: Decimal,
-        awarded_by: Optional[User] = None,
-    ) -> Dict[str, Any]:
+        awarded_by: User | None = None,
+    ) -> dict[str, Any]:
         """Calculates and applies marks for an algorithmic coding assignment submission."""
         awarded_score, policy = cls.calculate_assignment_marks(
             passed_test_cases=passed_test_cases,
@@ -194,16 +204,20 @@ class ScoringService:
         project_title: str,
         score: Decimal,
         max_score: Decimal,
-        awarded_by: Optional[User] = None,
+        awarded_by: User | None = None,
         feedback_notes: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Evaluates and persists score for a capstone project submission."""
         if score > max_score:
             score = max_score
         elif score < Decimal("0.00"):
             score = Decimal("0.00")
 
-        policy = ScoreRecord.ScoringPolicy.FULL if score == max_score else ScoreRecord.ScoringPolicy.MANUAL
+        policy = (
+            ScoreRecord.ScoringPolicy.FULL
+            if score == max_score
+            else ScoreRecord.ScoringPolicy.MANUAL
+        )
         reason = f"Capstone Project: {project_title} ({score}/{max_score} pts)"
 
         return cls.process_score_change(
@@ -220,21 +234,28 @@ class ScoringService:
         )
 
     @classmethod
-    def _update_leaderboard(cls, student: StudentProfile) -> Dict[str, int]:
+    def _update_leaderboard(cls, student: StudentProfile) -> dict[str, int]:
         """Calculates real-time global and batch rank for student, and refreshes daily leaderboard snapshots."""
         today = timezone.localdate()
-        
-        all_students = list(StudentProfile.objects.order_by("-total_points", "created_at"))
+
+        all_students = list(
+            StudentProfile.objects.order_by("-total_points", "created_at")
+        )
         student_ranks = {}
-        
+
         for rank, s in enumerate(all_students, start=1):
             student_ranks[s.id] = rank
             b_rank = 1
             if s.batch_code:
-                b_rank = sum(
-                    1 for other in all_students
-                    if other.batch_code == s.batch_code and other.total_points > s.total_points
-                ) + 1
+                b_rank = (
+                    sum(
+                        1
+                        for other in all_students
+                        if other.batch_code == s.batch_code
+                        and other.total_points > s.total_points
+                    )
+                    + 1
+                )
 
             LeaderboardSnapshot.objects.update_or_create(
                 snapshot_date=today,
@@ -250,6 +271,7 @@ class ScoringService:
 
         # Invalidate leaderboard caches via domain LeaderboardService
         from apps.leaderboard.services import LeaderboardService
+
         LeaderboardService.invalidate_cache()
         cache.delete(f"student_dashboard:{student.id}")
 
@@ -259,7 +281,7 @@ class ScoringService:
         }
 
     @classmethod
-    def get_student_score_history(cls, student: StudentProfile) -> Dict[str, Any]:
+    def get_student_score_history(cls, student: StudentProfile) -> dict[str, Any]:
         """Returns student score breakdown, total points, and recent score events."""
         records = ScoreRecord.objects.filter(student=student).order_by("-awarded_at")
         events = ScoreEvent.objects.filter(student=student).order_by("-created_at")[:20]

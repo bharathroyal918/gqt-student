@@ -2,6 +2,7 @@
 
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, status
 from rest_framework.views import APIView
@@ -20,7 +21,9 @@ from apps.notifications.services import AnnouncementAdminService
 
 
 class AnnouncementFilter(django_filters.FilterSet):
-    target_audience = django_filters.ChoiceFilter(choices=Announcement.TargetAudienceChoices.choices)
+    target_audience = django_filters.ChoiceFilter(
+        choices=Announcement.TargetAudienceChoices.choices
+    )
     target_batch = django_filters.CharFilter(lookup_expr="iexact")
     priority = django_filters.ChoiceFilter(choices=Announcement.PriorityChoices.choices)
     is_active = django_filters.BooleanFilter()
@@ -28,7 +31,13 @@ class AnnouncementFilter(django_filters.FilterSet):
 
     class Meta:
         model = Announcement
-        fields = ["target_audience", "target_batch", "priority", "is_active", "is_published"]
+        fields = [
+            "target_audience",
+            "target_batch",
+            "priority",
+            "is_active",
+            "is_published",
+        ]
 
 
 class AnnouncementAdminListCreateView(generics.ListCreateAPIView):
@@ -36,14 +45,20 @@ class AnnouncementAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = AnnouncementAdminSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = AnnouncementFilter
     search_fields = ["title", "content", "target_batch"]
     ordering_fields = ["priority", "created_at", "expires_at", "published_at"]
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        return Announcement.objects.select_related("published_by", "target_course").all()
+        return Announcement.objects.select_related(
+            "published_by", "target_course"
+        ).all()
 
     @extend_schema(
         request=AnnouncementAdminCreateSerializer,
@@ -61,7 +76,9 @@ class AnnouncementAdminListCreateView(generics.ListCreateAPIView):
             admin_user=request.user,
             title=data["title"],
             content=data["content"],
-            target_audience=data.get("target_audience", Announcement.TargetAudienceChoices.ALL),
+            target_audience=data.get(
+                "target_audience", Announcement.TargetAudienceChoices.ALL
+            ),
             target_batch=data.get("target_batch", ""),
             target_course_id=data.get("target_course_id"),
             priority=data.get("priority", "NORMAL"),
@@ -81,6 +98,7 @@ class AnnouncementAdminDetailUpdateDeleteView(APIView):
     """Admin endpoint to retrieve, edit, or deactivate an announcement."""
 
     permission_classes = [IsAdmin]
+    serializer_class = AnnouncementAdminSerializer
 
     @extend_schema(
         responses={200: AnnouncementAdminSerializer},
@@ -126,6 +144,7 @@ class AnnouncementAdminDetailUpdateDeleteView(APIView):
 
     @extend_schema(
         summary="Admin Deactivate Announcement",
+        responses={200: AnnouncementAdminSerializer},
         tags=["Admin Announcement Management"],
     )
     def delete(self, request, pk):
@@ -145,6 +164,7 @@ class AnnouncementAdminPublishView(APIView):
     """Admin endpoint to publish and fan out an existing announcement."""
 
     permission_classes = [IsAdmin]
+    serializer_class = AnnouncementAdminSerializer
 
     @extend_schema(
         summary="Admin Publish Announcement",
@@ -178,12 +198,15 @@ class AnnouncementAdminAuditHistoryView(APIView):
     @extend_schema(
         summary="Admin Announcement Audit History",
         description="Retrieve history of creation, modification, and publishing events.",
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Admin Announcement Management"],
     )
     def get(self, request, pk):
-        logs = AuditLog.objects.filter(
-            target_model="Announcement", target_id=str(pk)
-        ).select_related("actor").order_by("-created_at")
+        logs = (
+            AuditLog.objects.filter(target_model="Announcement", target_id=str(pk))
+            .select_related("actor")
+            .order_by("-created_at")
+        )
 
         log_data = [
             {

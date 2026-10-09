@@ -1,11 +1,13 @@
 """Admin views for certificate oversight and revocation."""
 
 import uuid
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+
+from django.http import Http404
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from rest_framework.views import APIView
 
-from apps.certificates.models import Certificate
 from apps.certificates.serializers import AdminCertificateSerializer
 from apps.certificates.services import CertificateService
 from apps.common.permissions import IsAdmin
@@ -22,9 +24,13 @@ class AdminCertificateListView(APIView):
         summary="Admin List Certificates",
         description="Search and filter all institutional completion certificate records.",
         parameters=[
-            OpenApiParameter("search", str, description="Search by student name, ID, or cert ID"),
+            OpenApiParameter(
+                "search", str, description="Search by student name, ID, or cert ID"
+            ),
             OpenApiParameter("course_id", str, description="Filter by course UUID"),
-            OpenApiParameter("is_revoked", bool, description="Filter by revocation status"),
+            OpenApiParameter(
+                "is_revoked", bool, description="Filter by revocation status"
+            ),
         ],
         responses={200: AdminCertificateSerializer(many=True)},
         tags=["Admin Certificates"],
@@ -57,6 +63,7 @@ class AdminCertificateRevokeView(APIView):
     """Admin endpoint to revoke an issued certificate."""
 
     permission_classes = [IsAdmin]
+    serializer_class = AdminCertificateSerializer
 
     @extend_schema(
         summary="Admin Revoke Certificate",
@@ -81,7 +88,7 @@ class AdminCertificateRevokeView(APIView):
                 message="Certificate successfully revoked.",
                 status_code=status.HTTP_200_OK,
             )
-        except Exception as exc:
+        except (Http404, NotFound) as exc:
             return api_error(
                 code="NOT_FOUND",
                 message=str(exc),

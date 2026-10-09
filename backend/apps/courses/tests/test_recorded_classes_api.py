@@ -5,7 +5,12 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.courses.models import Course, CourseEnrollment, RecordedClass, StudentRecordedClassProgress
+from apps.courses.models import (
+    Course,
+    CourseEnrollment,
+    RecordedClass,
+    StudentRecordedClassProgress,
+)
 from apps.students.models import StudentProfile
 
 User = get_user_model()
@@ -109,7 +114,10 @@ class RecordedClassesAPITests(APITestCase):
     def test_first_5_videos_unrestricted_preview_for_unenrolled_student(self):
         """Un-enrolled students can preview videos 1 to 5, but videos 6+ are marked is_locked=True with streaming data omitted."""
         self.client.force_authenticate(user=self.unenrolled_user)
-        url = reverse("api_v1:student_recorded_classes:course_playlist", kwargs={"course_id": self.java_course.id})
+        url = reverse(
+            "api_v1:student_recorded_classes:course_playlist",
+            kwargs={"course_id": self.java_course.id},
+        )
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -119,7 +127,10 @@ class RecordedClassesAPITests(APITestCase):
 
         # Videos 1 to 5 must be UNLOCKED with full streaming metadata
         for v in videos[:5]:
-            self.assertFalse(v["is_locked"], f"Video #{v['order_index']} should be unlocked free preview")
+            self.assertFalse(
+                v["is_locked"],
+                f"Video #{v['order_index']} should be unlocked free preview",
+            )
             self.assertTrue(v["is_preview"])
             self.assertIsNotNone(v["video_source_type"])
             self.assertNotEqual(v["video_source_type"], "LOCKED")
@@ -127,7 +138,10 @@ class RecordedClassesAPITests(APITestCase):
 
         # Videos 6 to 8 must be LOCKED with streaming URLs stripped
         for v in videos[5:]:
-            self.assertTrue(v["is_locked"], f"Video #{v['order_index']} must be locked for unenrolled students")
+            self.assertTrue(
+                v["is_locked"],
+                f"Video #{v['order_index']} must be locked for unenrolled students",
+            )
             self.assertEqual(v["video_source_type"], "LOCKED")
             self.assertEqual(v["youtube_video_id"], "")
             self.assertEqual(v["youtube_url"], "")
@@ -137,13 +151,19 @@ class RecordedClassesAPITests(APITestCase):
     def test_enrolled_student_has_all_videos_unlocked(self):
         """Enrolled / approved students have all videos unlocked without restrictions."""
         self.client.force_authenticate(user=self.enrolled_user)
-        url = reverse("api_v1:student_recorded_classes:course_playlist", kwargs={"course_id": self.java_course.id})
+        url = reverse(
+            "api_v1:student_recorded_classes:course_playlist",
+            kwargs={"course_id": self.java_course.id},
+        )
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         videos = response.json()["data"]["videos"]
         for v in videos:
-            self.assertFalse(v["is_locked"], f"Enrolled student should have video #{v['order_index']} unlocked")
+            self.assertFalse(
+                v["is_locked"],
+                f"Enrolled student should have video #{v['order_index']} unlocked",
+            )
             self.assertNotEqual(v["video_source_type"], "LOCKED")
             self.assertIn("dQw4w9WgXc", v["youtube_video_id"])
 
@@ -155,13 +175,19 @@ class RecordedClassesAPITests(APITestCase):
         self.client.force_authenticate(user=self.unenrolled_user)
 
         # Video 3 (Free Preview) should be 200 OK
-        url_v3 = reverse("api_v1:student_recorded_classes:video_stream", kwargs={"course_id": self.java_course.id, "video_id": video_3.id})
+        url_v3 = reverse(
+            "api_v1:student_recorded_classes:video_stream",
+            kwargs={"course_id": self.java_course.id, "video_id": video_3.id},
+        )
         res_v3 = self.client.get(url_v3)
         self.assertEqual(res_v3.status_code, status.HTTP_200_OK)
         self.assertEqual(res_v3.json()["data"]["title"], video_3.title)
 
         # Video 7 (Restricted) should be 403 FORBIDDEN
-        url_v7 = reverse("api_v1:student_recorded_classes:video_stream", kwargs={"course_id": self.java_course.id, "video_id": video_7.id})
+        url_v7 = reverse(
+            "api_v1:student_recorded_classes:video_stream",
+            kwargs={"course_id": self.java_course.id, "video_id": video_7.id},
+        )
         res_v7 = self.client.get(url_v7)
         self.assertEqual(res_v7.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(res_v7.json()["error"]["code"], "COURSE_ENROLLMENT_REQUIRED")
@@ -170,18 +196,27 @@ class RecordedClassesAPITests(APITestCase):
         self.client.force_authenticate(user=self.enrolled_user)
         res_v7_enrolled = self.client.get(url_v7)
         self.assertEqual(res_v7_enrolled.status_code, status.HTTP_200_OK)
-        self.assertEqual(res_v7_enrolled.json()["data"]["youtube_video_id"], video_7.youtube_video_id)
+        self.assertEqual(
+            res_v7_enrolled.json()["data"]["youtube_video_id"], video_7.youtube_video_id
+        )
 
     def test_student_video_progress_tracking(self):
         """Students can record playback time position and mark video as completed."""
         video_1 = self.videos[0]
         self.client.force_authenticate(user=self.enrolled_user)
-        url = reverse("api_v1:student_recorded_classes:video_progress", kwargs={"course_id": self.java_course.id, "video_id": video_1.id})
+        url = reverse(
+            "api_v1:student_recorded_classes:video_progress",
+            kwargs={"course_id": self.java_course.id, "video_id": video_1.id},
+        )
 
-        response = self.client.post(url, {"last_position_seconds": 450, "is_completed": True}, format="json")
+        response = self.client.post(
+            url, {"last_position_seconds": 450, "is_completed": True}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        progress = StudentRecordedClassProgress.objects.get(student=self.enrolled_student, recorded_class=video_1)
+        progress = StudentRecordedClassProgress.objects.get(
+            student=self.enrolled_student, recorded_class=video_1
+        )
         self.assertEqual(progress.last_position_seconds, 450)
         self.assertTrue(progress.is_completed)
         self.assertIsNotNone(progress.completed_at)
@@ -191,7 +226,10 @@ class RecordedClassesAPITests(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
 
         # 1. Create with YouTube link
-        url_create = reverse("api_v1:admin_courses:recorded_classes_list_create", kwargs={"course_id": self.java_course.id})
+        url_create = reverse(
+            "api_v1:admin_courses:recorded_classes_list_create",
+            kwargs={"course_id": self.java_course.id},
+        )
         payload = {
             "title": "Lesson 09: Spring Boot REST Architecture",
             "video_source_type": "YOUTUBE",
@@ -207,7 +245,10 @@ class RecordedClassesAPITests(APITestCase):
         self.assertEqual(created_video["order_index"], 9)
 
         # 2. Reorder classes
-        url_reorder = reverse("api_v1:admin_courses:recorded_classes_reorder", kwargs={"course_id": self.java_course.id})
+        url_reorder = reverse(
+            "api_v1:admin_courses:recorded_classes_reorder",
+            kwargs={"course_id": self.java_course.id},
+        )
         reorder_payload = {
             "order_items": [
                 {"id": str(self.videos[0].id), "order_index": 2},
@@ -227,19 +268,33 @@ class RecordedClassesAPITests(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
 
         # Allocate Un-enrolled Bob into Java Course
-        url_allocate = reverse("api_v1:admin_courses:enrollments_allocate", kwargs={"course_id": self.java_course.id})
-        res_alloc = self.client.post(url_allocate, {"student_id": str(self.unenrolled_student.id)}, format="json")
+        url_allocate = reverse(
+            "api_v1:admin_courses:enrollments_allocate",
+            kwargs={"course_id": self.java_course.id},
+        )
+        res_alloc = self.client.post(
+            url_allocate, {"student_id": str(self.unenrolled_student.id)}, format="json"
+        )
         self.assertEqual(res_alloc.status_code, status.HTTP_201_CREATED)
 
         # Now Bob has full access to all 8 videos
         self.client.force_authenticate(user=self.unenrolled_user)
-        url_stream = reverse("api_v1:student_recorded_classes:video_stream", kwargs={"course_id": self.java_course.id, "video_id": self.videos[6].id})
+        url_stream = reverse(
+            "api_v1:student_recorded_classes:video_stream",
+            kwargs={"course_id": self.java_course.id, "video_id": self.videos[6].id},
+        )
         res_stream = self.client.get(url_stream)
         self.assertEqual(res_stream.status_code, status.HTTP_200_OK)
 
         # Admin revokes Bob's enrollment
         self.client.force_authenticate(user=self.admin_user)
-        url_revoke = reverse("api_v1:admin_courses:enrollments_revoke", kwargs={"course_id": self.java_course.id, "student_id": self.unenrolled_student.id})
+        url_revoke = reverse(
+            "api_v1:admin_courses:enrollments_revoke",
+            kwargs={
+                "course_id": self.java_course.id,
+                "student_id": self.unenrolled_student.id,
+            },
+        )
         res_revoke = self.client.post(url_revoke)
         self.assertEqual(res_revoke.status_code, status.HTTP_200_OK)
 

@@ -1,13 +1,18 @@
 """Student views for AI Consultation Sessions and Message exchanges."""
 
 import uuid
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.exceptions import NotFound, PermissionDenied, Throttled, ValidationError
+from rest_framework.exceptions import (
+    NotFound,
+    PermissionDenied,
+    Throttled,
+    ValidationError,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from apps.ai_assistant.models import AIConversation
 from apps.ai_assistant.serializers import (
     AIConversationDetailSerializer,
     AIConversationListSerializer,
@@ -108,7 +113,9 @@ class StudentAIConversationListView(APIView):
             return api_error(
                 code="VALIDATION_ERROR",
                 message="Validation failed.",
-                details=exc.message_dict if hasattr(exc, "message_dict") else exc.messages,
+                details=exc.message_dict
+                if hasattr(exc, "message_dict")
+                else exc.messages,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -135,7 +142,9 @@ class StudentAIConversationDetailView(APIView):
 
         service = AIService()
         try:
-            conversation = service.get_conversation_for_student(student, conversation_id)
+            conversation = service.get_conversation_for_student(
+                student, conversation_id
+            )
             serializer = AIConversationDetailSerializer(conversation)
             return api_success(
                 data=serializer.data,
@@ -257,7 +266,9 @@ class StudentAIMessageSendView(APIView):
             return api_error(
                 code="VALIDATION_ERROR",
                 message="Validation failed.",
-                details=exc.message_dict if hasattr(exc, "message_dict") else exc.messages,
+                details=exc.message_dict
+                if hasattr(exc, "message_dict")
+                else exc.messages,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -266,10 +277,12 @@ class StudentAIMessageRetryView(APIView):
     """Regenerate an AI tutor response for the last student inquiry."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = AIMessageSerializer
 
     @extend_schema(
         summary="Retry AI Message",
         description="Regenerate an assistant response for the last student message in the session.",
+        request=None,
         responses={200: AIMessageSerializer},
         tags=["Student AI Help"],
     )

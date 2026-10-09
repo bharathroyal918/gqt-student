@@ -14,7 +14,9 @@ class CodingQuestion(BaseModel):
         MEDIUM = "MEDIUM", "Medium"
         HARD = "HARD", "Hard"
 
-    module = models.ForeignKey("modules.Module", on_delete=models.CASCADE, related_name="questions")
+    module = models.ForeignKey(
+        "modules.Module", on_delete=models.CASCADE, related_name="questions"
+    )
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280)
     difficulty = models.CharField(
@@ -23,18 +25,23 @@ class CodingQuestion(BaseModel):
         default=DifficultyChoices.EASY,
         db_index=True,
     )
-    problem_statement = models.TextField(help_text="Markdown formatted problem description")
+    problem_statement = models.TextField(
+        help_text="Markdown formatted problem description"
+    )
     allowed_languages = models.JSONField(
         default=list, help_text="e.g. ['python', 'java', 'c', 'cpp', 'javascript']"
     )
     starter_code = models.JSONField(
-        default=dict, help_text="Keyed by language code, e.g. {'python': 'def solution(): pass'}"
+        default=dict,
+        help_text="Keyed by language code, e.g. {'python': 'def solution(): pass'}",
     )
     time_limit_seconds = models.DecimalField(
         max_digits=4, decimal_places=2, default=Decimal("2.00")
     )
     memory_limit_mb = models.PositiveIntegerField(default=128)
-    points = models.DecimalField(max_digits=7, decimal_places=2, default=Decimal("100.00"))
+    points = models.DecimalField(
+        max_digits=7, decimal_places=2, default=Decimal("100.00")
+    )
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True, db_index=True)
     created_by = models.ForeignKey(
@@ -50,7 +57,9 @@ class CodingQuestion(BaseModel):
         verbose_name_plural = "Coding Questions"
         ordering = ["module", "order", "title"]
         constraints = [
-            models.UniqueConstraint(fields=["module", "slug"], name="unique_module_question_slug"),
+            models.UniqueConstraint(
+                fields=["module", "slug"], name="unique_module_question_slug"
+            ),
             models.CheckConstraint(
                 condition=models.Q(points__gt=Decimal("0.00")),
                 name="positive_question_points",
@@ -62,7 +71,9 @@ class CodingQuestion(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.module.order_index}.{self.order} {self.title} ({self.difficulty})"
+        return (
+            f"{self.module.order_index}.{self.order} {self.title} ({self.difficulty})"
+        )
 
 
 class TestCase(BaseModel):
@@ -78,7 +89,9 @@ class TestCase(BaseModel):
         db_index=True,
         help_text="True for public samples, False for hidden grading tests",
     )
-    weight = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("1.00"))
+    weight = models.DecimalField(
+        max_digits=5, decimal_places=2, default=Decimal("1.00")
+    )
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -113,7 +126,9 @@ class CodeSubmission(BaseModel):
         ZERO = "ZERO", "Zero Credit"
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="code_submissions"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="code_submissions",
     )
     question = models.ForeignKey(
         CodingQuestion, on_delete=models.CASCADE, related_name="submissions"
@@ -130,7 +145,9 @@ class CodeSubmission(BaseModel):
     total_test_cases = models.PositiveIntegerField(default=0)
     execution_time_ms = models.PositiveIntegerField(null=True, blank=True)
     peak_memory_kb = models.PositiveIntegerField(null=True, blank=True)
-    score_awarded = models.DecimalField(max_digits=7, decimal_places=2, default=Decimal("0.00"))
+    score_awarded = models.DecimalField(
+        max_digits=7, decimal_places=2, default=Decimal("0.00")
+    )
     scoring_policy = models.CharField(
         max_length=20, choices=ScoringPolicy.choices, default=ScoringPolicy.ZERO
     )
@@ -145,8 +162,12 @@ class CodeSubmission(BaseModel):
                 fields=["student", "question", "-submitted_at"],
                 name="subm_student_q_date_idx",
             ),
-            models.Index(fields=["question", "status"], name="subm_question_status_idx"),
-            models.Index(fields=["status", "submitted_at"], name="subm_status_date_idx"),
+            models.Index(
+                fields=["question", "status"], name="subm_question_status_idx"
+            ),
+            models.Index(
+                fields=["status", "submitted_at"], name="subm_status_date_idx"
+            ),
         ]
 
     def __str__(self):
@@ -170,7 +191,9 @@ class ExecutionResult(BaseModel):
     test_case = models.ForeignKey(
         TestCase, on_delete=models.CASCADE, related_name="execution_results"
     )
-    status = models.CharField(max_length=30, choices=ResultStatus.choices, db_index=True)
+    status = models.CharField(
+        max_length=30, choices=ResultStatus.choices, db_index=True
+    )
     stdout = models.TextField(blank=True, default="")
     stderr = models.TextField(blank=True, default="")
     execution_time_seconds = models.DecimalField(
@@ -184,7 +207,8 @@ class ExecutionResult(BaseModel):
         verbose_name_plural = "Execution Results"
         constraints = [
             models.UniqueConstraint(
-                fields=["submission", "test_case"], name="unique_submission_testcase_result"
+                fields=["submission", "test_case"],
+                name="unique_submission_testcase_result",
             )
         ]
 
@@ -196,7 +220,9 @@ class StudentQuestionProgress(BaseModel):
     """Single source of truth for a student's mastery and highest score on a question."""
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="question_progresses"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="question_progresses",
     )
     question = models.ForeignKey(
         CodingQuestion, on_delete=models.CASCADE, related_name="student_progresses"
@@ -206,7 +232,11 @@ class StudentQuestionProgress(BaseModel):
         max_digits=7, decimal_places=2, default=Decimal("0.00"), db_index=True
     )
     best_submission = models.ForeignKey(
-        CodeSubmission, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+        CodeSubmission,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
     )
     attempts_count = models.PositiveIntegerField(default=0)
     first_solved_at = models.DateTimeField(null=True, blank=True)
@@ -216,7 +246,9 @@ class StudentQuestionProgress(BaseModel):
         verbose_name = "Student Question Progress"
         verbose_name_plural = "Student Question Progresses"
         indexes = [
-            models.Index(fields=["student", "is_solved"], name="q_prog_student_solved_idx"),
+            models.Index(
+                fields=["student", "is_solved"], name="q_prog_student_solved_idx"
+            ),
         ]
         constraints = [
             models.UniqueConstraint(

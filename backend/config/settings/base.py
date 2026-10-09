@@ -1,6 +1,5 @@
 """Base settings for GQT Student Learning and Coding Assessment Platform."""
 
-import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -21,11 +20,21 @@ if (BASE_DIR / ".env").exists():
 elif (BASE_DIR.parent / ".env").exists():
     environ.Env.read_env(str(BASE_DIR.parent / ".env"), overwrite=True)
 
-SECRET_KEY = env("DJANGO_SECRET_KEY", default=env("SECRET_KEY", default="django-insecure-change-in-production-stage-32-chars-min"))
+SECRET_KEY = env(
+    "DJANGO_SECRET_KEY",
+    default=env(
+        "SECRET_KEY", default="django-insecure-change-in-production-stage-32-chars-min"
+    ),
+)
 DEBUG = env("DEBUG")
 ENVIRONMENT = env("ENVIRONMENT")
 
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "backend", "*"]))
+ALLOWED_HOSTS = env.list(
+    "DJANGO_ALLOWED_HOSTS",
+    default=env.list(
+        "ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "backend", "*"]
+    ),
+)
 render_hostname = env("RENDER_EXTERNAL_HOSTNAME", default="").strip()
 if render_hostname and render_hostname not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_hostname)
@@ -124,7 +133,9 @@ PASSWORD_HASHERS = [
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
         "OPTIONS": {"min_length": 10},
@@ -210,7 +221,9 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=env.int("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", default=15)
     ),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=env.int("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=env.int("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7)
+    ),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
@@ -311,13 +324,35 @@ CELERY_TASK_DEFAULT_QUEUE = "default"
 # ------------------------------------------------------------------------------
 # OPENAPI / SPECTACULAR DOCUMENTATION
 # ------------------------------------------------------------------------------
+# SPECTACULAR_SETTINGS = {
+#     "TITLE": "GQT Student Learning & Assessment API",
+#     "DESCRIPTION": "Production-grade REST API backend for GQT Student Portal",
+#     "VERSION": "1.0.0",
+#     "SERVE_INCLUDE_SCHEMA": False,
+#     "COMPONENT_SPLIT_REQUEST": True,
+# }
 SPECTACULAR_SETTINGS = {
     "TITLE": "GQT Student Learning & Assessment API",
     "DESCRIPTION": "Production-grade REST API backend for GQT Student Portal",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "ENUM_NAME_OVERRIDES": {
+        "AttendanceStatusEnum": "apps.students.models.AttendanceRecord.AttendanceStatus",
+        "CourseEnrollmentStatusEnum": "apps.courses.models.CourseEnrollment.EnrollmentStatus",
+        "ContactInquiryStatusEnum": "apps.contact.models.ContactInquiry.InquiryStatus",
+        "ProjectSubmissionStatusEnum": "apps.projects.models.ProjectSubmission.SubmissionStatus",
+        "CodeSubmissionStatusEnum": "apps.assignments.models.CodeSubmission.SubmissionStatus",
+        "ExecutionResultStatusEnum": "apps.assignments.models.ExecutionResult.ResultStatus",
+        "PlacementDriveStatusEnum": "apps.placements.models.PlacementDrive.DriveStatus",
+        "PlacementApplicationStatusEnum": "apps.placements.models.PlacementApplication.ApplicationStatus",
+        "StudentModuleStatusEnum": "apps.modules.models.StudentModuleProgress.ModuleStatus",
+        "ExportJobStatusEnum": "apps.analytics.models.ExportJob.JobStatus",
+        "LoginStatusEnum": "apps.accounts.models.LoginActivity.LoginStatus",
+    },
+    "DISABLE_ERRORS_AND_WARNINGS": False,
 }
+
 
 # ------------------------------------------------------------------------------
 # STRUCTURED LOGGING

@@ -97,7 +97,9 @@ class CodingQuestionAdminCreateSerializer(serializers.Serializer):
     time_limit_seconds = serializers.DecimalField(
         max_digits=4, decimal_places=2, required=False, default=2.00
     )
-    memory_limit_mb = serializers.IntegerField(required=False, default=128, min_value=16)
+    memory_limit_mb = serializers.IntegerField(
+        required=False, default=128, min_value=16
+    )
     points = serializers.DecimalField(
         max_digits=7, decimal_places=2, required=False, default=100.00
     )
@@ -115,9 +117,13 @@ class CodingQuestionAdminUpdateSerializer(serializers.Serializer):
         choices=CodingQuestion.DifficultyChoices.choices, required=False
     )
     problem_statement = serializers.CharField(required=False)
-    allowed_languages = serializers.ListField(child=serializers.CharField(), required=False)
+    allowed_languages = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
     starter_code = serializers.DictField(required=False)
-    time_limit_seconds = serializers.DecimalField(max_digits=4, decimal_places=2, required=False)
+    time_limit_seconds = serializers.DecimalField(
+        max_digits=4, decimal_places=2, required=False
+    )
     memory_limit_mb = serializers.IntegerField(required=False, min_value=16)
     points = serializers.DecimalField(max_digits=7, decimal_places=2, required=False)
     order = serializers.IntegerField(required=False, min_value=0)

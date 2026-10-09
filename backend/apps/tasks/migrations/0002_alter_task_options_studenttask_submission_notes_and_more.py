@@ -5,55 +5,76 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('assignments', '0001_initial'),
-        ('courses', '0001_initial'),
-        ('students', '0001_initial'),
-        ('tasks', '0001_initial'),
+        ("assignments", "0001_initial"),
+        ("courses", "0001_initial"),
+        ("students", "0001_initial"),
+        ("tasks", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='task',
-            options={'ordering': ['-scheduled_date', '-created_at'], 'verbose_name': 'Daily Task', 'verbose_name_plural': 'Daily Tasks'},
+            name="task",
+            options={
+                "ordering": ["-scheduled_date", "-created_at"],
+                "verbose_name": "Daily Task",
+                "verbose_name_plural": "Daily Tasks",
+            },
         ),
         migrations.AddField(
-            model_name='studenttask',
-            name='submission_notes',
-            field=models.TextField(blank=True, default=''),
+            model_name="studenttask",
+            name="submission_notes",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='task',
-            name='assigned_student',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_tasks', to='students.studentprofile'),
+            model_name="task",
+            name="assigned_student",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="assigned_tasks",
+                to="students.studentprofile",
+            ),
         ),
         migrations.AddField(
-            model_name='task',
-            name='batch_code',
-            field=models.CharField(blank=True, db_index=True, default='', max_length=50),
+            model_name="task",
+            name="batch_code",
+            field=models.CharField(
+                blank=True, db_index=True, default="", max_length=50
+            ),
         ),
         migrations.AddField(
-            model_name='task',
-            name='course',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='daily_tasks', to='courses.course'),
+            model_name="task",
+            name="course",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="daily_tasks",
+                to="courses.course",
+            ),
         ),
         migrations.AddField(
-            model_name='task',
-            name='deadline',
+            model_name="task",
+            name="deadline",
             field=models.DateTimeField(blank=True, db_index=True, null=True),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='scheduled_date',
+            model_name="task",
+            name="scheduled_date",
             field=models.DateField(blank=True, db_index=True, null=True),
         ),
         migrations.AddIndex(
-            model_name='task',
-            index=models.Index(fields=['is_active', 'deadline'], name='task_active_deadline_idx'),
+            model_name="task",
+            index=models.Index(
+                fields=["is_active", "deadline"], name="task_active_deadline_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='task',
-            index=models.Index(fields=['batch_code', 'is_active'], name='task_batch_active_idx'),
+            model_name="task",
+            index=models.Index(
+                fields=["batch_code", "is_active"], name="task_batch_active_idx"
+            ),
         ),
     ]

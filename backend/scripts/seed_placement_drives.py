@@ -2,9 +2,10 @@
 
 import os
 import sys
-import django
 from datetime import timedelta
 from decimal import Decimal
+
+import django
 
 # Setup django environment
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,9 +13,10 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 django.setup()
 
 from django.utils import timezone
-from apps.placements.models import PlacementDrive, PlacementApplication
+
+from apps.placements.models import PlacementApplication, PlacementDrive
 from apps.students.models import StudentProfile
-from apps.accounts.models import User
+
 
 def seed():
     print("Seeding placement drives...")
@@ -110,26 +112,43 @@ def seed():
             "drive_date": now + timedelta(days=22),
             "status": PlacementDrive.DriveStatus.ONGOING,
             "company_logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg",
-        }
+        },
     ]
 
     created_drives = []
     for data in drives_data:
         drive, created = PlacementDrive.objects.update_or_create(
-            company_code=data["company_code"],
-            defaults=data
+            company_code=data["company_code"], defaults=data
         )
         created_drives.append(drive)
-        print(f"{'Created' if created else 'Updated'} drive: {drive.company_name} - {drive.role}")
+        print(
+            f"{'Created' if created else 'Updated'} drive: {drive.company_name} - {drive.role}"
+        )
 
     # Seed sample applications for existing student profiles
     students = list(StudentProfile.objects.all()[:6])
     if students and created_drives:
         statuses = [
-            (PlacementApplication.ApplicationStatus.SELECTED, "Candidate excelled in technical interview and system design. Extended formal offer.", ""),
-            (PlacementApplication.ApplicationStatus.SHORTLISTED, "Cleared round 1 online assessment. Scheduled for final technical panel.", ""),
-            (PlacementApplication.ApplicationStatus.REJECTED, "Does not meet the mandatory criteria or failed coding test cutoff.", "Coding assessment cut-off was not met in Section 2 (Data Structures)."),
-            (PlacementApplication.ApplicationStatus.UNDER_REVIEW, "Resume submitted for initial technical screening by the talent acquisition team.", ""),
+            (
+                PlacementApplication.ApplicationStatus.SELECTED,
+                "Candidate excelled in technical interview and system design. Extended formal offer.",
+                "",
+            ),
+            (
+                PlacementApplication.ApplicationStatus.SHORTLISTED,
+                "Cleared round 1 online assessment. Scheduled for final technical panel.",
+                "",
+            ),
+            (
+                PlacementApplication.ApplicationStatus.REJECTED,
+                "Does not meet the mandatory criteria or failed coding test cutoff.",
+                "Coding assessment cut-off was not met in Section 2 (Data Structures).",
+            ),
+            (
+                PlacementApplication.ApplicationStatus.UNDER_REVIEW,
+                "Resume submitted for initial technical screening by the talent acquisition team.",
+                "",
+            ),
             (PlacementApplication.ApplicationStatus.APPLIED, "", ""),
         ]
 
@@ -138,7 +157,7 @@ def seed():
                 status_idx = (i + j) % len(statuses)
                 st, admin_note, rej_reason = statuses[status_idx]
 
-                app, created = PlacementApplication.objects.update_or_create(
+                _app, created = PlacementApplication.objects.update_or_create(
                     drive=drive,
                     student=student,
                     defaults={
@@ -147,7 +166,8 @@ def seed():
                         "student_id_number": student.student_id_number,
                         "email": student.user.email,
                         "phone_number": "+91 9876543210",
-                        "college_name": student.college_name or "GQT Engineering Academy",
+                        "college_name": student.college_name
+                        or "GQT Engineering Academy",
                         "branch": student.branch or "Computer Science",
                         "graduation_year": student.graduation_year or 2026,
                         "cgpa_or_percentage": "8.85 CGPA",
@@ -159,11 +179,14 @@ def seed():
                         "cover_note": "I am passionate about building high-performance systems and have completed capstone projects in full stack web development.",
                         "admin_notes": admin_note,
                         "rejection_reason": rej_reason,
-                    }
+                    },
                 )
-                print(f"  -> Application: {student.full_name} for {drive.company_name} [{st}]")
+                print(
+                    f"  -> Application: {student.full_name} for {drive.company_name} [{st}]"
+                )
 
     print("Placement seeding completed successfully!")
+
 
 if __name__ == "__main__":
     seed()

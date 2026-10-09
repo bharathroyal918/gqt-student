@@ -10,7 +10,9 @@ from apps.common.models import BaseModel
 class Module(BaseModel):
     """Represents a sequential learning topic unit (e.g. 1. Data Types, 2. If-Else)."""
 
-    course = models.ForeignKey("courses.Course", on_delete=models.CASCADE, related_name="modules")
+    course = models.ForeignKey(
+        "courses.Course", on_delete=models.CASCADE, related_name="modules"
+    )
     title = models.CharField(max_length=150)
     slug = models.SlugField(max_length=180)
     order_index = models.PositiveSmallIntegerField(db_index=True)
@@ -29,7 +31,9 @@ class Module(BaseModel):
             models.UniqueConstraint(
                 fields=["course", "order_index"], name="unique_course_module_order"
             ),
-            models.UniqueConstraint(fields=["course", "slug"], name="unique_course_module_slug"),
+            models.UniqueConstraint(
+                fields=["course", "slug"], name="unique_course_module_slug"
+            ),
             models.CheckConstraint(
                 condition=models.Q(passing_percentage__gte=Decimal("0.00"))
                 & models.Q(passing_percentage__lte=Decimal("100.00")),
@@ -44,7 +48,9 @@ class Module(BaseModel):
 class ModulePrerequisite(BaseModel):
     """Explicit prerequisite dependency rule between modules."""
 
-    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name="prerequisites")
+    module = models.ForeignKey(
+        Module, on_delete=models.CASCADE, related_name="prerequisites"
+    )
     prerequisite_module = models.ForeignKey(
         Module, on_delete=models.CASCADE, related_name="dependent_modules"
     )
@@ -54,7 +60,8 @@ class ModulePrerequisite(BaseModel):
         verbose_name_plural = "Module Prerequisites"
         constraints = [
             models.UniqueConstraint(
-                fields=["module", "prerequisite_module"], name="unique_module_prerequisite"
+                fields=["module", "prerequisite_module"],
+                name="unique_module_prerequisite",
             ),
             models.CheckConstraint(
                 condition=~models.Q(module=models.F("prerequisite_module")),
@@ -67,7 +74,9 @@ class ModulePrerequisite(BaseModel):
         if self.module_id == self.prerequisite_module_id:
             raise ValidationError("A module cannot be a prerequisite of itself.")
         if self.module.order_index <= self.prerequisite_module.order_index:
-            raise ValidationError("Prerequisite module order_index must precede the target module.")
+            raise ValidationError(
+                "Prerequisite module order_index must precede the target module."
+            )
 
     def __str__(self):
         return f"{self.prerequisite_module.title} -> {self.module.title}"
@@ -83,13 +92,22 @@ class StudentModuleProgress(BaseModel):
         COMPLETED = "COMPLETED", "Completed"
 
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="module_progresses"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="module_progresses",
     )
-    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name="student_progresses")
+    module = models.ForeignKey(
+        Module, on_delete=models.CASCADE, related_name="student_progresses"
+    )
     status = models.CharField(
-        max_length=20, choices=ModuleStatus.choices, default=ModuleStatus.LOCKED, db_index=True
+        max_length=20,
+        choices=ModuleStatus.choices,
+        default=ModuleStatus.LOCKED,
+        db_index=True,
     )
-    score_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    score_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, default=Decimal("0.00")
+    )
     unlocked_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     unlocked_by_override = models.BooleanField(default=False)
@@ -105,8 +123,12 @@ class StudentModuleProgress(BaseModel):
         verbose_name = "Student Module Progress"
         verbose_name_plural = "Student Module Progresses"
         indexes = [
-            models.Index(fields=["student", "status"], name="mod_prog_student_status_idx"),
-            models.Index(fields=["module", "status"], name="mod_prog_module_status_idx"),
+            models.Index(
+                fields=["student", "status"], name="mod_prog_student_status_idx"
+            ),
+            models.Index(
+                fields=["module", "status"], name="mod_prog_module_status_idx"
+            ),
         ]
         constraints = [
             models.UniqueConstraint(

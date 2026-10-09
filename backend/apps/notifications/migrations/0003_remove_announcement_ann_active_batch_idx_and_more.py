@@ -6,88 +6,135 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('courses', '0001_initial'),
-        ('notifications', '0002_alter_notification_notification_type'),
+        ("courses", "0001_initial"),
+        ("notifications", "0002_alter_notification_notification_type"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='announcement',
-            name='ann_active_batch_idx',
+            model_name="announcement",
+            name="ann_active_batch_idx",
         ),
         migrations.AddField(
-            model_name='announcement',
-            name='delivery_count',
+            model_name="announcement",
+            name="delivery_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='announcement',
-            name='email_sent_count',
+            model_name="announcement",
+            name="email_sent_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='announcement',
-            name='is_published',
+            model_name="announcement",
+            name="is_published",
             field=models.BooleanField(db_index=True, default=True),
         ),
         migrations.AddField(
-            model_name='announcement',
-            name='published_at',
+            model_name="announcement",
+            name="published_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='announcement',
-            name='target_audience',
-            field=models.CharField(choices=[('ALL', 'All Students'), ('BATCH', 'Specific Batch'), ('COURSE', 'Course Enrollees'), ('SPECIFIC', 'Selected Students')], db_index=True, default='ALL', max_length=20),
+            model_name="announcement",
+            name="target_audience",
+            field=models.CharField(
+                choices=[
+                    ("ALL", "All Students"),
+                    ("BATCH", "Specific Batch"),
+                    ("COURSE", "Course Enrollees"),
+                    ("SPECIFIC", "Selected Students"),
+                ],
+                db_index=True,
+                default="ALL",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='announcement',
-            name='target_course',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='announcements', to='courses.course'),
+            model_name="announcement",
+            name="target_course",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="announcements",
+                to="courses.course",
+            ),
         ),
         migrations.AddField(
-            model_name='notification',
-            name='email_sent',
+            model_name="notification",
+            name="email_sent",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='notification',
-            name='email_sent_at',
+            model_name="notification",
+            name="email_sent_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='notification',
-            name='idempotency_key',
-            field=models.CharField(blank=True, db_index=True, max_length=255, null=True, unique=True),
+            model_name="notification",
+            name="idempotency_key",
+            field=models.CharField(
+                blank=True, db_index=True, max_length=255, null=True, unique=True
+            ),
         ),
         migrations.AddField(
-            model_name='notification',
-            name='metadata',
+            model_name="notification",
+            name="metadata",
             field=models.JSONField(blank=True, default=dict),
         ),
         migrations.AlterField(
-            model_name='announcement',
-            name='target_batch',
-            field=models.CharField(blank=True, db_index=True, default='', help_text='Batch code if targeting specific batch', max_length=50),
+            model_name="announcement",
+            name="target_batch",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                default="",
+                help_text="Batch code if targeting specific batch",
+                max_length=50,
+            ),
         ),
         migrations.AlterField(
-            model_name='notification',
-            name='notification_type',
-            field=models.CharField(choices=[('TASK_DEADLINE', 'Task Deadline Approaching'), ('PROJECT_MARKED', 'Project Marked'), ('RANK_CHANGE', 'Rank Change'), ('ADMIN_ANNOUNCEMENT', 'Admin Announcement'), ('ACHIEVEMENT', 'Achievement Unlocked'), ('CERTIFICATE', 'Certificate Issued'), ('SUBMISSION_GRADED', 'Submission Graded'), ('MODULE_UNLOCKED', 'Module Unlocked'), ('PROJECT_FEEDBACK', 'Project Feedback'), ('STREAK_ALERT', 'Streak Alert'), ('DEADLINE_REMINDER', 'Deadline Reminder'), ('TASK_COMPLETED', 'Task Completed'), ('SYSTEM_NOTICE', 'System Notice')], default='SYSTEM_NOTICE', max_length=40),
+            model_name="notification",
+            name="notification_type",
+            field=models.CharField(
+                choices=[
+                    ("TASK_DEADLINE", "Task Deadline Approaching"),
+                    ("PROJECT_MARKED", "Project Marked"),
+                    ("RANK_CHANGE", "Rank Change"),
+                    ("ADMIN_ANNOUNCEMENT", "Admin Announcement"),
+                    ("ACHIEVEMENT", "Achievement Unlocked"),
+                    ("CERTIFICATE", "Certificate Issued"),
+                    ("SUBMISSION_GRADED", "Submission Graded"),
+                    ("MODULE_UNLOCKED", "Module Unlocked"),
+                    ("PROJECT_FEEDBACK", "Project Feedback"),
+                    ("STREAK_ALERT", "Streak Alert"),
+                    ("DEADLINE_REMINDER", "Deadline Reminder"),
+                    ("TASK_COMPLETED", "Task Completed"),
+                    ("SYSTEM_NOTICE", "System Notice"),
+                ],
+                default="SYSTEM_NOTICE",
+                max_length=40,
+            ),
         ),
         migrations.AddIndex(
-            model_name='announcement',
-            index=models.Index(fields=['is_active', 'is_published', '-created_at'], name='ann_active_pub_idx'),
+            model_name="announcement",
+            index=models.Index(
+                fields=["is_active", "is_published", "-created_at"],
+                name="ann_active_pub_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='announcement',
-            index=models.Index(fields=['target_audience', 'target_batch', '-created_at'], name='ann_aud_batch_idx'),
+            model_name="announcement",
+            index=models.Index(
+                fields=["target_audience", "target_batch", "-created_at"],
+                name="ann_aud_batch_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='notification',
-            index=models.Index(fields=['idempotency_key'], name='notif_idem_idx'),
+            model_name="notification",
+            index=models.Index(fields=["idempotency_key"], name="notif_idem_idx"),
         ),
     ]

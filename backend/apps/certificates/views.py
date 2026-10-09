@@ -1,9 +1,12 @@
 """Student and Public views for Badges, Achievements, and Certificate verification."""
 
 import uuid
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, Http404
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
@@ -88,6 +91,9 @@ class StudentCertificateListView(APIView):
         )
 
 
+from drf_spectacular.types import OpenApiTypes
+
+
 class StudentCertificateDownloadView(APIView):
     """Download official PDF completion certificate document."""
 
@@ -96,6 +102,7 @@ class StudentCertificateDownloadView(APIView):
     @extend_schema(
         summary="Download Certificate PDF",
         description="Stream the signed PDF document for the certificate.",
+        responses={200: OpenApiTypes.BINARY},
         tags=["Student Certificates"],
     )
     def get(self, request, certificate_id: uuid.UUID):
@@ -142,7 +149,9 @@ class StudentCertificateDownloadView(APIView):
             cert.pdf_file.open("rb"),
             content_type="application/pdf",
         )
-        response["Content-Disposition"] = f'attachment; filename="{cert.certificate_id}.pdf"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="{cert.certificate_id}.pdf"'
+        )
         return response
 
 
@@ -163,7 +172,9 @@ class PublicCertificateVerifyView(APIView):
             if not result.get("is_valid"):
                 return api_error(
                     code="CERTIFICATE_REVOKED",
-                    message=result.get("message", "This certificate has been officially revoked."),
+                    message=result.get(
+                        "message", "This certificate has been officially revoked."
+                    ),
                     details=result,
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
@@ -172,7 +183,7 @@ class PublicCertificateVerifyView(APIView):
                 message="Certificate authenticity verified.",
                 status_code=status.HTTP_200_OK,
             )
-        except Exception:
+        except (NotFound, Http404, ObjectDoesNotExist):
             return api_error(
                 code="NOT_FOUND",
                 message="Certificate not found. Please verify the ID or hash.",

@@ -71,5 +71,7 @@ class StudentRecordedClassStreamSerializer(serializers.Serializer):
 
 
 class StudentRecordedClassProgressUpdateSerializer(serializers.Serializer):
-    last_position_seconds = serializers.IntegerField(required=False, default=0, min_value=0)
+    last_position_seconds = serializers.IntegerField(
+        required=False, default=0, min_value=0
+    )
     is_completed = serializers.BooleanField(required=False, allow_null=True)

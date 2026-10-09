@@ -22,7 +22,9 @@ class Project(BaseModel):
         on_delete=models.SET_NULL,
         related_name="projects",
     )
-    max_score = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("10.00"))
+    max_score = models.DecimalField(
+        max_digits=6, decimal_places=2, default=Decimal("10.00")
+    )
     due_date = models.DateTimeField(null=True, blank=True, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
 
@@ -45,9 +47,13 @@ class ProjectSubmission(BaseModel):
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Rejected"
 
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="submissions")
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="submissions"
+    )
     student = models.ForeignKey(
-        "students.StudentProfile", on_delete=models.CASCADE, related_name="project_submissions"
+        "students.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="project_submissions",
     )
     github_repository_url = models.URLField(max_length=500, blank=True, default="")
     live_demo_url = models.URLField(max_length=500, blank=True, default="")
@@ -59,7 +65,11 @@ class ProjectSubmission(BaseModel):
         db_index=True,
     )
     score = models.DecimalField(
-        max_digits=6, decimal_places=2, null=True, blank=True, help_text="Evaluated project score"
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Evaluated project score",
     )
     submitted_at = models.DateTimeField(auto_now_add=True, db_index=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -116,7 +126,9 @@ class ProjectFeedback(BaseModel):
         ProjectSubmission, on_delete=models.CASCADE, related_name="feedbacks"
     )
     reviewer = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="given_project_feedbacks"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="given_project_feedbacks",
     )
     feedback_text = models.TextField()
     suggested_changes = models.TextField(blank=True, default="")

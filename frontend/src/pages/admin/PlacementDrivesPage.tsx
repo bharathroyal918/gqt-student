@@ -349,68 +349,70 @@ export const PlacementDrivesPage: React.FC = () => {
             return (
               <div
                 key={drive.id}
-                className="group relative rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 p-5 shadow-sm transition-all duration-200 hover:border-brand-500/40 hover:shadow-md flex flex-col justify-between"
+                className="group relative rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900/60 p-5 shadow-sm transition-all duration-200 hover:border-brand-500/40 hover:shadow-md flex flex-col justify-between overflow-hidden min-w-0"
               >
-                <div>
+                <div className="min-w-0">
                   {/* Top Bar */}
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/10 to-indigo-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 font-bold text-lg">
                         {drive.company_name.slice(0, 2).toUpperCase()}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-slate-900 dark:text-white text-base truncate" title={drive.company_name}>
                             {drive.company_name}
                           </h3>
                           {drive.company_code && (
-                            <span className="text-[11px] font-mono font-medium text-slate-400 bg-slate-100 dark:bg-surface-800 px-2 py-0.5 rounded-md">
+                            <span className="text-[11px] font-mono font-medium text-slate-400 bg-slate-100 dark:bg-surface-800 px-2 py-0.5 rounded-md shrink-0">
                               {drive.company_code}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm font-semibold text-brand-600 dark:text-brand-400 mt-0.5">
+                        <p className="text-sm font-semibold text-brand-600 dark:text-brand-400 mt-0.5 truncate" title={drive.role}>
                           {drive.role}
                         </p>
                       </div>
                     </div>
 
-                    <Badge
-                      variant={
-                        drive.status === "ONGOING"
-                          ? "emerald"
-                          : drive.status === "UPCOMING"
-                            ? "amber"
-                            : "slate"
-                      }
-                      size="sm"
-                    >
-                      {drive.status}
-                    </Badge>
+                    <div className="shrink-0">
+                      <Badge
+                        variant={
+                          drive.status === "ONGOING"
+                            ? "emerald"
+                            : drive.status === "UPCOMING"
+                              ? "amber"
+                              : "slate"
+                        }
+                        size="sm"
+                      >
+                        {drive.status}
+                      </Badge>
+                    </div>
                   </div>
 
                   {/* Highlights Grid */}
                   <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <DollarSign className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      <span className="font-semibold text-slate-900 dark:text-white truncate">
+                      <span className="font-semibold text-slate-900 dark:text-white truncate block flex-1" title={drive.stipend_or_ctc}>
                         {drive.stipend_or_ctc}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
-                      <span className="truncate">{drive.location}</span>
+                      <span className="truncate block flex-1" title={drive.location}>{drive.location}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <Layers className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                      <span className="capitalize">{drive.mode_of_work.toLowerCase()}</span>
+                      <span className="capitalize truncate block flex-1">{drive.mode_of_work.toLowerCase()}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <ShieldCheck className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                      <span className="truncate">Bond: {drive.bond_period}</span>
+                      <span className="truncate block flex-1" title={`Bond: ${drive.bond_period}`}>Bond: {drive.bond_period}</span>
                     </div>
                   </div>
 

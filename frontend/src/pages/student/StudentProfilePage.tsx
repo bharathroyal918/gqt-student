@@ -34,6 +34,7 @@ import {
   StudentAttendanceSummary,
   StudentProfileUpdatePayload,
 } from "../../api/studentApi";
+import { collegesApi } from "../../api/collegesApi";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -81,6 +82,11 @@ export const StudentProfilePage: React.FC = () => {
   const { data: certificates = [], isLoading: certsLoading } = useQuery<StudentCertificateItem[]>({
     queryKey: ["student-certificates"],
     queryFn: studentApi.getCertificates,
+  });
+
+  const { data: colleges = [] } = useQuery({
+    queryKey: ["student-colleges"],
+    queryFn: () => collegesApi.getColleges(),
   });
 
   // Profile Update Mutation
@@ -613,16 +619,34 @@ export const StudentProfilePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">
-                    College / University Name
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g. Global Institute of Technology"
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      College / Institution Name *
+                    </label>
+                    <span className="text-[10px] text-brand-600 dark:text-brand-400 font-medium">
+                      Select from approved campuses
+                    </span>
+                  </div>
+                  <select
                     value={formData.college_name || ""}
                     onChange={(e) => setFormData({ ...formData, college_name: e.target.value })}
-                    className="text-xs"
-                  />
+                    className="w-full rounded-xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-950 p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"
+                  >
+                    <option value="">-- Choose your College / University --</option>
+                    {colleges.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name} {c.code ? `(${c.code})` : ""} {c.city ? `— ${c.city}` : ""}
+                      </option>
+                    ))}
+                    {formData.college_name &&
+                      !colleges.some(
+                        (c) => c.name.toLowerCase() === formData.college_name?.toLowerCase()
+                      ) && (
+                        <option value={formData.college_name}>
+                          {formData.college_name} (Current)
+                        </option>
+                      )}
+                  </select>
                 </div>
 
                 <div>

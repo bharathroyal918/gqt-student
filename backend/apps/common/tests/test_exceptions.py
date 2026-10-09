@@ -2,7 +2,11 @@ from django.test import SimpleTestCase
 from rest_framework import status
 from rest_framework.exceptions import NotAuthenticated, ValidationError
 
-from apps.common.exceptions import DomainException, ModuleLockedException, custom_exception_handler
+from apps.common.exceptions import (
+    DomainException,
+    ModuleLockedException,
+    custom_exception_handler,
+)
 
 
 class ExceptionHandlerTests(SimpleTestCase):

@@ -26,5 +26,6 @@ class ContactModelTests(TestCase):
         )
         self.assertEqual(inquiry.status, ContactInquiry.InquiryStatus.PENDING)
         self.assertEqual(
-            str(inquiry), "[PENDING] Question regarding Loops module from inquiry.user@gqt.local"
+            str(inquiry),
+            "[PENDING] Question regarding Loops module from inquiry.user@gqt.local",
         )

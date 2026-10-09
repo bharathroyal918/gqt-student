@@ -12,7 +12,11 @@ from apps.ai_assistant.views import (
 app_name = "ai_assistant"
 
 urlpatterns = [
-    path("conversations/", StudentAIConversationListView.as_view(), name="conversation_list_create"),
+    path(
+        "conversations/",
+        StudentAIConversationListView.as_view(),
+        name="conversation_list_create",
+    ),
     path(
         "conversations/<uuid:conversation_id>/",
         StudentAIConversationDetailView.as_view(),

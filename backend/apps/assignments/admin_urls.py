@@ -12,7 +12,11 @@ from apps.assignments.admin_views import (
 app_name = "admin_assignments"
 
 urlpatterns = [
-    path("questions/", CodingQuestionAdminListCreateView.as_view(), name="question_list_create"),
+    path(
+        "questions/",
+        CodingQuestionAdminListCreateView.as_view(),
+        name="question_list_create",
+    ),
     path(
         "questions/<uuid:pk>/",
         CodingQuestionAdminDetailUpdateDeleteView.as_view(),

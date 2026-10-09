@@ -1,6 +1,7 @@
 """Student and public views for company information and contact inquiries."""
 
 from django.core.exceptions import ValidationError
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -23,6 +24,7 @@ class CompanyInfoView(APIView):
     @extend_schema(
         summary="Get Institutional Company & Support Info",
         description="Fetch verified telephone hotlines, support emails, office addresses, and social links.",
+        responses={200: OpenApiTypes.OBJECT},
         tags=["Contact & Institutional Info"],
     )
     def get(self, request):
@@ -74,7 +76,9 @@ class ContactInquirySubmitView(APIView):
         except ValidationError as val_err:
             return api_error(
                 code="SUBMISSION_BLOCKED",
-                message=str(val_err.message if hasattr(val_err, "message") else val_err),
+                message=str(
+                    val_err.message if hasattr(val_err, "message") else val_err
+                ),
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 

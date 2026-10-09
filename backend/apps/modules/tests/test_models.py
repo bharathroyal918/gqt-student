@@ -16,7 +16,9 @@ class ModuleModelTests(TestCase):
     """Test suite for Module, ModulePrerequisite, and StudentModuleProgress."""
 
     def setUp(self):
-        self.user = User.objects.create_user(email="mod.student@gqt.local", password="Password123!")
+        self.user = User.objects.create_user(
+            email="mod.student@gqt.local", password="Password123!"
+        )
         self.student = StudentProfile.objects.create(
             user=self.user,
             student_id_number="GQT-STU-002",

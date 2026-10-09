@@ -196,7 +196,7 @@ export const StudentDashboardPage: React.FC = () => {
               className="flex items-center gap-1.5 border-brand-500/30 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 shadow-sm"
             >
               <QrCode className="h-3.5 w-3.5" />
-              <span>My Attendance QR</span>
+              <span>Attendance</span>
             </Button>
 
             <Link to="/courses">
@@ -270,7 +270,7 @@ export const StudentDashboardPage: React.FC = () => {
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-amber-500" />
-                  Cohort Leaderboard
+                  Leaderboard
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Live rankings based on verified coding questions, daily tasks, and capstone project performance.
@@ -320,9 +320,8 @@ export const StudentDashboardPage: React.FC = () => {
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: idx * 0.1 }}
-                    className={`relative rounded-2xl border ${podiumColors.border} ${podiumColors.bg} p-5 flex flex-col justify-between shadow-sm transition-all hover:scale-[1.02] ${
-                      student.is_current_student ? "ring-2 ring-brand-500" : ""
-                    }`}
+                    className={`relative rounded-2xl border ${podiumColors.border} ${podiumColors.bg} p-5 flex flex-col justify-between shadow-sm transition-all hover:scale-[1.02] ${student.is_current_student ? "ring-2 ring-brand-500" : ""
+                      }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -370,7 +369,7 @@ export const StudentDashboardPage: React.FC = () => {
                   <tr>
                     <th className="px-4 py-3">Rank</th>
                     <th className="px-4 py-3">Student</th>
-                    <th className="px-4 py-3">Cohort Batch</th>
+                    <th className="px-4 py-3">Training Batch</th>
                     <th className="px-4 py-3 text-right">Total Score</th>
                   </tr>
                 </thead>
@@ -378,11 +377,10 @@ export const StudentDashboardPage: React.FC = () => {
                   {leaderboard.top_10.slice(3).map((item) => (
                     <tr
                       key={item.student_id}
-                      className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-surface-800/40 ${
-                        item.is_current_student
-                          ? "bg-brand-500/10 font-bold dark:bg-brand-500/15"
-                          : ""
-                      }`}
+                      className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-surface-800/40 ${item.is_current_student
+                        ? "bg-brand-500/10 font-bold dark:bg-brand-500/15"
+                        : ""
+                        }`}
                     >
                       <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">
                         #{item.rank}
@@ -642,41 +640,37 @@ export const StudentDashboardPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 dark:border-surface-800 p-1 bg-slate-50 dark:bg-surface-900">
             <button
               onClick={() => setActiveTab("submissions")}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === "submissions"
-                  ? "bg-brand-600 text-white shadow-sm font-bold"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${activeTab === "submissions"
+                ? "bg-brand-600 text-white shadow-sm font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
             >
               Code Runs ({activity.recent_submissions.length})
             </button>
             <button
               onClick={() => setActiveTab("tasks")}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === "tasks"
-                  ? "bg-brand-600 text-white shadow-sm font-bold"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${activeTab === "tasks"
+                ? "bg-brand-600 text-white shadow-sm font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
             >
               Daily Tasks ({activity.recent_tasks.length})
             </button>
             <button
               onClick={() => setActiveTab("achievements")}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === "achievements"
-                  ? "bg-brand-600 text-white shadow-sm font-bold"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${activeTab === "achievements"
+                ? "bg-brand-600 text-white shadow-sm font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
             >
               Badges ({activity.recent_achievements.length})
             </button>
             <button
               onClick={() => setActiveTab("notifications")}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === "notifications"
-                  ? "bg-brand-600 text-white shadow-sm font-bold"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${activeTab === "notifications"
+                ? "bg-brand-600 text-white shadow-sm font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
             >
               Notifications ({activity.notifications.length})
             </button>
@@ -728,8 +722,8 @@ export const StudentDashboardPage: React.FC = () => {
                           sub.status === "ACCEPTED"
                             ? "success"
                             : sub.status === "WRONG_ANSWER"
-                            ? "danger"
-                            : "neutral"
+                              ? "danger"
+                              : "neutral"
                         }
                       >
                         {sub.status.replace("_", " ")}
@@ -845,11 +839,10 @@ export const StudentDashboardPage: React.FC = () => {
                 activity.notifications.map((notif) => (
                   <div
                     key={notif.id}
-                    className={`flex items-start gap-3.5 rounded-xl border p-4 transition-colors ${
-                      notif.is_read
-                        ? "border-slate-200 dark:border-surface-800 bg-transparent"
-                        : "border-brand-500/40 bg-brand-500/5 dark:bg-brand-500/10"
-                    }`}
+                    className={`flex items-start gap-3.5 rounded-xl border p-4 transition-colors ${notif.is_read
+                      ? "border-slate-200 dark:border-surface-800 bg-transparent"
+                      : "border-brand-500/40 bg-brand-500/5 dark:bg-brand-500/10"
+                      }`}
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold">
                       <Bell className="h-4 w-4" />

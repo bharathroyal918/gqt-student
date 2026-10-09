@@ -26,7 +26,6 @@ class StudentTaskListSerializer(serializers.Serializer):
 
 class StudentTaskDetailSerializer(StudentTaskListSerializer):
     """Detailed task payload for student workspace."""
-    pass
 
 
 class StudentTaskCompleteSerializer(serializers.Serializer):

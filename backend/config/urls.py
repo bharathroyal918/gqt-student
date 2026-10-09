@@ -2,7 +2,6 @@
 
 from django.contrib import admin
 from django.urls import include, path
-
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -16,6 +15,8 @@ from apps.projects.views import ProjectFileDownloadView
 api_v1_patterns = [
     path("", include("apps.common.urls")),
     path("auth/", include("apps.accounts.urls")),
+    path("colleges/", include("apps.students.urls")),
+    path("admin/colleges/", include("apps.students.admin_urls")),
     path("admin/students/", include("apps.students.admin_urls")),
     path("admin/courses/", include("apps.courses.admin_urls")),
     path("admin/modules/", include("apps.modules.admin_urls")),
@@ -37,8 +38,16 @@ api_v1_patterns = [
     path("students/ai/", include("apps.ai_assistant.urls")),
     path("students/notifications/", include("apps.notifications.urls")),
     path("students/", include("apps.certificates.urls")),
-    path("certificates/verify/<str:identifier>/", PublicCertificateVerifyView.as_view(), name="public_cert_verify"),
-    path("projects/files/<uuid:file_id>/download/", ProjectFileDownloadView.as_view(), name="project_file_download"),
+    path(
+        "certificates/verify/<str:identifier>/",
+        PublicCertificateVerifyView.as_view(),
+        name="public_cert_verify",
+    ),
+    path(
+        "projects/files/<uuid:file_id>/download/",
+        ProjectFileDownloadView.as_view(),
+        name="project_file_download",
+    ),
     path("students/recorded-classes/", include("apps.courses.student_urls")),
     path("students/", include("apps.students.urls")),
 ]
@@ -64,14 +73,21 @@ urlpatterns = [
     path("", root_status_view, name="root_status"),
     path("admin/", admin.site.urls),
     path("health/", include("apps.common.urls")),
-    path("certificates/verify/<str:identifier>/", PublicCertificateVerifyView.as_view(), name="root_public_cert_verify"),
+    path(
+        "certificates/verify/<str:identifier>/",
+        PublicCertificateVerifyView.as_view(),
+        name="root_public_cert_verify",
+    ),
     path("api/v1/", include((api_v1_patterns, "api_v1"))),
     # OpenAPI 3 Schema & Interactive API Explorers
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
@@ -52,15 +53,23 @@ class TaskModelTests(TestCase):
 
     def test_compute_student_status(self):
         # 1. Not completed, future deadline -> PENDING
-        self.assertEqual(self.task.compute_student_status(is_completed=False), "PENDING")
+        self.assertEqual(
+            self.task.compute_student_status(is_completed=False), "PENDING"
+        )
 
         # 2. Completed -> COMPLETED
-        self.assertEqual(self.task.compute_student_status(is_completed=True), "COMPLETED")
+        self.assertEqual(
+            self.task.compute_student_status(is_completed=True), "COMPLETED"
+        )
 
         # 3. Due soon -> DUE_SOON
         self.task.deadline = timezone.now() + timedelta(hours=10)
-        self.assertEqual(self.task.compute_student_status(is_completed=False), "DUE_SOON")
+        self.assertEqual(
+            self.task.compute_student_status(is_completed=False), "DUE_SOON"
+        )
 
         # 4. Overdue -> OVERDUE
         self.task.deadline = timezone.now() - timedelta(hours=10)
-        self.assertEqual(self.task.compute_student_status(is_completed=False), "OVERDUE")
+        self.assertEqual(
+            self.task.compute_student_status(is_completed=False), "OVERDUE"
+        )

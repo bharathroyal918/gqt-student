@@ -44,7 +44,11 @@ class AIConversationListSerializer(serializers.ModelSerializer):
         last_msg = obj.messages.order_by("-created_at").first()
         if not last_msg:
             return ""
-        return (last_msg.content[:80] + "...") if len(last_msg.content) > 80 else last_msg.content
+        return (
+            (last_msg.content[:80] + "...")
+            if len(last_msg.content) > 80
+            else last_msg.content
+        )
 
 
 class AIConversationDetailSerializer(serializers.ModelSerializer):
@@ -72,7 +76,9 @@ class AIConversationDetailSerializer(serializers.ModelSerializer):
 class SendAIMessageSerializer(serializers.Serializer):
     """Input serializer for sending a message in a conversation."""
 
-    content = serializers.CharField(max_length=4000, allow_blank=False, trim_whitespace=True)
+    content = serializers.CharField(
+        max_length=4000, allow_blank=False, trim_whitespace=True
+    )
 
 
 class CreateAIConversationSerializer(serializers.Serializer):
@@ -80,4 +86,6 @@ class CreateAIConversationSerializer(serializers.Serializer):
 
     title = serializers.CharField(max_length=200, required=False, allow_blank=True)
     context_question_id = serializers.UUIDField(required=False, allow_null=True)
-    initial_message = serializers.CharField(max_length=4000, required=False, allow_blank=True)
+    initial_message = serializers.CharField(
+        max_length=4000, required=False, allow_blank=True
+    )

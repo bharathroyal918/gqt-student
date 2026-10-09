@@ -22,7 +22,9 @@ class CertificateModelTests(TestCase):
             full_name="Certificate Student",
             batch_code="BATCH-2026-A",
         )
-        self.course = Course.objects.create(title="Python Professional", slug="python-professional")
+        self.course = Course.objects.create(
+            title="Python Professional", slug="python-professional"
+        )
         self.badge = Badge.objects.create(
             slug="7-day-streak",
             name="Consistency Champion",

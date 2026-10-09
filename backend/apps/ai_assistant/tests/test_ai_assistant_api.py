@@ -1,6 +1,5 @@
 """Comprehensive test suite for Student AI Consultation API & Services."""
 
-import uuid
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from rest_framework import status
@@ -8,7 +7,7 @@ from rest_framework.test import APITestCase
 
 from apps.ai_assistant.models import AIConversation, AIMessage
 from apps.ai_assistant.providers.base import AIProviderResult, BaseAIProvider
-from apps.ai_assistant.services import AIService, safe_scrub_secrets
+from apps.ai_assistant.services import safe_scrub_secrets
 from apps.students.models import StudentProfile
 
 User = get_user_model()
@@ -21,7 +20,9 @@ class MockCustomAIProvider(BaseAIProvider):
         self.call_history = []
 
     def generate_response(self, messages, system_prompt, context=None, **kwargs):
-        self.call_history.append({"messages": messages, "system_prompt": system_prompt, "context": context})
+        self.call_history.append(
+            {"messages": messages, "system_prompt": system_prompt, "context": context}
+        )
         last_msg = messages[-1]["content"] if messages else ""
         return AIProviderResult(
             content=f"Mock AI tutor response to: {last_msg}",
@@ -38,7 +39,9 @@ class AIAssistantApiTests(APITestCase):
 
         # Student A
         self.user_a = User.objects.create_user(
-            email="student.a@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="student.a@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_a = StudentProfile.objects.create(
             user=self.user_a,
@@ -49,7 +52,9 @@ class AIAssistantApiTests(APITestCase):
 
         # Student B
         self.user_b = User.objects.create_user(
-            email="student.b@gqt.local", password="Password123!", role=User.RoleChoices.STUDENT
+            email="student.b@gqt.local",
+            password="Password123!",
+            role=User.RoleChoices.STUDENT,
         )
         self.student_b = StudentProfile.objects.create(
             user=self.user_b,
@@ -65,7 +70,10 @@ class AIAssistantApiTests(APITestCase):
         # 1. Create a new conversation
         create_res = self.client.post(
             "/api/v1/students/ai/conversations/",
-            {"title": "Understanding Python Decorators", "initial_message": "What is a decorator?"},
+            {
+                "title": "Understanding Python Decorators",
+                "initial_message": "What is a decorator?",
+            },
             format="json",
         )
         self.assertEqual(create_res.status_code, status.HTTP_201_CREATED)
@@ -100,7 +108,9 @@ class AIAssistantApiTests(APITestCase):
         # Student B attempts to read Student A's conversation
         self.client.force_authenticate(user=self.user_b)
         get_res = self.client.get(f"/api/v1/students/ai/conversations/{conv_a.id}/")
-        self.assertIn(get_res.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
+        self.assertIn(
+            get_res.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND]
+        )
 
         # Student B attempts to send message to Student A's conversation
         send_res = self.client.post(
@@ -108,7 +118,9 @@ class AIAssistantApiTests(APITestCase):
             {"content": "Unauthorized prompt injection"},
             format="json",
         )
-        self.assertIn(send_res.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
+        self.assertIn(
+            send_res.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND]
+        )
 
         # Student B's conversation list is empty
         list_b = self.client.get("/api/v1/students/ai/conversations/")

@@ -24,7 +24,9 @@ from apps.common.utils import get_client_ip
 
 class QuestionFilter(django_filters.FilterSet):
     module_id = django_filters.UUIDFilter(field_name="module__id")
-    difficulty = django_filters.ChoiceFilter(choices=CodingQuestion.DifficultyChoices.choices)
+    difficulty = django_filters.ChoiceFilter(
+        choices=CodingQuestion.DifficultyChoices.choices
+    )
     is_active = django_filters.BooleanFilter()
 
     class Meta:
@@ -37,7 +39,11 @@ class CodingQuestionAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = CodingQuestionAdminListSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = QuestionFilter
     search_fields = ["title", "slug", "problem_statement"]
     ordering_fields = ["order", "points", "created_at", "title"]
@@ -181,6 +187,7 @@ class TestCaseAdminDetailUpdateDeleteView(APIView):
     """Admin endpoint to update or delete a specific test case."""
 
     permission_classes = [IsAdmin]
+    serializer_class = TestCaseAdminSerializer
 
     @extend_schema(
         request=TestCaseUpdateSerializer,
@@ -206,6 +213,7 @@ class TestCaseAdminDetailUpdateDeleteView(APIView):
 
     @extend_schema(
         summary="Admin Delete Test Case",
+        responses={200: TestCaseAdminSerializer},
         tags=["Admin Assignment Management"],
     )
     def delete(self, request, pk):

@@ -12,6 +12,7 @@ Tests:
 
 from datetime import timedelta
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
@@ -19,13 +20,12 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.accounts.models import User
 from apps.courses.models import Course, CourseEnrollment
 from apps.notifications.models import Notification
 from apps.scoring.models import ScoreRecord
 from apps.students.models import StudentProfile
 from apps.tasks.models import StudentTask, Task
-from apps.tasks.services import StudentTaskService, TaskAdminService
+from apps.tasks.services import StudentTaskService
 
 User = get_user_model()
 
@@ -177,7 +177,7 @@ class DailyTasksApiTests(TestCase):
         now = timezone.now()
 
         # Task 1: Overdue (deadline in past)
-        t_overdue = Task.objects.create(
+        _t_overdue = Task.objects.create(
             title="T Overdue",
             description="Overdue task",
             deadline=now - timedelta(hours=5),
@@ -185,7 +185,7 @@ class DailyTasksApiTests(TestCase):
         )
 
         # Task 2: Due Soon (deadline within next 12 hours)
-        t_due_soon = Task.objects.create(
+        _t_due_soon = Task.objects.create(
             title="T Due Soon",
             description="Due soon task",
             deadline=now + timedelta(hours=6),
@@ -193,7 +193,7 @@ class DailyTasksApiTests(TestCase):
         )
 
         # Task 3: Pending (deadline in 3 days)
-        t_pending = Task.objects.create(
+        _t_pending = Task.objects.create(
             title="T Pending",
             description="Pending task",
             deadline=now + timedelta(days=3),
@@ -318,7 +318,7 @@ class DailyTasksApiTests(TestCase):
         now = timezone.now()
 
         # Task 1: Due in 6 hours (assigned to Batch A)
-        t1 = Task.objects.create(
+        _t1 = Task.objects.create(
             title="Urgent Task Due Soon",
             description="Due very soon",
             deadline=now + timedelta(hours=6),
@@ -327,7 +327,7 @@ class DailyTasksApiTests(TestCase):
         )
 
         # Task 2: Due in 48 hours (not in 24h window)
-        t2 = Task.objects.create(
+        _t2 = Task.objects.create(
             title="Task Due in 2 Days",
             description="Not urgent",
             deadline=now + timedelta(hours=48),

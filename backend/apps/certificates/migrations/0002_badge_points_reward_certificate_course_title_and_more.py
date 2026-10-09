@@ -4,45 +4,57 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('certificates', '0001_initial'),
+        ("certificates", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='badge',
-            name='points_reward',
+            model_name="badge",
+            name="points_reward",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='certificate',
-            name='course_title',
-            field=models.CharField(default='', max_length=200),
+            model_name="certificate",
+            name="course_title",
+            field=models.CharField(default="", max_length=200),
         ),
         migrations.AddField(
-            model_name='certificate',
-            name='metadata',
+            model_name="certificate",
+            name="metadata",
             field=models.JSONField(blank=True, default=dict),
         ),
         migrations.AddField(
-            model_name='certificate',
-            name='student_name',
-            field=models.CharField(default='', max_length=200),
+            model_name="certificate",
+            name="student_name",
+            field=models.CharField(default="", max_length=200),
         ),
         migrations.AddField(
-            model_name='certificate',
-            name='title',
-            field=models.CharField(default='Certificate of Completion', max_length=255),
+            model_name="certificate",
+            name="title",
+            field=models.CharField(default="Certificate of Completion", max_length=255),
         ),
         migrations.AlterField(
-            model_name='badge',
-            name='criteria_type',
-            field=models.CharField(choices=[('STREAK_MILESTONE', 'Streak Milestone'), ('QUESTIONS_SOLVED', 'Questions Solved'), ('MODULE_COMPLETION', 'Module Completion'), ('COURSE_COMPLETION', 'Course Completion'), ('PROJECT_COMPLETION', 'Project Completion'), ('ASSIGNMENT_ACHIEVEMENT', 'Assignment Achievement'), ('POINTS_MILESTONE', 'Points Milestone'), ('LEADERBOARD_TOP', 'Leaderboard Top Rank'), ('PROJECT_EXCELLENCE', 'Project Excellence')], max_length=40),
+            model_name="badge",
+            name="criteria_type",
+            field=models.CharField(
+                choices=[
+                    ("STREAK_MILESTONE", "Streak Milestone"),
+                    ("QUESTIONS_SOLVED", "Questions Solved"),
+                    ("MODULE_COMPLETION", "Module Completion"),
+                    ("COURSE_COMPLETION", "Course Completion"),
+                    ("PROJECT_COMPLETION", "Project Completion"),
+                    ("ASSIGNMENT_ACHIEVEMENT", "Assignment Achievement"),
+                    ("POINTS_MILESTONE", "Points Milestone"),
+                    ("LEADERBOARD_TOP", "Leaderboard Top Rank"),
+                    ("PROJECT_EXCELLENCE", "Project Excellence"),
+                ],
+                max_length=40,
+            ),
         ),
         migrations.AlterField(
-            model_name='badge',
-            name='icon_url',
-            field=models.CharField(blank=True, default='', max_length=500),
+            model_name="badge",
+            name="icon_url",
+            field=models.CharField(blank=True, default="", max_length=500),
         ),
     ]

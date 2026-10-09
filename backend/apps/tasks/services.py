@@ -2,8 +2,9 @@
 
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
-from django.db import models, transaction
+from typing import Any
+
+from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -24,7 +25,9 @@ class TaskAdminService:
     @classmethod
     def get_task(cls, task_id: str) -> Task:
         return get_object_or_404(
-            Task.objects.select_related("question", "course", "assigned_student").prefetch_related("completions__student__user"),
+            Task.objects.select_related(
+                "question", "course", "assigned_student"
+            ).prefetch_related("completions__student__user"),
             id=task_id,
         )
 
@@ -35,19 +38,21 @@ class TaskAdminService:
         admin_user: User,
         title: str,
         description: str,
-        scheduled_date: Optional[date] = None,
-        deadline: Optional[datetime] = None,
-        question_id: Optional[str] = None,
+        scheduled_date: date | None = None,
+        deadline: datetime | None = None,
+        question_id: str | None = None,
         points: Decimal = Decimal("20.00"),
-        batch_code: Optional[str] = None,
-        course_id: Optional[str] = None,
-        assigned_student_id: Optional[str] = None,
+        batch_code: str | None = None,
+        course_id: str | None = None,
+        assigned_student_id: str | None = None,
         is_active: bool = True,
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> Task:
         # Rule: Deadline must be in the future when creating a task
         if deadline is not None and deadline <= timezone.now():
-            raise DomainException("Task deadline must be in the future when creating a new task.")
+            raise DomainException(
+                "Task deadline must be in the future when creating a new task."
+            )
 
         question = None
         if question_id:
@@ -96,17 +101,17 @@ class TaskAdminService:
         cls,
         task_id: str,
         admin_user: User,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        scheduled_date: Optional[date] = None,
-        deadline: Optional[datetime] = None,
-        question_id: Optional[str] = None,
-        points: Optional[Decimal] = None,
-        batch_code: Optional[str] = None,
-        course_id: Optional[str] = None,
-        assigned_student_id: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        ip_address: Optional[str] = None,
+        title: str | None = None,
+        description: str | None = None,
+        scheduled_date: date | None = None,
+        deadline: datetime | None = None,
+        question_id: str | None = None,
+        points: Decimal | None = None,
+        batch_code: str | None = None,
+        course_id: str | None = None,
+        assigned_student_id: str | None = None,
+        is_active: bool | None = None,
+        ip_address: str | None = None,
     ) -> Task:
         task = cls.get_task(task_id)
         update_fields = ["updated_at"]
@@ -147,7 +152,9 @@ class TaskAdminService:
             if assigned_student_id == "":
                 task.assigned_student = None
             else:
-                task.assigned_student = get_object_or_404(StudentProfile, id=assigned_student_id)
+                task.assigned_student = get_object_or_404(
+                    StudentProfile, id=assigned_student_id
+                )
             update_fields.append("assigned_student")
 
         if batch_code is not None:
@@ -176,7 +183,9 @@ class TaskAdminService:
 
     @classmethod
     @transaction.atomic
-    def archive_task(cls, task_id: str, admin_user: User, ip_address: Optional[str] = None) -> Task:
+    def archive_task(
+        cls, task_id: str, admin_user: User, ip_address: str | None = None
+    ) -> Task:
         task = cls.get_task(task_id)
         task.is_active = False
         task.save(update_fields=["is_active", "updated_at"])
@@ -192,7 +201,9 @@ class TaskAdminService:
 
     @classmethod
     @transaction.atomic
-    def delete_task(cls, task_id: str, admin_user: User, ip_address: Optional[str] = None) -> None:
+    def delete_task(
+        cls, task_id: str, admin_user: User, ip_address: str | None = None
+    ) -> None:
         task = cls.get_task(task_id)
         task_title = task.title
         task.delete()
@@ -207,10 +218,12 @@ class TaskAdminService:
         )
 
     @classmethod
-    def get_task_completions(cls, task_id: str) -> List[Dict[str, Any]]:
+    def get_task_completions(cls, task_id: str) -> list[dict[str, Any]]:
         task = cls.get_task(task_id)
-        completions = task.completions.select_related("student__user").order_by("-completed_at")
-        
+        completions = task.completions.select_related("student__user").order_by(
+            "-completed_at"
+        )
+
         return [
             {
                 "id": str(c.id),
@@ -243,7 +256,11 @@ class StudentTaskService:
             Q(assigned_student=student)
             | Q(batch_code=student.batch_code)
             | Q(course_id__in=enrolled_course_ids)
-            | (Q(assigned_student__isnull=True) & Q(batch_code="") & Q(course__isnull=True))
+            | (
+                Q(assigned_student__isnull=True)
+                & Q(batch_code="")
+                & Q(course__isnull=True)
+            )
         )
 
         return (
@@ -262,8 +279,8 @@ class StudentTaskService:
 
     @classmethod
     def get_student_tasks(
-        cls, student: StudentProfile, status_filter: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        cls, student: StudentProfile, status_filter: str | None = None
+    ) -> list[dict[str, Any]]:
         tasks = cls.get_assigned_tasks_queryset(student)
         results = []
 
@@ -293,7 +310,9 @@ class StudentTaskService:
                 "id": str(task.id),
                 "title": task.title,
                 "description": task.description,
-                "scheduled_date": str(task.scheduled_date) if task.scheduled_date else None,
+                "scheduled_date": str(task.scheduled_date)
+                if task.scheduled_date
+                else None,
                 "deadline": task.deadline.isoformat() if task.deadline else None,
                 "points": float(task.points),
                 "question_id": str(task.question.id) if task.question else None,
@@ -308,16 +327,21 @@ class StudentTaskService:
                 "submission_notes": completion.submission_notes if completion else "",
             }
 
-            if status_filter and status_filter.upper() != "ALL":
-                if computed_status != status_filter.upper():
-                    continue
+            if (
+                status_filter
+                and status_filter.upper() != "ALL"
+                and computed_status != status_filter.upper()
+            ):
+                continue
 
             results.append(task_payload)
 
         return results
 
     @classmethod
-    def get_student_task_detail(cls, student: StudentProfile, task_id: str) -> Dict[str, Any]:
+    def get_student_task_detail(
+        cls, student: StudentProfile, task_id: str
+    ) -> dict[str, Any]:
         tasks = cls.get_assigned_tasks_queryset(student).filter(id=task_id)
         task = tasks.first()
         if not task:
@@ -364,7 +388,7 @@ class StudentTaskService:
     @transaction.atomic
     def mark_task_complete(
         cls, student: StudentProfile, task_id: str, submission_notes: str = ""
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Marks a daily task completed for the student, guarantees idempotency, and records scoring/events."""
         tasks = cls.get_assigned_tasks_queryset(student).filter(id=task_id)
         task = tasks.first()
@@ -376,7 +400,7 @@ class StudentTaskService:
         if existing and existing.is_completed:
             raise DomainException("This task has already been completed.")
 
-        student_task, created = StudentTask.objects.update_or_create(
+        student_task, _created = StudentTask.objects.update_or_create(
             student=student,
             task=task,
             defaults={
@@ -447,9 +471,9 @@ class StudentTaskService:
                 )
 
             # Exclude students who already completed the task
-            completed_student_ids = task.completions.filter(is_completed=True).values_list(
-                "student_id", flat=True
-            )
+            completed_student_ids = task.completions.filter(
+                is_completed=True
+            ).values_list("student_id", flat=True)
             uncompleted_students = students_qs.exclude(id__in=completed_student_ids)
 
             for student in uncompleted_students:
