@@ -57,6 +57,14 @@ export const authApi = {
     return data.data;
   },
 
+  loginTPO: async (email: string, password: string): Promise<LoginResult> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
+      "/tpo/auth/login/",
+      { email, password }
+    );
+    return data.data;
+  },
+
   loginEmail: async (email: string, password: string): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/auth/login/email/",

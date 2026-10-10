@@ -21,6 +21,8 @@ from apps.accounts.views import (
     VerifyOTPView,
 )
 
+from apps.students.tpo_views import TPOLoginView
+
 app_name = "auth"
 
 urlpatterns = [
@@ -30,6 +32,7 @@ urlpatterns = [
     # Dedicated Logins
     path("login/student/", StudentLoginView.as_view(), name="login_student"),
     path("login/admin/", AdminLoginView.as_view(), name="login_admin"),
+    path("login/tpo/", TPOLoginView.as_view(), name="login_tpo"),
     path("login/email/", EmailLoginView.as_view(), name="login_email"),
     # OTP-based Login
     path("otp/request/", RequestOTPView.as_view(), name="otp_request"),

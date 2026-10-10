@@ -63,6 +63,7 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     class RoleChoices(models.TextChoices):
         ADMIN = "ADMIN", "Administrator / Staff"
         STUDENT = "STUDENT", "Student"
+        TPO = "TPO", "Training & Placement Officer"
 
     class OnboardingStatusChoices(models.TextChoices):
         PENDING_ACTIVATION = "PENDING_ACTIVATION", "Pending Activation"
@@ -139,6 +140,65 @@ class AdminProfile(BaseModel):
 
     def __str__(self):
         return f"AdminProfile: {self.full_name or self.user.email}"
+
+
+class TPOProfile(BaseModel):
+    """Institutional Training & Placement Officer (TPO) profile extension."""
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="tpo_profile"
+    )
+    college = models.ForeignKey(
+        "students.College",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="tpo_officers",
+        help_text="Institutional college explicitly assigned by Administrator.",
+    )
+    full_name = models.CharField(max_length=150, blank=True, default="")
+    designation = models.CharField(
+        max_length=100, blank=True, default="Training & Placement Officer"
+    )
+    department = models.CharField(
+        max_length=100, blank=True, default="Training & Placement Cell"
+    )
+    phone_number = models.CharField(max_length=30, blank=True, default="")
+    bio = models.TextField(blank=True, default="")
+    avatar_url = models.CharField(max_length=500, blank=True, default="")
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="Controls active authorization status for this institutional college.",
+    )
+    assigned_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="assigned_tpos",
+    )
+    assigned_at = models.DateTimeField(null=True, blank=True)
+    revoked_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="revoked_tpos",
+    )
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "TPO Profile"
+        verbose_name_plural = "TPO Profiles"
+        indexes = [
+            models.Index(fields=["college", "is_active"], name="tpo_college_active_idx"),
+            models.Index(fields=["user", "is_active"], name="tpo_user_active_idx"),
+        ]
+
+    def __str__(self):
+        college_name = self.college.name if self.college else "Unassigned"
+        return f"{self.full_name or self.user.email} — {college_name} (TPO)"
 
 
 class LoginActivity(UUIDModel, TimeStampedModel):

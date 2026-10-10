@@ -15,8 +15,8 @@ from apps.projects.views import ProjectFileDownloadView
 api_v1_patterns = [
     path("", include("apps.common.urls")),
     path("auth/", include("apps.accounts.urls")),
-    path("colleges/", include("apps.students.urls")),
-    path("admin/colleges/", include("apps.students.admin_urls")),
+    path("tpo/", include("apps.students.tpo_urls")),
+    path("admin/tpos/", include("apps.students.admin_tpo_urls")),
     path("admin/students/", include("apps.students.admin_urls")),
     path("admin/courses/", include("apps.courses.admin_urls")),
     path("admin/modules/", include("apps.modules.admin_urls")),

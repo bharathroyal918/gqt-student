@@ -5,10 +5,12 @@ import { useAuthStore } from "../store/authStore";
 // Layouts
 import { AdminLayout } from "../components/layout/AdminLayout";
 import { StudentLayout } from "../components/layout/StudentLayout";
+import { TPOLayout } from "../components/layout/TPOLayout";
 
 // Guards
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { StudentRouteGuard } from "../components/auth/StudentRouteGuard";
+import { TPORouteGuard } from "../components/auth/TPORouteGuard";
 
 // Fast Loading Spinner Fallback for Lazy Route Boundaries
 const RouteLoadingFallback: React.FC = () => (
@@ -37,6 +39,9 @@ const StudentRegisterPage = lazy(() =>
 const AdminLoginPage = lazy(() =>
   import("../pages/auth/AdminLoginPage").then((m) => ({ default: m.AdminLoginPage }))
 );
+const TPOLoginPage = lazy(() =>
+  import("../pages/auth/TPOLoginPage").then((m) => ({ default: m.TPOLoginPage }))
+);
 const ForgotPasswordPage = lazy(() =>
   import("../pages/auth/ForgotPasswordPage").then((m) => ({ default: m.ForgotPasswordPage }))
 );
@@ -46,6 +51,48 @@ const ResetPasswordPage = lazy(() =>
 const UnauthorizedPage = lazy(() =>
   import("../pages/UnauthorizedPage").then((m) => ({ default: m.UnauthorizedPage }))
 );
+
+// TPO Portal Pages (Lazy)
+const TPODashboardPage = lazy(() =>
+  import("../pages/tpo/TPODashboardPage").then((m) => ({ default: m.TPODashboardPage }))
+);
+const TPOStudentsPage = lazy(() =>
+  import("../pages/tpo/TPOStudentsPage").then((m) => ({ default: m.TPOStudentsPage }))
+);
+const TPOStudentDetailPage = lazy(() =>
+  import("../pages/tpo/TPOStudentDetailPage").then((m) => ({ default: m.TPOStudentDetailPage }))
+);
+const TPOProfilePage = lazy(() =>
+  import("../pages/tpo/TPOProfilePage").then((m) => ({ default: m.TPOProfilePage }))
+);
+const TPOLearningProgressPage = lazy(() =>
+  import("../pages/tpo/TPOLearningProgressPage").then((m) => ({ default: m.TPOLearningProgressPage }))
+);
+const TPOAssignmentsLabsPage = lazy(() =>
+  import("../pages/tpo/TPOAssignmentsLabsPage").then((m) => ({ default: m.TPOAssignmentsLabsPage }))
+);
+const TPOAttendanceAnalyticsPage = lazy(() =>
+  import("../pages/tpo/TPOAttendanceAnalyticsPage").then((m) => ({
+    default: m.TPOAttendanceAnalyticsPage,
+  }))
+);
+const TPOPerformanceTrendsPage = lazy(() =>
+  import("../pages/tpo/TPOPerformanceTrendsPage").then((m) => ({
+    default: m.TPOPerformanceTrendsPage,
+  }))
+);
+const TPOStudentsNeedingSupportPage = lazy(() =>
+  import("../pages/tpo/TPOStudentsNeedingSupportPage").then((m) => ({
+    default: m.TPOStudentsNeedingSupportPage,
+  }))
+);
+const TPOReportsPage = lazy(() =>
+  import("../pages/tpo/TPOReportsPage").then((m) => ({
+    default: m.TPOReportsPage,
+  }))
+);
+
+
 
 // Student Pages (Lazy)
 const StudentDashboardPage = lazy(() =>
@@ -140,6 +187,9 @@ const StudentsPage = lazy(() =>
 const CollegesPage = lazy(() =>
   import("../pages/admin/CollegesPage").then((m) => ({ default: m.CollegesPage }))
 );
+const TPOsPage = lazy(() =>
+  import("../pages/admin/TPOsPage").then((m) => ({ default: m.TPOsPage }))
+);
 const StudentDetailPage = lazy(() =>
   import("../pages/admin/StudentDetailPage").then((m) => ({ default: m.StudentDetailPage }))
 );
@@ -214,6 +264,10 @@ const RootRedirector: React.FC = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
+  if (user?.role === "TPO") {
+    return <Navigate to="/tpo/dashboard" replace />;
+  }
+
   return <Navigate to="/dashboard" replace />;
 };
 
@@ -256,6 +310,20 @@ export const router = createBrowserRouter([
   {
     path: "/auth/admin/login",
     element: withSuspense(AdminLoginPage),
+  },
+
+  // Public TPO Authentication
+  {
+    path: "/tpo/login",
+    element: withSuspense(TPOLoginPage),
+  },
+  {
+    path: "/auth/tpo-login",
+    element: withSuspense(TPOLoginPage),
+  },
+  {
+    path: "/auth/tpo/login",
+    element: withSuspense(TPOLoginPage),
   },
   {
     path: "/auth/login",
@@ -417,6 +485,10 @@ export const router = createBrowserRouter([
                 element: withSuspense(CollegesPage),
               },
               {
+                path: "tpos",
+                element: withSuspense(TPOsPage),
+              },
+              {
                 path: "students/:id",
                 element: withSuspense(StudentDetailPage),
               },
@@ -511,6 +583,68 @@ export const router = createBrowserRouter([
               {
                 path: "account",
                 element: withSuspense(AdminProfilePage),
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  // Protected TPO Portal (Authenticated + Role = TPO + Active College)
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <TPORouteGuard />,
+        children: [
+          {
+            path: "/tpo",
+            element: <TPOLayout />,
+            children: [
+              {
+                path: "",
+                element: <Navigate to="/tpo/dashboard" replace />,
+              },
+              {
+                path: "dashboard",
+                element: withSuspense(TPODashboardPage),
+              },
+              {
+                path: "students",
+                element: withSuspense(TPOStudentsPage),
+              },
+              {
+                path: "students/:id",
+                element: withSuspense(TPOStudentDetailPage),
+              },
+              {
+                path: "learning-progress",
+                element: withSuspense(TPOLearningProgressPage),
+              },
+              {
+                path: "assignments-labs",
+                element: withSuspense(TPOAssignmentsLabsPage),
+              },
+              {
+                path: "attendance",
+                element: withSuspense(TPOAttendanceAnalyticsPage),
+              },
+              {
+                path: "trends",
+                element: withSuspense(TPOPerformanceTrendsPage),
+              },
+              {
+                path: "students-needing-support",
+                element: withSuspense(TPOStudentsNeedingSupportPage),
+              },
+              {
+                path: "reports",
+                element: withSuspense(TPOReportsPage),
+              },
+              {
+                path: "profile",
+                element: withSuspense(TPOProfilePage),
               },
             ],
           },

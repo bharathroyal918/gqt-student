@@ -16,6 +16,7 @@ import {
   Video,
   QrCode,
   Building2,
+  UserCheck,
 } from "lucide-react";
 import { BrandLogo } from "../common/BrandLogo";
 import { useAuthStore } from "../../store/authStore";
@@ -38,6 +39,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobil
     { name: "Placement Drives", href: "/admin/placements", icon: Briefcase },
     { name: "Students", href: "/admin/students", icon: Users },
     { name: "Colleges", href: "/admin/colleges", icon: Building2 },
+    { name: "TPO Management", href: "/admin/tpos", icon: UserCheck },
     { name: "Attendance & QR", href: "/admin/attendance", icon: QrCode },
     { name: "Courses", href: "/admin/courses", icon: BookOpen },
     { name: "Recorded Classes", href: "/admin/recorded-classes", icon: Video },

@@ -215,10 +215,23 @@ class ReadinessCheckView(APIView):
                 cursor.execute("SELECT 1")
                 if cursor.fetchone() != (1,):
                     raise DatabaseError("Database unavailable")
-            cache.set("__readiness_ping__", "1", timeout=5)
-            if cache.get("__readiness_ping__") != "1":
-                raise ConnectionError("Cache unavailable")
-            return api_success(data={"status": "ready", "ready": True})
+            
+            cache_ok = True
+            try:
+                cache.set("__readiness_ping__", "1", timeout=5)
+                if cache.get("__readiness_ping__") != "1":
+                    cache_ok = False
+            except Exception:
+                cache_ok = False
+
+            return api_success(
+                data={
+                    "status": "ready",
+                    "ready": True,
+                    "database": "connected",
+                    "cache": "connected" if cache_ok else "degraded",
+                }
+            )
         except (
             DatabaseError,
             ConnectionError,

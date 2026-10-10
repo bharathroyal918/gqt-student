@@ -113,3 +113,61 @@ class IsOwnerOrAdmin(BasePermission):
                 return True
 
         return False
+
+
+class IsTPO(BasePermission):
+    """Allows access strictly to authenticated, active TPO users with a valid active college assignment."""
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated and request.user.is_active):
+            return False
+        if getattr(request.user, "role", None) != User.RoleChoices.TPO:
+            return False
+        tpo_profile = getattr(request.user, "tpo_profile", None)
+        return bool(
+            tpo_profile
+            and tpo_profile.is_active
+            and tpo_profile.college
+            and tpo_profile.college.is_active
+        )
+
+
+IsTPOUser = IsTPO  # Alias for backward compatibility
+
+
+class HasActiveTPOCollegeAssignment(BasePermission):
+    """Strictly verifies that the TPO has a non-revoked, active institutional college assignment."""
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated and request.user.is_active):
+            return False
+        if getattr(request.user, "role", None) != User.RoleChoices.TPO:
+            return False
+        tpo_profile = getattr(request.user, "tpo_profile", None)
+        if not tpo_profile or not tpo_profile.is_active:
+            return False
+        return bool(tpo_profile.college and tpo_profile.college.is_active)
+
+
+class IsTPOOrAdmin(BasePermission):
+    """Allows access to administrators or authorized TPO officers."""
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated and request.user.is_active):
+            return False
+        if (
+            getattr(request.user, "role", None) == User.RoleChoices.ADMIN
+            or request.user.is_staff
+            or request.user.is_superuser
+        ):
+            return True
+        if getattr(request.user, "role", None) == User.RoleChoices.TPO:
+            tpo_profile = getattr(request.user, "tpo_profile", None)
+            return bool(
+                tpo_profile
+                and tpo_profile.is_active
+                and tpo_profile.college
+                and tpo_profile.college.is_active
+            )
+        return False
+

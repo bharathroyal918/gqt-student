@@ -6,6 +6,17 @@ from .base import env
 DEBUG = False
 ENVIRONMENT = "production"
 
+ALLOWED_HOSTS = env.list(
+    "DJANGO_ALLOWED_HOSTS",
+    default=[
+        "localhost",
+        "127.0.0.1",
+        "backend",
+        "gqt-student.onrender.com",
+        "gqt-student-portal-backend.onrender.com",
+    ],
+)
+
 # Database Configuration (Supabase PostgreSQL / Render PostgreSQL)
 raw_db_url = (
     env("DATABASE_URL", default="").strip()
@@ -27,6 +38,27 @@ else:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "prod_db.sqlite3",
+        }
+    }
+
+redis_url = env("REDIS_URL", default="").strip()
+if redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": redis_url,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+            },
+            "KEY_PREFIX": "gqt_portal_prod",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "prod-locmem-cache",
         }
     }
 

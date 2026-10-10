@@ -190,6 +190,46 @@ class AuthService:
         return user, access, refresh, user_data
 
     @classmethod
+    def login_as_tpo(
+        cls,
+        email: str,
+        password: str,
+        ip_address: str | None = None,
+        user_agent: str = "",
+    ) -> tuple[User, str, str, dict[str, Any]]:
+        """Dedicated TPO authentication verifying TPO role and active assignment."""
+        user, access, refresh, user_data = cls.login_with_email(
+            email=email,
+            password=password,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        if user.role != User.RoleChoices.TPO:
+            raise DomainException(
+                detail=(
+                    "Access denied. The TPO Portal is restricted "
+                    "to authorized Training & Placement Officers."
+                ),
+                code="FORBIDDEN_ROLE",
+                status_code=403,
+            )
+        tpo_profile = getattr(user, "tpo_profile", None)
+        if not tpo_profile or not tpo_profile.is_active:
+            raise DomainException(
+                detail="Your TPO access has been suspended or deactivated. Please contact the administrator.",
+                code="TPO_INACTIVE",
+                status_code=403,
+            )
+        if not tpo_profile.college or not tpo_profile.college.is_active:
+            raise DomainException(
+                detail="Your TPO account has no active college assignment. Please contact the administrator.",
+                code="TPO_NO_COLLEGE_ASSIGNED",
+                status_code=403,
+            )
+        return user, access, refresh, user_data
+
+
+    @classmethod
     def login_with_email(
         cls,
         email: str,
@@ -924,7 +964,61 @@ class AuthService:
                 "can_review_projects": ap.can_review_projects,
                 "can_manage_curriculum": ap.can_manage_curriculum,
             }
+        elif hasattr(user, "tpo_profile") and user.tpo_profile:
+            tp = user.tpo_profile
+            data["tpo_profile"] = {
+                "id": str(tp.id),
+                "full_name": tp.full_name,
+                "designation": tp.designation,
+                "department": tp.department,
+                "phone_number": tp.phone_number,
+                "bio": tp.bio,
+                "avatar_url": tp.avatar_url,
+                "is_active": tp.is_active,
+                "college": (
+                    {
+                        "id": str(tp.college.id),
+                        "name": tp.college.name,
+                        "code": tp.college.code,
+                        "city": tp.college.city,
+                        "state": tp.college.state,
+                    }
+                    if tp.college
+                    else None
+                ),
+            }
         return data
+
+    @classmethod
+    def get_tpo_assigned_college(cls, user: User):
+        """Authoritatively resolves and validates the TPO's assigned college from database."""
+        if not user or not user.is_authenticated or not user.is_active:
+            raise DomainException(
+                detail="Authentication required.",
+                code="UNAUTHENTICATED",
+                status_code=401,
+            )
+        if user.role != User.RoleChoices.TPO:
+            raise DomainException(
+                detail="User does not have TPO role.",
+                code="FORBIDDEN_ROLE",
+                status_code=403,
+            )
+        tpo_profile = getattr(user, "tpo_profile", None)
+        if not tpo_profile or not tpo_profile.is_active:
+            raise DomainException(
+                detail="TPO profile is inactive or suspended.",
+                code="TPO_INACTIVE",
+                status_code=403,
+            )
+        if not tpo_profile.college or not tpo_profile.college.is_active:
+            raise DomainException(
+                detail="No active college assignment found for this TPO.",
+                code="TPO_NO_COLLEGE_ASSIGNED",
+                status_code=403,
+            )
+        return tpo_profile.college
+
 
 
 class StudentProvisioningService:
