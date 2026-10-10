@@ -5,6 +5,7 @@ export interface TPOProfile {
   email: string;
   mobile_number?: string | null;
   user_is_active?: boolean;
+  user_onboarding_status?: string;
   role?: string;
   full_name: string;
   designation: string;
@@ -23,6 +24,19 @@ export interface TPOProfile {
   updated_at: string;
 }
 
+export interface RegisterTPOPayload {
+  full_name: string;
+  email: string;
+  password: string;
+  college_id?: string;
+  college_name?: string;
+  mobile_number?: string;
+  designation?: string;
+  department?: string;
+  phone_number?: string;
+  bio?: string;
+}
+
 export interface CreateTPOPayload {
   email: string;
   full_name: string;
@@ -31,6 +45,10 @@ export interface CreateTPOPayload {
   department?: string;
   phone_number?: string;
   bio?: string;
+}
+
+export interface ApproveTPOPayload {
+  college_id?: string;
 }
 
 export interface UpdateTPOPayload {
@@ -363,21 +381,21 @@ export interface TPOReportPreviewRequest {
   filters?: TPOReportFilterPayload;
 }
 
-export interface TPOReportPreviewColumn {
-  field: string;
-  label: string;
-}
-
 export interface TPOReportPreviewResponse {
   report_type: string;
-  report_name: string;
-  generated_at: string;
-  college_id: string;
-  college_name: string;
+  report_name?: string;
+  college?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  college_id?: string;
+  college_name?: string;
   total_rows: number;
-  sample_rows: Record<string, any>[];
-  columns: TPOReportPreviewColumn[];
-  is_truncated: boolean;
+  columns: string[];
+  preview_rows: (string | number | boolean | null)[][];
+  generated_at: string;
+  is_truncated?: boolean;
   limitations?: string;
 }
 

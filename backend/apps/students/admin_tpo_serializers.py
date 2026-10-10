@@ -29,6 +29,9 @@ class AdminTPOListSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
     mobile_number = serializers.CharField(source="user.mobile_number", read_only=True)
     user_is_active = serializers.BooleanField(source="user.is_active", read_only=True)
+    user_onboarding_status = serializers.CharField(
+        source="user.onboarding_status", read_only=True
+    )
     college = TPOCollegeBriefSerializer(read_only=True)
     assigned_by_email = serializers.EmailField(
         source="assigned_by.email", read_only=True, default=None
@@ -41,6 +44,7 @@ class AdminTPOListSerializer(serializers.ModelSerializer):
             "email",
             "mobile_number",
             "user_is_active",
+            "user_onboarding_status",
             "full_name",
             "designation",
             "department",
@@ -92,6 +96,12 @@ class AdminTPOUpdateSerializer(serializers.ModelSerializer):
             "bio",
             "avatar_url",
         ]
+
+
+class AdminTPOApproveSerializer(serializers.Serializer):
+    """Optional payload to approve/activate a TPO and specify or override college."""
+
+    college_id = serializers.UUIDField(required=False, allow_null=True)
 
 
 class AdminTPOReassignCollegeSerializer(serializers.Serializer):

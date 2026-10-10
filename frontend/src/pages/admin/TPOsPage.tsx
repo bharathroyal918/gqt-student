@@ -37,12 +37,13 @@ export const TPOsPage: React.FC = () => {
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [collegeFilter, setCollegeFilter] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "ACTIVE" | "INACTIVE">("ALL");
 
   // Modal States
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [selectedTpoDetail, setSelectedTpoDetail] = useState<TPOProfile | null>(null);
   const [reassigningTpo, setReassigningTpo] = useState<TPOProfile | null>(null);
+  const [approvingTpo, setApprovingTpo] = useState<TPOProfile | null>(null);
   const [targetCollegeId, setTargetCollegeId] = useState<string>("");
   const [statusActionTpo, setStatusActionTpo] = useState<{ tpo: TPOProfile; action: "deactivate" | "reactivate" } | null>(null);
   const [editingTpo, setEditingTpo] = useState<TPOProfile | null>(null);
@@ -89,13 +90,27 @@ export const TPOsPage: React.FC = () => {
       adminTpoApi.getTPOs({
         search: searchTerm || undefined,
         college_id: collegeFilter === "ALL" ? undefined : collegeFilter,
-        is_active: statusFilter === "ALL" ? undefined : statusFilter === "ACTIVE",
+        is_active:
+          statusFilter === "ACTIVE"
+            ? true
+            : statusFilter === "INACTIVE" || statusFilter === "PENDING"
+            ? false
+            : undefined,
       }),
   });
 
   const tpos: TPOProfile[] = useMemo(() => {
-    return tposResponse?.data || [];
-  }, [tposResponse]);
+    const raw = tposResponse?.data || [];
+    if (statusFilter === "PENDING") {
+      return raw.filter(
+        (t) =>
+          !t.is_active ||
+          !t.user_is_active ||
+          t.user_onboarding_status === "PENDING_ACTIVATION"
+      );
+    }
+    return raw;
+  }, [tposResponse, statusFilter]);
 
   // 3. Fetch Audit History for Selected TPO
   const { data: auditLogs = [], isLoading: isAuditLoading } = useQuery({
@@ -114,6 +129,19 @@ export const TPOsPage: React.FC = () => {
     },
     onError: (err: any) => {
       setFormError(err?.response?.data?.error?.message || err?.response?.data?.message || "Failed to invite TPO.");
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: ({ id, collegeId }: { id: string; collegeId?: string }) =>
+      adminTpoApi.approveTPO(id, collegeId ? { college_id: collegeId } : undefined),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tpos"] });
+      setApprovingTpo(null);
+      setTargetCollegeId("");
+    },
+    onError: (err: any) => {
+      alert(err?.response?.data?.error?.message || "Failed to grant TPO access.");
     },
   });
 
@@ -188,10 +216,22 @@ export const TPOsPage: React.FC = () => {
     setFormError(null);
   };
 
+  const handleOpenApprove = (tpo: TPOProfile) => {
+    setApprovingTpo(tpo);
+    setTargetCollegeId(tpo.college?.id || "");
+  };
+
   // KPI Metrics
-  const totalCount = tpos.length;
-  const activeCount = tpos.filter((t) => t.is_active && t.user_is_active).length;
-  const assignedCollegesCount = new Set(tpos.map((t) => t.college?.id).filter(Boolean)).size;
+  const rawTpos = tposResponse?.data || [];
+  const totalCount = rawTpos.length;
+  const pendingCount = rawTpos.filter(
+    (t) =>
+      !t.is_active ||
+      !t.user_is_active ||
+      t.user_onboarding_status === "PENDING_ACTIVATION"
+  ).length;
+  const activeCount = rawTpos.filter((t) => t.is_active && t.user_is_active).length;
+  const assignedCollegesCount = new Set(rawTpos.map((t) => t.college?.id).filter(Boolean)).size;
 
   return (
     <div className="space-y-6">
@@ -207,7 +247,7 @@ export const TPOsPage: React.FC = () => {
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Invite, assign, and manage Training & Placement Officers (TPOs) across institutional colleges.
+            Invite, assign, and approve Training & Placement Officers (TPOs) across institutional colleges.
           </p>
         </div>
 
@@ -226,7 +266,7 @@ export const TPOsPage: React.FC = () => {
       </div>
 
       {/* KPI Stats Banner */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -237,7 +277,20 @@ export const TPOsPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 text-3xl font-black text-slate-900 dark:text-white">{totalCount}</div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Provisioned institutional officers</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Registered institutional officers</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Pending Approvals
+            </span>
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-950/80 p-2 text-amber-600 dark:text-amber-400">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-3 text-3xl font-black text-amber-600 dark:text-amber-400">{pendingCount}</div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Awaiting admin access approval</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 shadow-sm">
@@ -250,7 +303,7 @@ export const TPOsPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 text-3xl font-black text-emerald-600 dark:text-emerald-400">{activeCount}</div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Officers with active portal permissions</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Officers with active portal access</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 shadow-sm">
@@ -302,8 +355,9 @@ export const TPOsPage: React.FC = () => {
             className="rounded-xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-950 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
             <option value="ALL">All Status</option>
-            <option value="ACTIVE">Active Only</option>
-            <option value="INACTIVE">Inactive Only</option>
+            <option value="PENDING">Pending Approvals</option>
+            <option value="ACTIVE">Active Access</option>
+            <option value="INACTIVE">Deactivated</option>
           </select>
         </div>
       </div>
@@ -380,7 +434,7 @@ export const TPOsPage: React.FC = () => {
                               {tpo.college.name}
                             </span>
                             <span className="text-[11px] text-slate-400">
-                              {tpo.college.city}, {tpo.college.state}
+                              {tpo.college.city ? `${tpo.college.city}, ${tpo.college.state}` : tpo.college.code}
                             </span>
                           </div>
                         </div>
@@ -399,6 +453,8 @@ export const TPOsPage: React.FC = () => {
                     <td className="px-5 py-4">
                       {tpo.is_active && tpo.user_is_active ? (
                         <Badge variant="success">Active</Badge>
+                      ) : tpo.user_onboarding_status === "PENDING_ACTIVATION" || !tpo.assigned_by_email ? (
+                        <Badge variant="warning">Pending Approval</Badge>
                       ) : (
                         <Badge variant="danger">Deactivated</Badge>
                       )}
@@ -412,6 +468,19 @@ export const TPOsPage: React.FC = () => {
 
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {/* Grant Access Button for Pending/Inactive TPOs */}
+                        {(!tpo.is_active || !tpo.user_is_active || tpo.user_onboarding_status === "PENDING_ACTIVATION") && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleOpenApprove(tpo)}
+                            className="h-8 px-2.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm flex items-center gap-1"
+                            title="Grant Access & Approve College"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span>Grant Access</span>
+                          </Button>
+                        )}
+
                         {/* View Details / Audit Drawer */}
                         <Button
                           size="sm"
@@ -449,7 +518,7 @@ export const TPOsPage: React.FC = () => {
                         </Button>
 
                         {/* Deactivate / Reactivate Toggle */}
-                        {tpo.is_active && tpo.user_is_active ? (
+                        {tpo.is_active && tpo.user_is_active && (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -458,16 +527,6 @@ export const TPOsPage: React.FC = () => {
                             title="Deactivate Access"
                           >
                             <PowerOff className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setStatusActionTpo({ tpo, action: "reactivate" })}
-                            className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                            title="Reactivate Access"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
@@ -700,7 +759,59 @@ export const TPOsPage: React.FC = () => {
       </Modal>
 
       {/* -------------------------------------------------------------------------- */}
-      {/* 4. DETAILS & AUDIT HISTORY MODAL */}
+      {/* 4. GRANT ACCESS / APPROVAL MODAL */}
+      {/* -------------------------------------------------------------------------- */}
+      <Modal
+        isOpen={!!approvingTpo}
+        onClose={() => setApprovingTpo(null)}
+        title="Grant TPO Access & Approve College"
+      >
+        {approvingTpo && (
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
+              <strong>Access Authorization:</strong> Approving{" "}
+              <span className="font-semibold">{approvingTpo.full_name}</span> ({approvingTpo.email}) will activate their portal account and grant full access to student records and assessment analytics for the assigned college selected below.
+            </div>
+
+            <FormField label="Assigned Institution / College" required>
+              <select
+                value={targetCollegeId}
+                onChange={(e) => setTargetCollegeId(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-950 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+                required
+              >
+                <option value="">Select an Institutional College...</option>
+                {colleges.map((col) => (
+                  <option key={col.id} value={col.id}>
+                    {col.name} {col.code ? `(${col.code})` : ""} {col.city ? `— ${col.city}` : ""}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-surface-800">
+              <Button variant="outline" onClick={() => setApprovingTpo(null)}>
+                Cancel
+              </Button>
+              <Button
+                disabled={!targetCollegeId || approveMutation.isPending}
+                onClick={() =>
+                  approveMutation.mutate({
+                    id: approvingTpo.id,
+                    collegeId: targetCollegeId,
+                  })
+                }
+                className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              >
+                {approveMutation.isPending ? "Granting Access..." : "Grant Access & Activate"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* -------------------------------------------------------------------------- */}
+      {/* 5. DETAILS & AUDIT HISTORY MODAL */}
       {/* -------------------------------------------------------------------------- */}
       <Modal
         isOpen={!!selectedTpoDetail}

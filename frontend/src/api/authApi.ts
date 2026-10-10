@@ -1,6 +1,7 @@
 import { apiClient } from "./client";
 import { ApiSuccessResponse } from "../types/api";
 import { User, StudentProfile } from "../types/auth";
+import { RegisterTPOPayload } from "../types/tpo";
 
 export interface LoginResult {
   access: string;
@@ -35,6 +36,15 @@ export const authApi = {
   registerStudent: async (payload: RegisterStudentPayload): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/auth/register/",
+      payload
+    );
+    return data.data;
+  },
+
+  // TPO Registration
+  registerTPO: async (payload: RegisterTPOPayload): Promise<any> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<any>>(
+      "/tpo/auth/register/",
       payload
     );
     return data.data;

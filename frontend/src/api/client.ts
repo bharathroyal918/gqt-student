@@ -1,14 +1,15 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { ApiErrorResponse, ApiSuccessResponse } from "../types/api";
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || "/api/v1";
+const rawApiBaseUrl = (import.meta as any).env?.VITE_API_BASE_URL || "/api/v1";
+export const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, "");
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000,
+  timeout: 20000,
 });
 
 // Request Interceptor: Attach Access Token
@@ -54,10 +55,17 @@ apiClient.interceptors.response.use(
           }
           return apiClient(originalRequest);
         } catch (refreshError) {
-          // Invalidate tokens and redirect to login
+          // Invalidate tokens and redirect to portal-specific login
           localStorage.removeItem("gqt_access_token");
           localStorage.removeItem("gqt_refresh_token");
-          window.location.href = "/auth/login";
+          const path = window.location.pathname;
+          if (path.startsWith("/admin")) {
+            window.location.href = "/admin/login";
+          } else if (path.startsWith("/tpo")) {
+            window.location.href = "/tpo/login";
+          } else {
+            window.location.href = "/login";
+          }
           return Promise.reject(refreshError);
         }
       }

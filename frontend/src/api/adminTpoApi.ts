@@ -1,5 +1,6 @@
 import { apiClient } from "./client";
 import {
+  ApproveTPOPayload,
   CreateTPOPayload,
   ReassignCollegePayload,
   TPOAuditLog,
@@ -44,6 +45,14 @@ export const adminTpoApi = {
 
   provisionTPO: async (payload: CreateTPOPayload): Promise<TPOProfile> => {
     const response = await apiClient.post<{ data: TPOProfile }>("/admin/tpos/", payload);
+    return response.data.data;
+  },
+
+  approveTPO: async (id: string, payload?: ApproveTPOPayload): Promise<TPOProfile> => {
+    const response = await apiClient.post<{ data: TPOProfile }>(
+      `/admin/tpos/${id}/approve/`,
+      payload || {}
+    );
     return response.data.data;
   },
 

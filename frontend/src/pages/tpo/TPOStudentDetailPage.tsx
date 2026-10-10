@@ -113,7 +113,7 @@ export const TPOStudentDetailPage: React.FC = () => {
                 Total Points
               </span>
               <span className="text-xl font-bold text-slate-900 dark:text-white">
-                {student.total_points.toFixed(0)}
+                {Number(student.total_points || 0).toFixed(0)}
               </span>
             </div>
             <div className="h-8 w-px bg-slate-200 dark:bg-surface-800" />
@@ -123,12 +123,12 @@ export const TPOStudentDetailPage: React.FC = () => {
               </span>
               <span
                 className={`text-xl font-bold ${
-                  student.attendance_percentage >= 75
+                  Number(student.attendance_percentage || 0) >= 75
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-rose-600 dark:text-rose-400"
                 }`}
               >
-                {student.attendance_percentage}%
+                {student.attendance_percentage || 0}%
               </span>
             </div>
           </div>
@@ -146,10 +146,10 @@ export const TPOStudentDetailPage: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
-              {student.current_streak_days}
+              {student.current_streak_days || 0}
             </span>
             <span className="text-xs text-slate-400">
-              days (best: {student.highest_streak_days}d)
+              days (best: {student.highest_streak_days || 0}d)
             </span>
           </div>
         </Card>
@@ -161,9 +161,9 @@ export const TPOStudentDetailPage: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
-              {student.attended_classes}
+              {student.attended_classes || 0}
             </span>
-            <span className="text-xs text-slate-400">/ {student.total_classes} attended</span>
+            <span className="text-xs text-slate-400">/ {student.total_classes || 0} attended</span>
           </div>
         </Card>
 
@@ -174,7 +174,7 @@ export const TPOStudentDetailPage: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
-              {student.score_breakdown?.ASSIGNMENT?.toFixed(0) || "0"}
+              {Number(student.score_breakdown?.ASSIGNMENT || 0).toFixed(0)}
             </span>
             <span className="text-xs text-slate-400">pts awarded</span>
           </div>
@@ -187,7 +187,7 @@ export const TPOStudentDetailPage: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-slate-900 dark:text-white">
-              {student.score_breakdown?.PROJECT?.toFixed(0) || "0"}
+              {Number(student.score_breakdown?.PROJECT || 0).toFixed(0)}
             </span>
             <span className="text-xs text-slate-400">pts awarded</span>
           </div>
@@ -203,14 +203,14 @@ export const TPOStudentDetailPage: React.FC = () => {
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="h-4 w-4 text-brand-500" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Enrolled Curriculum Courses ({student.enrollments.length})
+              Enrolled Curriculum Courses ({(student.enrollments || []).length})
             </h3>
           </div>
-          {student.enrollments.length === 0 ? (
+          {(student.enrollments || []).length === 0 ? (
             <p className="text-xs text-slate-400">No active course enrollments.</p>
           ) : (
             <div className="space-y-3">
-              {student.enrollments.map((enr) => (
+              {(student.enrollments || []).map((enr) => (
                 <div
                   key={enr.id}
                   className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-surface-900/60 border border-slate-100 dark:border-surface-800/60 text-xs"
@@ -237,14 +237,14 @@ export const TPOStudentDetailPage: React.FC = () => {
           <div className="flex items-center gap-2 mb-4">
             <Code2 className="h-4 w-4 text-brand-500" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Recent Lab Submissions ({student.recent_submissions.length})
+              Recent Lab Submissions ({(student.recent_submissions || []).length})
             </h3>
           </div>
-          {student.recent_submissions.length === 0 ? (
+          {(student.recent_submissions || []).length === 0 ? (
             <p className="text-xs text-slate-400">No coding submissions recorded yet.</p>
           ) : (
             <div className="space-y-2.5">
-              {student.recent_submissions.map((sub) => (
+              {(student.recent_submissions || []).map((sub) => (
                 <div
                   key={sub.id}
                   className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-surface-900/60 border border-slate-100 dark:border-surface-800/60 text-xs"
@@ -291,10 +291,10 @@ export const TPOStudentDetailPage: React.FC = () => {
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="h-4 w-4 text-brand-500" />
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-            Recent Attendance Log ({student.recent_attendance.length} sessions)
+            Recent Attendance Log ({(student.recent_attendance || []).length} sessions)
           </h3>
         </div>
-        {student.recent_attendance.length === 0 ? (
+        {(student.recent_attendance || []).length === 0 ? (
           <p className="text-xs text-slate-400">No session attendance records available.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -309,7 +309,7 @@ export const TPOStudentDetailPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-surface-800">
-                {student.recent_attendance.map((att) => (
+                {(student.recent_attendance || []).map((att) => (
                   <tr key={att.id} className="hover:bg-slate-50 dark:hover:bg-surface-800/40">
                     <td className="px-4 py-3 font-mono font-medium">{att.date}</td>
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">

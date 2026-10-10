@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   BookOpen,
@@ -39,6 +39,8 @@ export const TPOSidebar: React.FC<TPOSidebarProps> = ({ isOpen, onCloseMobile })
   const tpoInitials = tpoName.slice(0, 2).toUpperCase();
   const college = profile?.college;
 
+  const navigate = useNavigate();
+
   const handleLogout = async () => {
     const refreshToken = localStorage.getItem("gqt_refresh_token");
     if (refreshToken) {
@@ -49,7 +51,7 @@ export const TPOSidebar: React.FC<TPOSidebarProps> = ({ isOpen, onCloseMobile })
       }
     }
     clearAuth();
-    window.location.href = "/login";
+    navigate("/tpo/login", { replace: true });
   };
 
   const navItems = [

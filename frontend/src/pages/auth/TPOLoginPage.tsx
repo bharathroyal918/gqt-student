@@ -67,27 +67,29 @@ export const TPOLoginPage: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-900 p-4 sm:p-6 lg:p-8 font-sans text-slate-100">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 sm:p-6 lg:p-8 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Background aesthetics */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-brand-500/10 blur-[128px]" />
-        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-emerald-500/10 blur-[128px]" />
+      <div className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden">
+        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-brand-500/10 dark:bg-brand-500/15 blur-[128px]" />
+        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 blur-[128px]" />
       </div>
 
-      {/* Theme Toggle Top Right */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+      {/* Floating Theme Toggle Top Right */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
         <button
+          type="button"
           onClick={toggleTheme}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors shadow-lg"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 dark:border-surface-800 bg-white/90 dark:bg-surface-900/90 text-slate-600 dark:text-slate-300 shadow-md backdrop-blur-md hover:bg-slate-100 dark:hover:bg-surface-800 transition-all"
+          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           aria-label="Toggle Theme"
         >
-          {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+          {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
         </button>
       </div>
 
       {/* Login Card */}
       <div className="relative w-full max-w-md">
-        <div className="rounded-3xl border border-slate-800/80 bg-slate-950/80 p-8 shadow-2xl backdrop-blur-xl sm:p-10">
+        <div className="rounded-3xl border border-slate-200 dark:border-surface-800 bg-white/95 dark:bg-surface-900/85 p-8 shadow-2xl shadow-brand-500/5 dark:shadow-black/60 backdrop-blur-2xl sm:p-10 transition-colors">
           {/* Header */}
           <div className="flex flex-col items-center text-center">
             <BrandLogo
@@ -96,18 +98,18 @@ export const TPOLoginPage: React.FC = () => {
               badgeVariant="admin"
               subtitle="Training & Placement Officer Access"
             />
-            <h1 className="mt-6 text-xl font-bold tracking-tight text-white sm:text-2xl">
+            <h1 className="mt-6 text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
               Officer Sign In
             </h1>
-            <p className="mt-2 text-xs text-slate-400 max-w-sm leading-relaxed">
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
               Sign in with your institutional credentials to access student directories and placement analytics.
             </p>
           </div>
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="mt-6 flex items-start gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3.5 text-xs text-rose-300">
-              <ShieldAlert className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+            <div className="mt-6 flex items-start gap-3 rounded-2xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-3.5 text-xs text-rose-700 dark:text-rose-300">
+              <ShieldAlert className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400 mt-0.5" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -143,18 +145,20 @@ export const TPOLoginPage: React.FC = () => {
             </div>
           </form>
 
-          {/* Alternate Logins Footer */}
-          <div className="mt-8 border-t border-slate-800/80 pt-6 text-center text-xs text-slate-500">
-            <span>Are you a student or platform administrator? </span>
-            <div className="mt-2 flex justify-center gap-4 text-xs font-semibold">
-              <Link to="/login" className="text-brand-400 hover:text-brand-300 hover:underline">
-                Student Portal
-              </Link>
-              <span>•</span>
-              <Link to="/admin/login" className="text-brand-400 hover:text-brand-300 hover:underline">
-                Admin Portal
+          {/* Dedicated TPO Registration Navigation Footer */}
+          <div className="mt-8 border-t border-slate-200 dark:border-surface-800 pt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+            <span>New Placement Officer or Institution? </span>
+            <div className="mt-2 flex justify-center items-center gap-2">
+              <Link
+                to="/tpo/register"
+                className="font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline transition-colors"
+              >
+                Register TPO Account & Select College →
               </Link>
             </div>
+            <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500">
+              * Note: Newly registered TPO accounts require institutional administrative approval before student records become accessible.
+            </p>
           </div>
         </div>
       </div>

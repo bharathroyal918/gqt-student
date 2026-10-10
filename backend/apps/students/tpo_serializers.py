@@ -89,6 +89,36 @@ class TPOLoginSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
 
 
+class TPORegisterSerializer(serializers.Serializer):
+    """Payload for TPO self-registration with college selection."""
+
+    full_name = serializers.CharField(max_length=150, required=True)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(min_length=8, required=True, write_only=True)
+    college_id = serializers.UUIDField(required=False, allow_null=True)
+    college_name = serializers.CharField(required=False, allow_blank=True, default="")
+    mobile_number = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, default=""
+    )
+    designation = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, default="Training & Placement Officer"
+    )
+    department = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, default="Training & Placement Cell"
+    )
+    phone_number = serializers.CharField(
+        max_length=30, required=False, allow_blank=True, default=""
+    )
+    bio = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        if not attrs.get("college_id") and not attrs.get("college_name"):
+            raise serializers.ValidationError(
+                {"college_id": "Please select your institutional college."}
+            )
+        return attrs
+
+
 class TPOStudentRosterSerializer(serializers.ModelSerializer):
     """Read-only serializer for college-scoped student roster list view."""
 

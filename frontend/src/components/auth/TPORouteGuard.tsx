@@ -9,7 +9,11 @@ import { Button } from "../ui/Button";
 export const TPORouteGuard: React.FC = () => {
   const { user, clearAuth } = useAuthStore();
 
-  if (!user || user.role !== "TPO") {
+  if (!user) {
+    return <Navigate to="/tpo/login" replace />;
+  }
+
+  if (user.role !== "TPO") {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -58,7 +62,7 @@ export const TPORouteGuard: React.FC = () => {
               variant="ghost"
               onClick={() => {
                 clearAuth();
-                window.location.href = "/login";
+                window.location.href = "/tpo/login";
               }}
               className="w-full text-slate-400 hover:text-white"
             >

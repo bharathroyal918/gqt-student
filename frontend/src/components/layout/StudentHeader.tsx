@@ -53,7 +53,7 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
       // Continue client cleanup even if API fails
     } finally {
       clearAuth();
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   };
 

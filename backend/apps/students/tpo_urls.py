@@ -12,6 +12,7 @@ from apps.students.tpo_views import (
     TPOLoginView,
     TPOPerformanceTrendsView,
     TPOProfileMeView,
+    TPORegisterView,
     TPOReportExportView,
     TPOReportPreviewView,
     TPOReportTypesListView,
@@ -24,6 +25,7 @@ app_name = "tpo"
 
 urlpatterns = [
     path("auth/login/", TPOLoginView.as_view(), name="login"),
+    path("auth/register/", TPORegisterView.as_view(), name="register"),
     path("me/", TPOProfileMeView.as_view(), name="profile_me"),
     path("college/", TPOCollegeDetailView.as_view(), name="college_detail"),
     path("college/summary/", TPOCollegeSummaryView.as_view(), name="college_summary"),

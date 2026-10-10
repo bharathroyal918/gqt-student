@@ -105,12 +105,21 @@ class AuthService:
             is_active=True,
             last_login_ip=ip_address,
         )
+        from apps.students.models import College
+
+        matching_college = None
+        if college_name and college_name.strip():
+            matching_college = College.objects.filter(
+                name__iexact=college_name.strip(), is_active=True
+            ).first()
+
         StudentProfile.objects.create(
             user=user,
             student_id_number=clean_student_id,
             full_name=full_name.strip(),
             batch_code=batch_code.strip() if batch_code else "BATCH-2026-A",
-            college_name=college_name.strip() if college_name else "",
+            college=matching_college,
+            college_name=college_name.strip() if college_name else (matching_college.name if matching_college else ""),
             graduation_year=graduation_year or 2026,
         )
         AuditLog.objects.create(
@@ -214,6 +223,18 @@ class AuthService:
                 status_code=403,
             )
         tpo_profile = getattr(user, "tpo_profile", None)
+        if (
+            user.onboarding_status == User.OnboardingStatusChoices.PENDING_ACTIVATION
+            or (tpo_profile and not tpo_profile.is_active and not tpo_profile.assigned_by)
+        ):
+            raise DomainException(
+                detail=(
+                    "Your TPO account registration is pending administrative approval. "
+                    "Student data access will be activated once approved by the administrator."
+                ),
+                code="TPO_PENDING_APPROVAL",
+                status_code=403,
+            )
         if not tpo_profile or not tpo_profile.is_active:
             raise DomainException(
                 detail="Your TPO access has been suspended or deactivated. Please contact the administrator.",
@@ -227,6 +248,99 @@ class AuthService:
                 status_code=403,
             )
         return user, access, refresh, user_data
+
+    @classmethod
+    @transaction.atomic
+    def register_tpo(
+        cls,
+        full_name: str,
+        email: str,
+        password: str,
+        college_id: str | None = None,
+        college_name: str = "",
+        mobile_number: str = "",
+        designation: str = "Training & Placement Officer",
+        department: str = "Training & Placement Cell",
+        phone_number: str = "",
+        bio: str = "",
+        ip_address: str | None = None,
+        user_agent: str = "",
+    ) -> tuple[User, Any]:
+        """Self-registration for TPO with selected college, pending admin approval."""
+        from apps.accounts.models import TPOProfile
+        from apps.students.models import College
+
+        clean_email = email.strip().lower()
+        clean_mobile = mobile_number.strip() if mobile_number else None
+
+        if User.objects.filter(email=clean_email).exists():
+            raise DomainException(
+                detail="An account with this email address already exists. Please sign in.",
+                code="EMAIL_ALREADY_EXISTS",
+                status_code=400,
+            )
+        if clean_mobile and User.objects.filter(mobile_number=clean_mobile).exists():
+            raise DomainException(
+                detail="An account with this mobile number already exists.",
+                code="MOBILE_ALREADY_EXISTS",
+                status_code=400,
+            )
+
+        # Resolve College
+        college = None
+        if college_id:
+            college = College.objects.filter(id=college_id, is_active=True).first()
+        if not college and college_name:
+            college = College.objects.filter(
+                name__iexact=college_name.strip(), is_active=True
+            ).first()
+
+        if not college:
+            raise DomainException(
+                detail="Please select a valid institutional college from the available list.",
+                code="COLLEGE_REQUIRED",
+                status_code=400,
+            )
+
+        user = User.objects.create_user(
+            email=clean_email,
+            mobile_number=clean_mobile,
+            password=password,
+            role=User.RoleChoices.TPO,
+            onboarding_status=User.OnboardingStatusChoices.PENDING_ACTIVATION,
+            is_active=False,
+            last_login_ip=ip_address,
+        )
+
+        tpo_profile = TPOProfile.objects.create(
+            user=user,
+            college=college,
+            full_name=full_name.strip(),
+            designation=designation.strip() or "Training & Placement Officer",
+            department=department.strip() or "Training & Placement Cell",
+            phone_number=phone_number.strip() or (clean_mobile or ""),
+            bio=bio.strip(),
+            is_active=False,
+            assigned_by=None,
+            assigned_at=None,
+        )
+
+        AuditLog.objects.create(
+            actor=user,
+            action="TPO_SELF_REGISTERED",
+            target_model="TPOProfile",
+            target_id=str(tpo_profile.id),
+            ip_address=ip_address,
+            payload={
+                "email": clean_email,
+                "full_name": full_name.strip(),
+                "college_id": str(college.id),
+                "college_name": college.name,
+                "status": "PENDING_ADMIN_APPROVAL",
+            },
+        )
+
+        return user, tpo_profile
 
 
     @classmethod
@@ -246,6 +360,27 @@ class AuthService:
                 and existing_user.check_password(password)
                 and not existing_user.is_active
             ):
+                if (
+                    existing_user.role == User.RoleChoices.TPO
+                    and existing_user.onboarding_status == User.OnboardingStatusChoices.PENDING_ACTIVATION
+                ):
+                    LoginActivity.objects.create(
+                        user=existing_user,
+                        identifier=email,
+                        login_type=LoginActivity.LoginType.EMAIL_PASSWORD,
+                        status=LoginActivity.LoginStatus.LOCKED,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        failure_reason="TPO registration pending approval",
+                    )
+                    raise DomainException(
+                        detail=(
+                            "Your TPO account registration is pending administrative approval. "
+                            "Student data access will be activated once approved by the administrator."
+                        ),
+                        code="TPO_PENDING_APPROVAL",
+                        status_code=403,
+                    )
                 LoginActivity.objects.create(
                     user=existing_user,
                     identifier=email,
@@ -275,6 +410,27 @@ class AuthService:
                 status_code=401,
             )
         if not user.is_active:
+            if (
+                user.role == User.RoleChoices.TPO
+                and user.onboarding_status == User.OnboardingStatusChoices.PENDING_ACTIVATION
+            ):
+                LoginActivity.objects.create(
+                    user=user,
+                    identifier=email,
+                    login_type=LoginActivity.LoginType.EMAIL_PASSWORD,
+                    status=LoginActivity.LoginStatus.LOCKED,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    failure_reason="TPO registration pending approval",
+                )
+                raise DomainException(
+                    detail=(
+                        "Your TPO account registration is pending administrative approval. "
+                        "Student data access will be activated once approved by the administrator."
+                    ),
+                    code="TPO_PENDING_APPROVAL",
+                    status_code=403,
+                )
             LoginActivity.objects.create(
                 user=user,
                 identifier=email,
@@ -1059,12 +1215,21 @@ class StudentProvisioningService:
             onboarding_status=onboarding_status,
             is_active=True,
         )
+        from apps.students.models import College
+
+        matching_college = None
+        if college_name and college_name.strip():
+            matching_college = College.objects.filter(
+                name__iexact=college_name.strip(), is_active=True
+            ).first()
+
         profile = StudentProfile.objects.create(
             user=user,
             student_id_number=student_id_number,
             full_name=full_name,
             batch_code=batch_code,
-            college_name=college_name,
+            college=matching_college,
+            college_name=college_name.strip() if college_name else (matching_college.name if matching_college else ""),
             graduation_year=graduation_year,
         )
         AuditLog.objects.create(

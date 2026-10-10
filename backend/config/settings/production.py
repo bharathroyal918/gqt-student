@@ -8,14 +8,28 @@ ENVIRONMENT = "production"
 
 ALLOWED_HOSTS = env.list(
     "DJANGO_ALLOWED_HOSTS",
-    default=[
-        "localhost",
-        "127.0.0.1",
-        "backend",
-        "gqt-student.onrender.com",
-        "gqt-student-portal-backend.onrender.com",
-    ],
+    default=env.list(
+        "ALLOWED_HOSTS",
+        default=[
+            "localhost",
+            "127.0.0.1",
+            "backend",
+            ".onrender.com",
+            "gqt-student.onrender.com",
+            "gqt-student-portal-backend.onrender.com",
+        ],
+    ),
 )
+render_hostname = env("RENDER_EXTERNAL_HOSTNAME", default="").strip()
+if render_hostname and render_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_hostname)
+if ".onrender.com" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(".onrender.com")
+
+for trusted_origin in ["https://*.vercel.app", "https://*.onrender.com"]:
+    if trusted_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(trusted_origin)
+
 
 # Database Configuration (Supabase PostgreSQL / Render PostgreSQL)
 raw_db_url = (

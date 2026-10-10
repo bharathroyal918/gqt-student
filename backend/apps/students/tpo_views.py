@@ -23,6 +23,7 @@ from apps.students.tpo_serializers import (
     TPOPerformanceTrendsResponseSerializer,
     TPOProfileDetailSerializer,
     TPOProfileUpdateSerializer,
+    TPORegisterSerializer,
     TPOReportExportRequestSerializer,
     TPOReportPreviewRequestSerializer,
     TPOReportPreviewResponseSerializer,
@@ -36,6 +37,60 @@ from apps.students.tpo_services import TPOAnalyticsService, TPODashboardService
 
 logger = logging.getLogger(__name__)
 
+
+class TPORegisterView(APIView):
+    """Dedicated registration endpoint for Training & Placement Officers."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=TPORegisterSerializer,
+        summary="TPO Portal Registration",
+        tags=["TPO Portal"],
+    )
+    def post(self, request):
+        serializer = TPORegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        ip_address = get_client_ip(request)
+        user_agent = request.META.get("HTTP_USER_AGENT", "")
+
+        user, profile = AuthService.register_tpo(
+            full_name=data["full_name"],
+            email=data["email"],
+            password=data["password"],
+            college_id=str(data["college_id"]) if data.get("college_id") else None,
+            college_name=data.get("college_name", ""),
+            mobile_number=data.get("mobile_number", ""),
+            designation=data.get("designation", "Training & Placement Officer"),
+            department=data.get("department", "Training & Placement Cell"),
+            phone_number=data.get("phone_number", ""),
+            bio=data.get("bio", ""),
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        college_name = profile.college.name if profile.college else "Selected College"
+        return api_success(
+            data={
+                "id": str(profile.id),
+                "email": user.email,
+                "full_name": profile.full_name,
+                "college": {
+                    "id": str(profile.college.id),
+                    "name": profile.college.name,
+                    "code": profile.college.code,
+                }
+                if profile.college
+                else None,
+                "status": "PENDING_APPROVAL",
+            },
+            message=(
+                f"TPO registration submitted for {college_name}. "
+                "Your account is pending administrator approval before student access is activated."
+            ),
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class TPOLoginView(APIView):

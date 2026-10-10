@@ -10,13 +10,20 @@ export const UnauthorizedPage: React.FC = () => {
   const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
 
-  const handleSwitchAccount = () => {
-    clearAuth();
-    navigate("/auth/login");
-  };
-
   const isStudent = user?.role === "STUDENT";
   const isAdmin = user?.role === "ADMIN";
+  const isTPO = user?.role === "TPO";
+
+  const handleLogout = () => {
+    clearAuth();
+    if (isAdmin) {
+      navigate("/admin/login");
+    } else if (isTPO) {
+      navigate("/tpo/login");
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-surface-950 p-4 text-center font-sans text-slate-900 dark:text-slate-100">
@@ -51,7 +58,7 @@ export const UnauthorizedPage: React.FC = () => {
               You are signed in as <span className="font-semibold text-brand-600 dark:text-brand-400">{studentProfile?.full_name || user.email}</span> (Student Account).
             </p>
             <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-              Student accounts are not authorized to view the Institutional Administration portal.
+              Your account does not have authorization to access this area.
             </p>
 
             <div className="mt-6 space-y-3">
@@ -66,10 +73,38 @@ export const UnauthorizedPage: React.FC = () => {
               <Button
                 variant="secondary"
                 className="w-full text-slate-700 dark:text-slate-300"
-                onClick={handleSwitchAccount}
+                onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2 text-slate-400" />
-                <span>Switch to Admin Account</span>
+                <span>Sign Out</span>
+              </Button>
+            </div>
+          </>
+        ) : isTPO ? (
+          <>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              You are signed in as <span className="font-semibold text-brand-600 dark:text-brand-400">{user.email}</span> (TPO Account).
+            </p>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+              Your account is authorized for the Training & Placement Officer portal.
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <Link to="/tpo/dashboard" className="block w-full">
+                <Button variant="primary" className="w-full">
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  <span>Go to TPO Dashboard</span>
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+
+              <Button
+                variant="secondary"
+                className="w-full text-slate-700 dark:text-slate-300"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2 text-slate-400" />
+                <span>Sign Out</span>
               </Button>
             </div>
           </>
@@ -86,6 +121,15 @@ export const UnauthorizedPage: React.FC = () => {
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
+
+              <Button
+                variant="secondary"
+                className="w-full text-slate-700 dark:text-slate-300"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2 text-slate-400" />
+                <span>Sign Out</span>
+              </Button>
             </div>
           </>
         ) : (
@@ -100,7 +144,12 @@ export const UnauthorizedPage: React.FC = () => {
                   Student Portal Login
                 </Button>
               </Link>
-              <Link to="/auth/login" className="w-full">
+              <Link to="/tpo/login" className="w-full">
+                <Button variant="secondary" className="w-full">
+                  TPO Portal Login
+                </Button>
+              </Link>
+              <Link to="/admin/login" className="w-full">
                 <Button variant="secondary" className="w-full">
                   Admin Portal Login
                 </Button>

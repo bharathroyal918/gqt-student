@@ -291,40 +291,78 @@ class AdminTPOService:
 
     @classmethod
     @transaction.atomic
-    def reactivate_tpo(cls, tpo_id: str, admin_user: User, ip_address: str | None = None) -> TPOProfile:
-        """Reactivate a previously deactivated TPO account."""
+    def approve_tpo(
+        cls,
+        tpo_id: str,
+        admin_user: User,
+        college_id: str | None = None,
+        ip_address: str | None = None,
+    ) -> TPOProfile:
+        """Admin grants access/approves a registered TPO account and assigns/confirms college."""
         tpo = cls.get_tpo_detail(tpo_id)
+
+        if college_id:
+            college = College.objects.filter(id=college_id, is_active=True).first()
+            if not college:
+                raise DomainException(
+                    detail="Target college not found or is currently inactive.",
+                    code="COLLEGE_NOT_FOUND",
+                    status_code=400,
+                )
+            tpo.college = college
 
         if not tpo.college or not tpo.college.is_active:
             raise DomainException(
-                detail="Cannot reactivate TPO without an active college assignment. Please reassign to an active college first.",
+                detail="Cannot approve TPO without an active college assignment. Please select an active college.",
                 code="TPO_NO_ACTIVE_COLLEGE",
                 status_code=400,
             )
 
         tpo.is_active = True
+        tpo.assigned_by = admin_user
+        tpo.assigned_at = timezone.now()
         tpo.revoked_by = None
         tpo.revoked_at = None
-        tpo.save(update_fields=["is_active", "revoked_by", "revoked_at", "updated_at"])
+        tpo.save(
+            update_fields=[
+                "college",
+                "is_active",
+                "assigned_by",
+                "assigned_at",
+                "revoked_by",
+                "revoked_at",
+                "updated_at",
+            ]
+        )
 
         user = tpo.user
         user.is_active = True
-        user.save(update_fields=["is_active", "updated_at"])
+        user.onboarding_status = User.OnboardingStatusChoices.ACTIVE
+        user.save(update_fields=["is_active", "onboarding_status", "updated_at"])
 
         AuditLog.objects.create(
             actor=admin_user,
-            action="TPO_REACTIVATED",
+            action="TPO_ACCESS_GRANTED",
             target_model="TPOProfile",
             target_id=str(tpo.id),
             ip_address=ip_address,
             payload={
                 "email": user.email,
+                "full_name": tpo.full_name,
                 "college_id": str(tpo.college.id),
                 "college_name": tpo.college.name,
             },
         )
 
         return tpo
+
+    @classmethod
+    @transaction.atomic
+    def reactivate_tpo(
+        cls, tpo_id: str, admin_user: User, ip_address: str | None = None
+    ) -> TPOProfile:
+        """Reactivate a previously deactivated TPO account."""
+        return cls.approve_tpo(tpo_id=tpo_id, admin_user=admin_user, ip_address=ip_address)
 
     @classmethod
     def get_tpo_audit_history(cls, tpo_id: str):

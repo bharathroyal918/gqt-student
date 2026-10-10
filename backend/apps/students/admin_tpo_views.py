@@ -9,6 +9,7 @@ from apps.common.permissions import IsAdmin
 from apps.common.responses import api_success
 from apps.common.utils import get_client_ip
 from apps.students.admin_tpo_serializers import (
+    AdminTPOApproveSerializer,
     AdminTPOAuditLogSerializer,
     AdminTPODetailSerializer,
     AdminTPOListSerializer,
@@ -161,6 +162,38 @@ class AdminTPODeactivateView(APIView):
         return api_success(
             data=AdminTPODetailSerializer(tpo).data,
             message=f"TPO '{tpo.full_name}' has been deactivated.",
+        )
+
+
+class AdminTPOApproveView(APIView):
+    """Admin endpoint to approve and grant institutional data access to a registered TPO."""
+
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        request=AdminTPOApproveSerializer,
+        responses={200: AdminTPODetailSerializer},
+        summary="Admin Approve TPO Access",
+        tags=["Admin TPO Management"],
+    )
+    def post(self, request, pk):
+        serializer = AdminTPOApproveSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        college_id = (
+            str(serializer.validated_data["college_id"])
+            if serializer.validated_data.get("college_id")
+            else None
+        )
+        ip_address = get_client_ip(request)
+        tpo = AdminTPOService.approve_tpo(
+            tpo_id=str(pk),
+            admin_user=request.user,
+            college_id=college_id,
+            ip_address=ip_address,
+        )
+        return api_success(
+            data=AdminTPODetailSerializer(tpo).data,
+            message=f"Access granted for TPO '{tpo.full_name}' to {tpo.college.name}.",
         )
 
 

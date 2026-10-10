@@ -669,7 +669,11 @@ class StudentAdminService:
 
         if college_name is not None:
             student.college_name = college_name.strip()
-            updated_fields_profile.append("college_name")
+            matching_col = College.objects.filter(
+                name__iexact=student.college_name, is_active=True
+            ).first()
+            student.college = matching_col
+            updated_fields_profile.extend(["college_name", "college"])
 
         if graduation_year is not None:
             student.graduation_year = graduation_year

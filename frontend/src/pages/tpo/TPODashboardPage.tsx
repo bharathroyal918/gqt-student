@@ -105,10 +105,12 @@ export const TPODashboardPage: React.FC = () => {
             <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Link to="/tpo/students">
-            <Button size="sm" className="flex items-center gap-1.5">
-              View Roster <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+          <Link
+            to="/tpo/students"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white shadow-sm transition-colors"
+          >
+            <span>View Roster</span>
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>

@@ -54,7 +54,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
       // Continue client cleanup even if API network request fails
     } finally {
       clearAuth();
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   };
 

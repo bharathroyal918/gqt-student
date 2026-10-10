@@ -286,3 +286,85 @@ class AdminTPOManagementAPITests(APITestCase):
         """Anonymous request receives 401 when hitting Admin TPO endpoints."""
         response = self.client.get(reverse("api_v1:admin_tpos:list_create"))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # --------------------------------------------------------------------------
+    # SELF-REGISTRATION & ADMIN APPROVAL WORKFLOW TESTS
+    # --------------------------------------------------------------------------
+    def test_tpo_self_registration_and_admin_approval_lifecycle(self):
+        """End-to-end test for TPO self-registration, pending login block, and admin approval."""
+        # 1. TPO self-registers via public TPO registration endpoint
+        reg_payload = {
+            "email": "dr.kavita@bmsce.edu",
+            "password": "SecurePassword123!",
+            "full_name": "Dr. Kavita Sharma",
+            "college_id": str(self.college_b.id),
+            "designation": "Head of Training & Placement",
+            "department": "Placement & Career Development",
+            "phone_number": "+91 9123456780",
+        }
+        reg_response = self.client.post(reverse("api_v1:tpo:register"), data=reg_payload)
+        self.assertEqual(reg_response.status_code, status.HTTP_201_CREATED)
+        reg_data = reg_response.json()["data"]
+        self.assertEqual(reg_data["status"], "PENDING_APPROVAL")
+        self.assertEqual(reg_data["email"], "dr.kavita@bmsce.edu")
+        self.assertEqual(reg_data["college"]["name"], self.college_b.name)
+
+        # Verify DB state: Account created but inactive & pending activation
+        tpo_user = User.objects.get(email="dr.kavita@bmsce.edu")
+        self.assertEqual(tpo_user.role, User.RoleChoices.TPO)
+        self.assertFalse(tpo_user.is_active)
+        self.assertEqual(tpo_user.onboarding_status, User.OnboardingStatusChoices.PENDING_ACTIVATION)
+        self.assertFalse(tpo_user.tpo_profile.is_active)
+        self.assertIsNone(tpo_user.tpo_profile.assigned_by)
+        self.assertEqual(tpo_user.tpo_profile.college, self.college_b)
+
+        # 2. Unapproved TPO attempts to login -> must be denied with 403
+        login_payload = {
+            "email": "dr.kavita@bmsce.edu",
+            "password": "SecurePassword123!",
+        }
+        login_response = self.client.post(reverse("api_v1:tpo:login"), data=login_payload)
+        self.assertEqual(login_response.status_code, status.HTTP_403_FORBIDDEN)
+        err_body = login_response.json()
+        error_msg = err_body.get("error", {}).get("message", "") or err_body.get("detail", "")
+        self.assertIn("pending administrative approval", error_msg.lower())
+
+        # 3. Admin lists TPOs and sees Dr. Kavita as pending approval
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.admin_token}")
+        list_response = self.client.get(f"{reverse('api_v1:admin_tpos:list_create')}?status=pending")
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+        pending_tpos = list_response.json()["data"]
+        self.assertTrue(any(t["email"] == "dr.kavita@bmsce.edu" for t in pending_tpos))
+
+        # 4. Admin grants access / approves TPO via approve endpoint
+        approve_url = reverse("api_v1:admin_tpos:approve", kwargs={"pk": tpo_user.tpo_profile.id})
+        approve_payload = {
+            "college_id": str(self.college_b.id),
+            "designation": "Director of Placements",
+            "notes": "Verified institutional credentials and approved by Admin.",
+        }
+        approve_response = self.client.post(approve_url, data=approve_payload)
+        self.assertEqual(approve_response.status_code, status.HTTP_200_OK)
+        approve_data = approve_response.json()["data"]
+        self.assertTrue(approve_data["is_active"])
+        self.assertEqual(approve_data["designation"], "Head of Training & Placement")
+
+        # Verify DB state: now active and assigned by admin
+        tpo_user.refresh_from_db()
+        self.assertTrue(tpo_user.is_active)
+        self.assertEqual(tpo_user.onboarding_status, User.OnboardingStatusChoices.ACTIVE)
+        self.assertTrue(tpo_user.tpo_profile.is_active)
+        self.assertEqual(tpo_user.tpo_profile.assigned_by, self.admin_user)
+
+        # 5. Now approved TPO logs in successfully
+        self.client.credentials()  # clear admin token
+        login_success = self.client.post(reverse("api_v1:tpo:login"), data=login_payload)
+        self.assertEqual(login_success.status_code, status.HTTP_200_OK)
+        approved_access_token = login_success.json()["data"]["access"]
+
+        # 6. Approved TPO can now fetch profile and see college context
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {approved_access_token}")
+        profile_res = self.client.get(reverse("api_v1:tpo:profile_me"))
+        self.assertEqual(profile_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(profile_res.json()["data"]["college"]["code"], "BMSCE")
+

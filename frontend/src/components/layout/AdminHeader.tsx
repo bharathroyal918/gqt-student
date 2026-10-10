@@ -25,7 +25,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileSidebar 
       }
     }
     clearAuth();
-    navigate("/auth/login");
+    navigate("/admin/login", { replace: true });
   };
 
   return (

@@ -65,7 +65,7 @@ export const TPOReportsPage: React.FC = () => {
 
   // Set default selected type once loaded
   useEffect(() => {
-    if (reportTypes && reportTypes.length > 0 && !selectedType) {
+    if (Array.isArray(reportTypes) && reportTypes.length > 0 && !selectedType) {
       setSelectedType(reportTypes[0].id);
     }
   }, [reportTypes, selectedType]);
@@ -146,7 +146,9 @@ export const TPOReportsPage: React.FC = () => {
     return <LoadingState message="Loading reporting capabilities and security schemas..." />;
   }
 
-  if (isTypesError || !reportTypes) {
+  const typesList = Array.isArray(reportTypes) ? reportTypes : [];
+
+  if (isTypesError || typesList.length === 0) {
     return (
       <ErrorState
         title="Failed to Load Report Definitions"
@@ -159,7 +161,7 @@ export const TPOReportsPage: React.FC = () => {
     );
   }
 
-  const currentReportMeta = reportTypes.find((r) => r.id === selectedType);
+  const currentReportMeta = typesList.find((r) => r.id === selectedType);
   const college = profile?.college;
 
   return (
@@ -240,7 +242,7 @@ export const TPOReportsPage: React.FC = () => {
             </h3>
 
             <div className="space-y-2">
-              {reportTypes.map((type) => {
+              {typesList.map((type) => {
                 const isSelected = selectedType === type.id;
                 return (
                   <button
@@ -511,72 +513,89 @@ export const TPOReportsPage: React.FC = () => {
             {/* Preview Table */}
             {!previewMutation.isPending && previewData && (
               <div className="mt-4 space-y-4">
-                {previewData.sample_rows.length === 0 ? (
-                  <div className="py-16 text-center rounded-xl border border-dashed border-slate-200 dark:border-surface-800">
-                    <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      No Records Matched Active Filters
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Try clearing or adjusting your batch, course, or date filters.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-surface-800">
-                      <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-                        <thead className="bg-slate-50 dark:bg-surface-950/80 text-slate-900 dark:text-white font-semibold border-b border-slate-200 dark:border-surface-800">
-                          <tr>
-                            {previewData.columns.map((col) => (
-                              <th key={col.field} className="px-3.5 py-3 whitespace-nowrap">
-                                {col.label}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-surface-800 bg-white dark:bg-surface-900">
-                          {previewData.sample_rows.map((row, idx) => (
-                            <tr
-                              key={idx}
-                              className="hover:bg-slate-50/80 dark:hover:bg-surface-800/50 transition-colors"
-                            >
-                              {previewData.columns.map((col) => {
-                                const val = row[col.field];
+                {(() => {
+                  const rows = previewData.preview_rows || (previewData as any).sample_rows || [];
+                  const cols = previewData.columns || [];
+
+                  if (rows.length === 0) {
+                    return (
+                      <div className="py-16 text-center rounded-xl border border-dashed border-slate-200 dark:border-surface-800">
+                        <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          No Records Matched Active Filters
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Try clearing or adjusting your batch, course, or date filters.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-surface-800">
+                        <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+                          <thead className="bg-slate-50 dark:bg-surface-950/80 text-slate-900 dark:text-white font-semibold border-b border-slate-200 dark:border-surface-800">
+                            <tr>
+                              {cols.map((col: any, colIdx: number) => {
+                                const headerLabel = typeof col === "string" ? col : col?.label || col?.field || `Col ${colIdx + 1}`;
                                 return (
-                                  <td
-                                    key={col.field}
-                                    className="px-3.5 py-2.5 whitespace-nowrap text-slate-800 dark:text-slate-200"
-                                  >
-                                    {val === true ? (
-                                      <Badge variant="success" size="sm">
-                                        Yes
-                                      </Badge>
-                                    ) : val === false ? (
-                                      <Badge variant="neutral" size="sm">
-                                        No
-                                      </Badge>
-                                    ) : val === null || val === undefined || val === "" ? (
-                                      <span className="text-slate-400 italic">—</span>
-                                    ) : (
-                                      String(val)
-                                    )}
-                                  </td>
+                                  <th key={colIdx} className="px-3.5 py-3 whitespace-nowrap">
+                                    {headerLabel}
+                                  </th>
                                 );
                               })}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-surface-800 bg-white dark:bg-surface-900">
+                            {rows.map((row: any, rowIdx: number) => (
+                              <tr
+                                key={rowIdx}
+                                className="hover:bg-slate-50/80 dark:hover:bg-surface-800/50 transition-colors"
+                              >
+                                {cols.map((col: any, colIdx: number) => {
+                                  const val = Array.isArray(row)
+                                    ? row[colIdx]
+                                    : typeof col === "string"
+                                    ? row[col]
+                                    : row[col?.field];
 
-                    {previewData.is_truncated && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 italic text-center">
-                        Showing sample preview of first 25 records out of {previewData.total_rows} total rows.
-                        The complete dataset will be included in the exported file.
-                      </p>
-                    )}
-                  </>
-                )}
+                                  return (
+                                    <td
+                                      key={colIdx}
+                                      className="px-3.5 py-2.5 whitespace-nowrap text-slate-800 dark:text-slate-200"
+                                    >
+                                      {val === true ? (
+                                        <Badge variant="success" size="sm">
+                                          Yes
+                                        </Badge>
+                                      ) : val === false ? (
+                                        <Badge variant="neutral" size="sm">
+                                          No
+                                        </Badge>
+                                      ) : val === null || val === undefined || val === "" ? (
+                                        <span className="text-slate-400 italic">—</span>
+                                      ) : (
+                                        String(val)
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {previewData.total_rows > 25 && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 italic text-center">
+                          Showing sample preview of first 25 records out of {previewData.total_rows} total rows.
+                          The complete dataset will be included in the exported file.
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </Card>

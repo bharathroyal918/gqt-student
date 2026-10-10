@@ -42,6 +42,9 @@ const AdminLoginPage = lazy(() =>
 const TPOLoginPage = lazy(() =>
   import("../pages/auth/TPOLoginPage").then((m) => ({ default: m.TPOLoginPage }))
 );
+const TPORegisterPage = lazy(() =>
+  import("../pages/auth/TPORegisterPage").then((m) => ({ default: m.TPORegisterPage }))
+);
 const ForgotPasswordPage = lazy(() =>
   import("../pages/auth/ForgotPasswordPage").then((m) => ({ default: m.ForgotPasswordPage }))
 );
@@ -245,7 +248,11 @@ const AdminProfilePage = lazy(() =>
 const AdminRoleGuard: React.FC = () => {
   const { user } = useAuthStore();
 
-  if (!user || user.role !== "ADMIN") {
+  if (!user) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  if (user.role !== "ADMIN") {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -312,9 +319,13 @@ export const router = createBrowserRouter([
     element: withSuspense(AdminLoginPage),
   },
 
-  // Public TPO Authentication
+  // Public TPO Authentication & Registration
   {
     path: "/tpo/login",
+    element: withSuspense(TPOLoginPage),
+  },
+  {
+    path: "/tpo-login",
     element: withSuspense(TPOLoginPage),
   },
   {
@@ -324,6 +335,22 @@ export const router = createBrowserRouter([
   {
     path: "/auth/tpo/login",
     element: withSuspense(TPOLoginPage),
+  },
+  {
+    path: "/tpo/register",
+    element: withSuspense(TPORegisterPage),
+  },
+  {
+    path: "/tpo-register",
+    element: withSuspense(TPORegisterPage),
+  },
+  {
+    path: "/auth/tpo-register",
+    element: withSuspense(TPORegisterPage),
+  },
+  {
+    path: "/auth/tpo/register",
+    element: withSuspense(TPORegisterPage),
   },
   {
     path: "/auth/login",

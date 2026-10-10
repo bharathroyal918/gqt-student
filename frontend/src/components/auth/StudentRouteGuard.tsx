@@ -14,6 +14,11 @@ export const StudentRouteGuard: React.FC = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
+  // Prevent TPO from accessing student portal
+  if (user.role === "TPO") {
+    return <Navigate to="/tpo/dashboard" replace />;
+  }
+
   if (user.role !== "STUDENT") {
     return <Navigate to="/unauthorized" replace />;
   }
