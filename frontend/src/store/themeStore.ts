@@ -20,14 +20,12 @@ const applyThemeToDOM = (theme: Theme) => {
 };
 
 const getInitialTheme = (): Theme => {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const saved = localStorage.getItem("gqt_theme");
   if (saved === "light" || saved === "dark") {
     return saved;
   }
-  return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches
-    ? "light"
-    : "dark";
+  return "light";
 };
 
 // Initialize DOM immediately

@@ -10,12 +10,12 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>GQT Student Portal — Learning &amp; Assessment</title>
     <meta name="description" content="Production Student Learning and Coding Assessment Platform for GQT. Master programming, track streaks, and build industry projects.">
-    <!-- Prevent Theme Flash -->
+    <!-- Prevent Theme Flash (Default Light Mode) -->
     <script>
       (function() {
         try {
           var theme = localStorage.getItem('gqt_theme');
-          var isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var isDark = theme === 'dark';
           if (isDark) {
             document.documentElement.classList.add('dark');
           } else {

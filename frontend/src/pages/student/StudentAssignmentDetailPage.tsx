@@ -85,7 +85,7 @@ export const StudentAssignmentDetailPage: React.FC = () => {
     return saved ? parseInt(saved) : 13;
   });
   const [editorTheme, setEditorTheme] = useState<"vs-dark" | "vs-light" | "hc-black">(() => {
-    return (localStorage.getItem("gqt_editor_theme") as any) || "vs-dark";
+    return (localStorage.getItem("gqt_editor_theme") as any) || "vs-light";
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showProblemPeek, setShowProblemPeek] = useState(false);

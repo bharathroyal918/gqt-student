@@ -99,7 +99,7 @@ export const TPOAttendanceAnalyticsPage: React.FC = () => {
               className="text-xs rounded-xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 py-1.5 px-2.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="ALL">All Batches</option>
-              {data.batch_breakdown.map((b) => (
+              {(data?.batch_breakdown || []).map((b) => (
                 <option key={b.batch_code} value={b.batch_code}>
                   {b.batch_code}
                 </option>
@@ -282,7 +282,7 @@ export const TPOAttendanceAnalyticsPage: React.FC = () => {
               Batch-wise Average Attendance
             </h3>
           </div>
-          {data.batch_breakdown.length === 0 ? (
+          {(!data.batch_breakdown || data.batch_breakdown.length === 0) ? (
             <p className="text-xs text-slate-400">No batch records found.</p>
           ) : (
             <div className="space-y-2.5">
@@ -332,11 +332,11 @@ export const TPOAttendanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
           <Badge variant="warning" size="sm">
-            {data.critical_students.length} flagged
+            {(data.critical_students || []).length} flagged
           </Badge>
         </div>
 
-        {data.critical_students.length === 0 ? (
+        {(!data.critical_students || data.critical_students.length === 0) ? (
           <div className="p-8 text-center text-slate-400 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/20">
             <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -360,7 +360,7 @@ export const TPOAttendanceAnalyticsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-surface-800">
-                {data.critical_students.map((s) => (
+                {(data.critical_students || []).map((s) => (
                   <tr
                     key={s.id}
                     className="hover:bg-slate-50/80 dark:hover:bg-surface-800/40 transition-colors"
