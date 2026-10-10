@@ -64,7 +64,7 @@ export const StudentsPage: React.FC = () => {
   const [authEmailData, setAuthEmailData] = useState({
     email: "",
     course_opted: "Full Stack Software & Assessment Track",
-    batch_code: "BATCH-2026-A",
+    batch_code: "Batch-2026-3",
   });
 
   // Fetch Students Query
@@ -106,7 +106,7 @@ export const StudentsPage: React.FC = () => {
       setAuthEmailData({
         email: "",
         course_opted: "Full Stack Software & Assessment Track",
-        batch_code: "BATCH-2026-A",
+        batch_code: "Batch-2026-3",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
@@ -420,9 +420,9 @@ export const StudentsPage: React.FC = () => {
               }}
             >
               <option value="">All Batches</option>
-              <option value="BATCH-2025-A">BATCH-2025-A</option>
-              <option value="BATCH-2025-B">BATCH-2025-B</option>
-              <option value="BATCH-2026-A">BATCH-2026-A</option>
+              <option value="Batch-2025-3">Batch-2025-3</option>
+              <option value="Batch-2025-6">Batch-2025-6</option>
+              <option value="Batch-2026-3">Batch-2026-3</option>
             </Select>
           </div>
 
@@ -529,9 +529,9 @@ export const StudentsPage: React.FC = () => {
               value={authEmailData.batch_code}
               onChange={(e) => setAuthEmailData({ ...authEmailData, batch_code: e.target.value })}
             >
-              <option value="BATCH-2026-A">BATCH-2026-A (Active Cohort)</option>
-              <option value="BATCH-2025-A">BATCH-2025-A</option>
-              <option value="BATCH-2025-B">BATCH-2025-B</option>
+              <option value="Batch-2026-3">Batch-2026-3 (Active Cohort)</option>
+              <option value="Batch-2025-3">Batch-2025-3</option>
+              <option value="Batch-2025-6">Batch-2025-6</option>
             </Select>
           </FormField>
 
@@ -598,7 +598,7 @@ export const StudentsPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Batch Code" required>
               <Input
-                placeholder="e.g. BATCH-2025-A"
+                placeholder="e.g. Batch-2026-3"
                 value={formData.batch_code}
                 onChange={(e) => setFormData({ ...formData, batch_code: e.target.value })}
                 required

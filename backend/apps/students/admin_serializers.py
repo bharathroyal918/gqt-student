@@ -138,7 +138,7 @@ class GrantAccessByEmailSerializer(serializers.Serializer):
         max_length=200, required=False, default="Full Stack Software & Assessment Track"
     )
     batch_code = serializers.CharField(
-        max_length=50, required=False, default="BATCH-2026-A"
+        max_length=50, required=False, default="Batch-2026-3"
     )
 
 

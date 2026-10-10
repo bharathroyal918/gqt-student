@@ -31,10 +31,14 @@ class StudentRegisterSerializer(serializers.Serializer):
         max_length=255, required=False, allow_blank=True, default=""
     )
     batch_code = serializers.CharField(
-        max_length=50, required=False, allow_blank=True, default="BATCH-2026-A"
+        max_length=50, required=False, allow_blank=True, default=""
     )
     graduation_year = serializers.IntegerField(
-        required=False, allow_null=True, default=2026
+        required=True, min_value=2000, max_value=2050,
+        error_messages={
+            "required": "Graduation year is mandatory. Please provide your expected or completed graduation year.",
+            "invalid": "Please enter a valid graduation year (e.g. 2026).",
+        }
     )
 
     def validate_college_name(self, value):

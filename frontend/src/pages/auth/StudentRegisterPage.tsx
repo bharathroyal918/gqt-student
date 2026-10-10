@@ -40,6 +40,10 @@ const registerSchema = z
       .regex(/^\+?[0-9\s\-]+$/, "Please enter a valid mobile number"),
     college_name: z.string().optional(),
     student_id_number: z.string().optional(),
+    graduation_year: z.coerce
+      .number({ invalid_type_error: "Graduation year is required" })
+      .min(2020, "Please enter a valid graduation year")
+      .max(2035, "Please enter a valid graduation year"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
@@ -78,6 +82,7 @@ export const StudentRegisterPage: React.FC = () => {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       agree_terms: false,
+      graduation_year: 2026,
     },
   });
 
@@ -102,6 +107,7 @@ export const StudentRegisterPage: React.FC = () => {
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
+      const regMonth = new Date().getMonth() + 1;
       const result = await authApi.registerStudent({
         full_name: data.full_name,
         email: data.email,
@@ -109,8 +115,8 @@ export const StudentRegisterPage: React.FC = () => {
         password: data.password,
         college_name: data.college_name || undefined,
         student_id_number: data.student_id_number || undefined,
-        batch_code: "BATCH-2026-A",
-        graduation_year: 2026,
+        batch_code: `Batch-${data.graduation_year}-${regMonth}`,
+        graduation_year: Number(data.graduation_year),
       });
 
       setAuth(
@@ -226,9 +232,9 @@ export const StudentRegisterPage: React.FC = () => {
               </FormField>
             </div>
 
-            {/* College & USN/Student ID in 2 columns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="College / University" error={errors.college_name?.message}>
+            {/* College, Graduation Year & USN/Student ID */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormField label="College / University" error={errors.college_name?.message} className="sm:col-span-1">
                 <div className="relative">
                   <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <select
@@ -240,22 +246,45 @@ export const StudentRegisterPage: React.FC = () => {
                         : "border-slate-200 dark:border-surface-700"
                     }`}
                   >
-                    <option value="">-- Select Your College / Campus --</option>
+                    <option value="">-- Select Campus --</option>
                     {colleges.map((c) => (
                       <option key={c.id} value={c.name}>
-                        {c.name} {c.code ? `(${c.code})` : ""} {c.city ? `— ${c.city}` : ""}
+                        {c.name} {c.code ? `(${c.code})` : ""}
                       </option>
                     ))}
                   </select>
                 </div>
               </FormField>
 
-              <FormField label="Student ID / USN (Optional)" error={errors.student_id_number?.message}>
+              <FormField label="Graduation Year" error={errors.graduation_year?.message} required className="sm:col-span-1">
                 <div className="relative">
                   <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <select
+                    {...register("graduation_year")}
+                    disabled={isSubmitting}
+                    className={`w-full rounded-xl border bg-slate-50 dark:bg-surface-950 pl-10 pr-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition-all ${
+                      errors.graduation_year
+                        ? "border-rose-500 focus:ring-rose-500"
+                        : "border-slate-200 dark:border-surface-700"
+                    }`}
+                  >
+                    <option value="2024">Class of 2024</option>
+                    <option value="2025">Class of 2025</option>
+                    <option value="2026">Class of 2026</option>
+                    <option value="2027">Class of 2027</option>
+                    <option value="2028">Class of 2028</option>
+                    <option value="2029">Class of 2029</option>
+                    <option value="2030">Class of 2030</option>
+                  </select>
+                </div>
+              </FormField>
+
+              <FormField label="Student ID / USN" error={errors.student_id_number?.message} className="sm:col-span-1">
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <Input
                     {...register("student_id_number")}
-                    placeholder="Auto-generated if empty"
+                    placeholder="Auto if blank"
                     className="pl-10"
                     error={!!errors.student_id_number}
                     disabled={isSubmitting}

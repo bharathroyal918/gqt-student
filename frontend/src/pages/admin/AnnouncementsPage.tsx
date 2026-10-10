@@ -296,7 +296,7 @@ export const AnnouncementsPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Target Cohort Batch (Optional)">
               <Input
-                placeholder="e.g. BATCH-2025-A (leave blank for all)"
+                placeholder="e.g. Batch-2026-3 (leave blank for all)"
                 value={formData.target_batch}
                 onChange={(e) => setFormData({ ...formData, target_batch: e.target.value })}
               />

@@ -297,7 +297,7 @@ class StudentAdminGrantAccessByEmailView(APIView):
             course_opted=serializer.validated_data.get(
                 "course_opted", "Full Stack Software & Assessment Track"
             ),
-            batch_code=serializer.validated_data.get("batch_code", "BATCH-2026-A"),
+            batch_code=serializer.validated_data.get("batch_code", "Batch-2026-3"),
             admin_user=request.user,
             ip_address=ip_address,
         )

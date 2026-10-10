@@ -139,6 +139,7 @@ class TPOStudentRosterSerializer(serializers.ModelSerializer):
             "college_id",
             "college_name",
             "branch",
+            "graduation_year",
             "course_opted",
             "attendance_percentage",
             "total_points",
@@ -161,6 +162,7 @@ class TPOCollegeSummaryPerformerSerializer(serializers.Serializer):
     total_points = serializers.FloatField()
     batch_code = serializers.CharField()
     branch = serializers.CharField()
+    graduation_year = serializers.IntegerField(allow_null=True, required=False)
     attendance_percentage = serializers.FloatField()
     avatar_url = serializers.CharField(allow_blank=True)
 
@@ -172,6 +174,11 @@ class TPOCollegeSummaryDistributionSerializer(serializers.Serializer):
 
 class TPOCollegeSummaryBatchSerializer(serializers.Serializer):
     batch_code = serializers.CharField()
+    count = serializers.IntegerField()
+
+
+class TPOCollegeSummaryGraduationYearSerializer(serializers.Serializer):
+    year = serializers.IntegerField()
     count = serializers.IntegerField()
 
 
@@ -189,6 +196,7 @@ class TPOCollegeSummarySerializer(serializers.Serializer):
     technology_distribution = TPOCollegeSummaryDistributionSerializer(many=True)
     branch_distribution = TPOCollegeSummaryDistributionSerializer(many=True)
     batch_distribution = TPOCollegeSummaryBatchSerializer(many=True)
+    graduation_year_distribution = TPOCollegeSummaryGraduationYearSerializer(many=True)
     top_performers = TPOCollegeSummaryPerformerSerializer(many=True)
 
 
@@ -281,6 +289,7 @@ class TPOStudentProgressItemSerializer(serializers.Serializer):
     full_name = serializers.CharField()
     batch_code = serializers.CharField()
     branch = serializers.CharField()
+    graduation_year = serializers.IntegerField(allow_null=True, required=False)
     course_opted = serializers.CharField()
     completed_modules = serializers.IntegerField()
     total_modules = serializers.IntegerField()
@@ -356,6 +365,7 @@ class TPOCriticalAttendanceStudentSerializer(serializers.Serializer):
     full_name = serializers.CharField()
     batch_code = serializers.CharField()
     branch = serializers.CharField()
+    graduation_year = serializers.IntegerField(allow_null=True, required=False)
     attendance_percentage = serializers.FloatField()
     attended_classes = serializers.IntegerField()
     total_classes = serializers.IntegerField()
@@ -404,6 +414,7 @@ class TPOStudentNeedingSupportSerializer(serializers.Serializer):
     full_name = serializers.CharField()
     batch_code = serializers.CharField()
     branch = serializers.CharField()
+    graduation_year = serializers.IntegerField(allow_null=True, required=False)
     course_opted = serializers.CharField()
     attendance_percentage = serializers.FloatField()
     total_points = serializers.FloatField()
@@ -419,6 +430,7 @@ class TPOLeaderboardItemSerializer(serializers.Serializer):
     full_name = serializers.CharField()
     batch_code = serializers.CharField()
     branch = serializers.CharField()
+    graduation_year = serializers.IntegerField(allow_null=True, required=False)
     course_opted = serializers.CharField()
     total_points = serializers.FloatField()
     attendance_percentage = serializers.FloatField()

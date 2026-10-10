@@ -110,7 +110,7 @@ class StudentAdminService:
         email: str,
         admin_user: User,
         course_opted: str = "Full Stack Software & Assessment Track",
-        batch_code: str = "BATCH-2026-A",
+        batch_code: str = "Batch-2026-3",
         ip_address: str | None = None,
     ) -> StudentProfile:
         """Admin provides direct access to a student using their registered institutional email."""

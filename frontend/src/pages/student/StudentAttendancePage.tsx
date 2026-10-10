@@ -55,7 +55,7 @@ export const StudentAttendancePage: React.FC = () => {
   const batchCode =
     attendanceData?.student?.batch_code ||
     studentProfile?.batch_code ||
-    "BATCH-2026";
+    "Batch-2026-3";
 
   const collegeName =
     attendanceData?.student?.college_name ||

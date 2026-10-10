@@ -106,6 +106,7 @@ export interface TPOCollegeSummary {
   technology_distribution: TPOCollegeSummaryDistribution[];
   branch_distribution: TPOCollegeSummaryDistribution[];
   batch_distribution: TPOCollegeSummaryBatch[];
+  graduation_year_distribution?: { graduation_year: number; count: number }[];
   top_performers: TPOCollegeSummaryPerformer[];
 }
 
@@ -119,6 +120,7 @@ export interface TPOStudentRosterItem {
   college_id?: string;
   college_name: string;
   branch: string;
+  graduation_year?: number | null;
   course_opted: string;
   attendance_percentage: number;
   total_points: number;
@@ -214,6 +216,7 @@ export interface TPOStudentProgressItem {
   full_name: string;
   batch_code: string;
   branch: string;
+  graduation_year?: number | null;
   course_opted: string;
   completed_modules: number;
   total_modules: number;
@@ -289,6 +292,7 @@ export interface TPOCriticalAttendanceStudent {
   full_name: string;
   batch_code: string;
   branch: string;
+  graduation_year?: number | null;
   attendance_percentage: number;
   attended_classes: number;
   total_classes: number;
@@ -337,6 +341,7 @@ export interface TPOStudentNeedingSupport {
   full_name: string;
   batch_code: string;
   branch: string;
+  graduation_year?: number | null;
   course_opted: string;
   attendance_percentage: number;
   total_points: number;
@@ -352,6 +357,7 @@ export interface TPOLeaderboardItem {
   full_name: string;
   batch_code: string;
   branch: string;
+  graduation_year?: number | null;
   course_opted: string;
   total_points: number;
   attendance_percentage: number;
@@ -369,6 +375,7 @@ export interface TPOReportType {
 
 export interface TPOReportFilterPayload {
   batch_code?: string;
+  graduation_year?: number | string;
   course_opted?: string;
   is_active?: boolean;
   risk_type?: string;

@@ -53,6 +53,7 @@ export const TPOReportsPage: React.FC = () => {
   // Filters
   const [batchCode, setBatchCode] = useState<string>("");
   const [courseOpted, setCourseOpted] = useState<string>("");
+  const [graduationYear, setGraduationYear] = useState<string>("");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("ALL");
   const [riskType, setRiskType] = useState<string>("ALL");
   const [dateFrom, setDateFrom] = useState<string>("");
@@ -75,6 +76,10 @@ export const TPOReportsPage: React.FC = () => {
     const filters: TPOReportFilterPayload = {};
     if (batchCode.trim()) filters.batch_code = batchCode.trim();
     if (courseOpted.trim()) filters.course_opted = courseOpted.trim();
+    if (graduationYear.trim()) {
+      const parsedYear = parseInt(graduationYear.trim(), 10);
+      if (!isNaN(parsedYear)) filters.graduation_year = parsedYear;
+    }
     if (isActiveFilter === "TRUE") filters.is_active = true;
     if (isActiveFilter === "FALSE") filters.is_active = false;
     if (riskType !== "ALL" && selectedType === "STUDENTS_NEEDING_SUPPORT") {
@@ -292,11 +297,30 @@ export const TPOReportsPage: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 2025-CS-A"
+                  placeholder="e.g. Batch-2026-3"
                   value={batchCode}
                   onChange={(e) => setBatchCode(e.target.value)}
                   className="w-full text-xs rounded-lg border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-950 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
                 />
+              </div>
+
+              {/* Graduation Year */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Graduation Year (Optional)
+                </label>
+                <select
+                  value={graduationYear}
+                  onChange={(e) => setGraduationYear(e.target.value)}
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-950 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+                >
+                  <option value="">All Graduation Years</option>
+                  {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map((yr) => (
+                    <option key={yr} value={yr}>
+                      Class of {yr}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Course / Technology Track */}

@@ -374,7 +374,12 @@ export const TPOAttendanceAnalyticsPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400">
-                      {s.batch_code}
+                      <div>{s.batch_code}</div>
+                      {s.graduation_year && (
+                        <div className="text-[10px] text-brand-600 dark:text-brand-400 font-semibold">
+                          Class of {s.graduation_year}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400">
                       {s.branch}

@@ -7,6 +7,7 @@ import {
   Building2,
   BookOpen,
   FolderKanban,
+  GraduationCap,
   ArrowRight,
   RefreshCw,
   Percent,
@@ -422,6 +423,46 @@ export const TPODashboardPage: React.FC = () => {
                     </span>
                   </div>
                 ))
+              )}
+            </div>
+          </Card>
+
+          {/* Graduation Year Breakdown */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <GraduationCap className="h-4 w-4 text-brand-500" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                Graduation Year Breakdown
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {!summary.graduation_year_distribution || summary.graduation_year_distribution.length === 0 ? (
+                <p className="text-xs text-slate-400 col-span-2">No graduation year records.</p>
+              ) : (
+                summary.graduation_year_distribution.map((gy) => {
+                  const pct =
+                    summary.total_students > 0
+                      ? Math.round((gy.count / summary.total_students) * 100)
+                      : 0;
+                  return (
+                    <div
+                      key={gy.graduation_year}
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-surface-900/60 border border-slate-100 dark:border-surface-800/60 flex flex-col justify-between"
+                    >
+                      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        Class of {gy.graduation_year}
+                      </div>
+                      <div className="mt-1.5 flex items-baseline justify-between">
+                        <span className="text-base font-bold text-slate-900 dark:text-white">
+                          {gy.count}
+                        </span>
+                        <span className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-1.5 py-0.5 rounded">
+                          {pct}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </Card>

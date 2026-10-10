@@ -25,6 +25,7 @@ export const TPOStudentsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [batchFilter, setBatchFilter] = useState("ALL");
   const [courseFilter, setCourseFilter] = useState("ALL");
+  const [graduationYearFilter, setGraduationYearFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
   const [ordering, setOrdering] = useState("-total_points");
   const [page, setPage] = useState(1);
@@ -52,6 +53,7 @@ export const TPOStudentsPage: React.FC = () => {
       searchTerm,
       batchFilter,
       courseFilter,
+      graduationYearFilter,
       statusFilter,
       ordering,
       page,
@@ -61,6 +63,7 @@ export const TPOStudentsPage: React.FC = () => {
         search: searchTerm || undefined,
         batch_code: batchFilter === "ALL" ? undefined : batchFilter,
         course_opted: courseFilter === "ALL" ? undefined : courseFilter,
+        graduation_year: graduationYearFilter === "ALL" ? undefined : graduationYearFilter,
         is_active: statusFilter === "ALL" ? undefined : statusFilter === "ACTIVE",
         ordering: ordering || undefined,
         page,
@@ -75,6 +78,7 @@ export const TPOStudentsPage: React.FC = () => {
     setSearchTerm("");
     setBatchFilter("ALL");
     setCourseFilter("ALL");
+    setGraduationYearFilter("ALL");
     setStatusFilter("ALL");
     setOrdering("-total_points");
     setPage(1);
@@ -112,7 +116,7 @@ export const TPOStudentsPage: React.FC = () => {
 
       {/* Filters Bar */}
       <Card className="p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
           {/* Search */}
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -126,6 +130,31 @@ export const TPOStudentsPage: React.FC = () => {
               }}
               className="w-full rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900 pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
+          </div>
+
+          {/* Graduation Year Filter */}
+          <div>
+            <select
+              value={graduationYearFilter}
+              onChange={(e) => {
+                setGraduationYearFilter(e.target.value);
+                setPage(1);
+              }}
+              className="w-full rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 font-medium"
+            >
+              <option value="ALL">All Grad Years</option>
+              {summary?.graduation_year_distribution && summary.graduation_year_distribution.length > 0
+                ? summary.graduation_year_distribution.map((gy) => (
+                    <option key={gy.graduation_year} value={gy.graduation_year}>
+                      Class of {gy.graduation_year} ({gy.count})
+                    </option>
+                  ))
+                : [2024, 2025, 2026, 2027, 2028, 2029, 2030].map((yr) => (
+                    <option key={yr} value={yr}>
+                      Class of {yr}
+                    </option>
+                  ))}
+            </select>
           </div>
 
           {/* Batch Filter */}
@@ -193,6 +222,8 @@ export const TPOStudentsPage: React.FC = () => {
               <option value="total_points">Points ↑</option>
               <option value="full_name">Name A-Z</option>
               <option value="-attendance_percentage">Attendance ↓</option>
+              <option value="-graduation_year">Grad Year ↓</option>
+              <option value="graduation_year">Grad Year ↑</option>
             </select>
           </div>
         </div>
@@ -216,7 +247,7 @@ export const TPOStudentsPage: React.FC = () => {
           icon={<Users className="h-8 w-8 text-brand-500" />}
           title="No Students Found"
           description={
-            searchTerm || batchFilter !== "ALL" || courseFilter !== "ALL" || statusFilter !== "ALL"
+            searchTerm || batchFilter !== "ALL" || courseFilter !== "ALL" || graduationYearFilter !== "ALL" || statusFilter !== "ALL"
               ? "No students match your filter criteria."
               : "No students are currently registered under your assigned college."
           }
@@ -231,8 +262,8 @@ export const TPOStudentsPage: React.FC = () => {
                 <thead className="border-b border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-950 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-5 py-3.5">Student</th>
+                    <th className="px-5 py-3.5">Class / Batch</th>
                     <th className="px-5 py-3.5">Track / Branch</th>
-                    <th className="px-5 py-3.5">Batch</th>
                     <th className="px-5 py-3.5">Attendance</th>
                     <th className="px-5 py-3.5">Points</th>
                     <th className="px-5 py-3.5">Account</th>
@@ -273,17 +304,22 @@ export const TPOStudentsPage: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-5 py-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 w-fit">
+                              Class of {student.graduation_year || "—"}
+                            </span>
+                            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-surface-800 text-slate-700 dark:text-slate-300 w-fit">
+                              {student.batch_code || "Unassigned"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
                           <div className="text-xs font-medium text-slate-900 dark:text-white">
                             {student.course_opted || "General"}
                           </div>
                           <div className="text-[11px] text-slate-400 mt-0.5">
                             {student.branch || "General"}
                           </div>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-surface-800 text-slate-700 dark:text-slate-300">
-                            {student.batch_code || "Unassigned"}
-                          </span>
                         </td>
                         <td className="px-5 py-4">
                           <span

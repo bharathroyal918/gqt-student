@@ -170,9 +170,9 @@ export const AnalyticsPage: React.FC = () => {
                 onChange={(e) => setSelectedBatch(e.target.value)}
               >
                 <option value="">All Cohorts / Batches</option>
-                <option value="BATCH-2025-A">BATCH-2025-A</option>
-                <option value="BATCH-2025-B">BATCH-2025-B</option>
-                <option value="BATCH-2026-A">BATCH-2026-A</option>
+                <option value="Batch-2025-3">Batch-2025-3</option>
+                <option value="Batch-2025-6">Batch-2025-6</option>
+                <option value="Batch-2026-3">Batch-2026-3</option>
               </Select>
             </div>
           </div>

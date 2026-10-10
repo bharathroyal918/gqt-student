@@ -113,14 +113,18 @@ class AuthService:
                 name__iexact=college_name.strip(), is_active=True
             ).first()
 
+        resolved_grad_year = graduation_year or timezone.now().year
+        current_month = timezone.now().month
+        resolved_batch_code = batch_code.strip() if batch_code and batch_code.strip() else f"Batch-{resolved_grad_year}-{current_month}"
+
         StudentProfile.objects.create(
             user=user,
             student_id_number=clean_student_id,
             full_name=full_name.strip(),
-            batch_code=batch_code.strip() if batch_code else "BATCH-2026-A",
+            batch_code=resolved_batch_code,
             college=matching_college,
             college_name=college_name.strip() if college_name else (matching_college.name if matching_college else ""),
-            graduation_year=graduation_year or 2026,
+            graduation_year=resolved_grad_year,
         )
         AuditLog.objects.create(
             actor=user,

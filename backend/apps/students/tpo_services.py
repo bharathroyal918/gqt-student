@@ -107,6 +107,20 @@ class TPODashboardService:
             for item in batch_counts
         ]
 
+        # Graduation Year Distribution
+        grad_counts = (
+            students_qs.values("graduation_year")
+            .annotate(count=Count("id"))
+            .order_by("graduation_year")
+        )
+        graduation_year_distribution = [
+            {
+                "year": item["graduation_year"] or 2026,
+                "count": item["count"],
+            }
+            for item in grad_counts
+        ]
+
         # Assignment Submissions within this College
         student_ids = students_qs.values_list("id", flat=True)
         submissions_qs = CodeSubmission.objects.filter(student_id__in=student_ids)
@@ -125,6 +139,7 @@ class TPODashboardService:
                 "total_points": float(s.total_points),
                 "batch_code": s.batch_code,
                 "branch": s.branch,
+                "graduation_year": s.graduation_year,
                 "attendance_percentage": float(s.attendance_percentage),
                 "avatar_url": s.avatar_url,
             }
@@ -150,6 +165,7 @@ class TPODashboardService:
             "technology_distribution": technology_distribution,
             "branch_distribution": branch_distribution,
             "batch_distribution": batch_distribution,
+            "graduation_year_distribution": graduation_year_distribution,
             "top_performers": top_performers,
         }
 
@@ -367,6 +383,7 @@ class TPOAnalyticsService:
                     "full_name": s.full_name,
                     "batch_code": s.batch_code,
                     "branch": s.branch,
+                    "graduation_year": s.graduation_year,
                     "course_opted": s.course_opted,
                     "completed_modules": completed,
                     "total_modules": total_active_modules,
@@ -594,6 +611,7 @@ class TPOAnalyticsService:
                 "full_name": s.full_name,
                 "batch_code": s.batch_code,
                 "branch": s.branch,
+                "graduation_year": s.graduation_year,
                 "attendance_percentage": float(s.attendance_percentage),
                 "attended_classes": s.attended_classes,
                 "total_classes": s.total_classes,
@@ -789,6 +807,7 @@ class TPOAnalyticsService:
                         "full_name": s.full_name,
                         "batch_code": s.batch_code,
                         "branch": s.branch,
+                        "graduation_year": s.graduation_year,
                         "course_opted": s.course_opted,
                         "attendance_percentage": float(s.attendance_percentage),
                         "total_points": float(s.total_points),
@@ -830,6 +849,7 @@ class TPOAnalyticsService:
                     "full_name": s.full_name,
                     "batch_code": s.batch_code,
                     "branch": s.branch,
+                    "graduation_year": s.graduation_year,
                     "course_opted": s.course_opted,
                     "total_points": float(s.total_points),
                     "attendance_percentage": float(s.attendance_percentage),

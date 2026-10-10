@@ -67,7 +67,8 @@ export const TPOStudentsNeedingSupportPage: React.FC = () => {
       s.full_name.toLowerCase().includes(term) ||
       s.student_id_number.toLowerCase().includes(term) ||
       (s.branch && s.branch.toLowerCase().includes(term)) ||
-      (s.batch_code && s.batch_code.toLowerCase().includes(term))
+      (s.batch_code && s.batch_code.toLowerCase().includes(term)) ||
+      (s.graduation_year && s.graduation_year.toString().includes(term))
     );
   });
 
@@ -273,8 +274,17 @@ export const TPOStudentsNeedingSupportPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400">
-                      <div>{s.batch_code}</div>
-                      <div className="text-[11px] text-slate-400">{s.branch}</div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {s.graduation_year && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+                            Class of {s.graduation_year}
+                          </span>
+                        )}
+                        <span className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
+                          {s.batch_code || "Unassigned"}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">{s.branch || "General"}</div>
                     </td>
                     <td className="px-4 py-3.5">
                       <span

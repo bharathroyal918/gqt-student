@@ -41,14 +41,14 @@ class TPOReportsService:
             "name": "College Student Roster",
             "description": "Comprehensive enrollment roster of all students in your assigned institution.",
             "supported_formats": ["CSV", "JSON"],
-            "supported_filters": ["batch_code", "course_opted", "is_active"],
+            "supported_filters": ["batch_code", "graduation_year", "course_opted", "is_active"],
         },
         {
             "id": "ATTENDANCE_COMPLIANCE",
             "name": "Attendance Compliance Report",
             "description": "Student-level attendance percentages, 75% policy threshold status, and placement eligibility.",
             "supported_formats": ["CSV", "JSON"],
-            "supported_filters": ["batch_code"],
+            "supported_filters": ["batch_code", "graduation_year"],
         },
         {
             "id": "LEARNING_PROGRESS",
@@ -62,14 +62,14 @@ class TPOReportsService:
             "name": "Assignment & Lab Performance Report",
             "description": "Coding challenge participation, attempts, accepted verdicts, pass rates, and points.",
             "supported_formats": ["CSV", "JSON"],
-            "supported_filters": ["date_from", "date_to"],
+            "supported_filters": ["date_from", "date_to", "graduation_year"],
         },
         {
             "id": "STUDENTS_NEEDING_SUPPORT",
             "name": "Students Needing Academic Support Report",
             "description": "Actionable list of students flagged for attendance deficit, lab inaction, or stalled progress.",
             "supported_formats": ["CSV", "JSON"],
-            "supported_filters": ["risk_type"],
+            "supported_filters": ["risk_type", "graduation_year"],
         },
         {
             "id": "COLLEGE_SUMMARY",
@@ -93,6 +93,13 @@ class TPOReportsService:
         if batch_code and batch_code != "ALL":
             qs = qs.filter(batch_code=batch_code)
 
+        grad_year = filters.get("graduation_year")
+        if grad_year and str(grad_year).strip() != "ALL":
+            try:
+                qs = qs.filter(graduation_year=int(grad_year))
+            except (ValueError, TypeError):
+                pass
+
         course_opted = filters.get("course_opted")
         if course_opted and course_opted != "ALL":
             qs = qs.filter(course_opted__icontains=course_opted)
@@ -109,6 +116,7 @@ class TPOReportsService:
             "Mobile Number",
             "Batch Code",
             "Branch",
+            "Graduation Year",
             "Course Opted",
             "Attendance %",
             "Total Points",
@@ -126,6 +134,7 @@ class TPOReportsService:
                 s.user.mobile_number if s.user else "",
                 s.batch_code or "Unassigned",
                 s.branch or "General",
+                s.graduation_year or "N/A",
                 s.course_opted or "General Track",
                 float(s.attendance_percentage),
                 float(s.total_points),
@@ -144,11 +153,19 @@ class TPOReportsService:
         if batch_code and batch_code != "ALL":
             qs = qs.filter(batch_code=batch_code)
 
+        grad_year = filters.get("graduation_year")
+        if grad_year and str(grad_year).strip() != "ALL":
+            try:
+                qs = qs.filter(graduation_year=int(grad_year))
+            except (ValueError, TypeError):
+                pass
+
         headers = [
             "Student ID",
             "Full Name",
             "Batch Code",
             "Branch",
+            "Graduation Year",
             "Classes Attended",
             "Total Classes",
             "Attendance %",
@@ -165,6 +182,7 @@ class TPOReportsService:
                 s.full_name,
                 s.batch_code or "Unassigned",
                 s.branch or "General",
+                s.graduation_year or "N/A",
                 s.attended_classes,
                 s.total_classes,
                 att_pct,
@@ -184,6 +202,7 @@ class TPOReportsService:
             "Full Name",
             "Batch Code",
             "Branch",
+            "Graduation Year",
             "Track Opted",
             "Completed Modules",
             "Total Applicable Modules",
@@ -201,6 +220,7 @@ class TPOReportsService:
                 s["full_name"],
                 s["batch_code"],
                 s["branch"],
+                s.get("graduation_year") or "N/A",
                 s["course_opted"],
                 s["completed_modules"],
                 s["total_modules"],
@@ -215,6 +235,14 @@ class TPOReportsService:
         date_from = filters.get("date_from")
         date_to = filters.get("date_to")
         students_qs = TPODashboardService.get_college_students_queryset(tpo_user)
+
+        grad_year = filters.get("graduation_year")
+        if grad_year and str(grad_year).strip() != "ALL":
+            try:
+                students_qs = students_qs.filter(graduation_year=int(grad_year))
+            except (ValueError, TypeError):
+                pass
+
         student_ids = list(students_qs.values_list("id", flat=True))
 
         subs_qs = CodeSubmission.objects.filter(student_id__in=student_ids)
@@ -257,6 +285,7 @@ class TPOReportsService:
             "Full Name",
             "Batch Code",
             "Branch",
+            "Graduation Year",
             "Unique Questions Attempted",
             "Total Submission Attempts",
             "Accepted Submissions",
@@ -279,6 +308,7 @@ class TPOReportsService:
                 s.full_name,
                 s.batch_code or "Unassigned",
                 s.branch or "General",
+                s.graduation_year or "N/A",
                 st["unique_questions"],
                 st["total_attempts"],
                 st["accepted"],
@@ -294,11 +324,20 @@ class TPOReportsService:
         risk_type = filters.get("risk_type")
         flagged_students = TPOAnalyticsService.get_students_needing_support(tpo_user, risk_type=risk_type)
 
+        grad_year = filters.get("graduation_year")
+        if grad_year and str(grad_year).strip() != "ALL":
+            try:
+                gy_int = int(grad_year)
+                flagged_students = [s for s in flagged_students if s.get("graduation_year") == gy_int]
+            except (ValueError, TypeError):
+                pass
+
         headers = [
             "Student ID",
             "Full Name",
             "Batch Code",
             "Branch",
+            "Graduation Year",
             "Attendance %",
             "Total Points",
             "Lab Attempts Count",
@@ -318,6 +357,7 @@ class TPOReportsService:
                 s["full_name"],
                 s["batch_code"],
                 s["branch"],
+                s.get("graduation_year") or "N/A",
                 s["attendance_percentage"],
                 s["total_points"],
                 s["submissions_count"],

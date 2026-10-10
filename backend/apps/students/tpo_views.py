@@ -218,9 +218,10 @@ class TPOStudentRosterView(APIView):
         parameters=[
             OpenApiParameter("search", str, description="Search by name, student ID, or email"),
             OpenApiParameter("batch_code", str, description="Filter by batch code"),
+            OpenApiParameter("graduation_year", int, description="Filter by graduation year (e.g. 2026)"),
             OpenApiParameter("course_opted", str, description="Filter by track/course opted"),
             OpenApiParameter("is_active", bool, description="Filter by active status"),
-            OpenApiParameter("ordering", str, description="Ordering field (e.g. -total_points, full_name)"),
+            OpenApiParameter("ordering", str, description="Ordering field (e.g. -total_points, full_name, -graduation_year)"),
         ],
         responses={200: TPOStudentRosterSerializer(many=True)},
         summary="List Enrolled Students in Assigned College",
@@ -241,6 +242,13 @@ class TPOStudentRosterView(APIView):
         if batch_code and batch_code != "ALL":
             qs = qs.filter(batch_code=batch_code)
 
+        grad_year_param = request.query_params.get("graduation_year", "").strip()
+        if grad_year_param and grad_year_param != "ALL":
+            try:
+                qs = qs.filter(graduation_year=int(grad_year_param))
+            except (ValueError, TypeError):
+                pass
+
         course_opted = request.query_params.get("course_opted", "").strip()
         if course_opted and course_opted != "ALL":
             qs = qs.filter(course_opted__icontains=course_opted)
@@ -260,6 +268,8 @@ class TPOStudentRosterView(APIView):
             "-student_id_number",
             "-attendance_percentage",
             "attendance_percentage",
+            "-graduation_year",
+            "graduation_year",
             "-created_at",
             "created_at",
         ]

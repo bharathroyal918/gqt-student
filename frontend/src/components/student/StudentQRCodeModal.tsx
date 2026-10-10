@@ -33,7 +33,7 @@ export const StudentQRCodeModal: React.FC<StudentQRCodeModalProps> = ({
   // Student Details Resolution
   const fullName = attendanceData?.student?.full_name || studentProfile?.full_name || "Enrolled Student";
   const studentId = attendanceData?.student?.student_id || studentProfile?.student_id_number || "GQT-STUDENT";
-  const batchCode = attendanceData?.student?.batch_code || studentProfile?.batch_code || "BATCH-2026";
+  const batchCode = attendanceData?.student?.batch_code || studentProfile?.batch_code || "Batch-2026-3";
   const collegeName = attendanceData?.student?.college_name || studentProfile?.college_name || "GQT Institute";
   const email = user?.email || "";
 

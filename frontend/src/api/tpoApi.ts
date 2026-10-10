@@ -21,6 +21,7 @@ import {
 export interface GetCollegeStudentsParams {
   search?: string;
   batch_code?: string;
+  graduation_year?: number | string;
   course_opted?: string;
   is_active?: boolean;
   ordering?: string;
