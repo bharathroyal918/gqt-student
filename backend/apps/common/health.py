@@ -29,7 +29,7 @@ class HealthCheckView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [HealthCheckThrottle]
+    throttle_classes = []
 
     def get(self, request, *args, **kwargs):
         # 1. Probe database
@@ -94,7 +94,7 @@ class DatabaseHealthCheckView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [HealthCheckThrottle]
+    throttle_classes = []
 
     def get(self, request, *args, **kwargs):
         start_time = time.perf_counter()
@@ -142,7 +142,7 @@ class RedisHealthCheckView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [HealthCheckThrottle]
+    throttle_classes = []
 
     def get(self, request, *args, **kwargs):
         start_time = time.perf_counter()
@@ -190,6 +190,7 @@ class LivenessCheckView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = []
 
     def get(self, request, *args, **kwargs):
         return api_success(data={"status": "alive", "timestamp": int(time.time())})
@@ -208,6 +209,7 @@ class ReadinessCheckView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = []
 
     def get(self, request, *args, **kwargs):
         try:

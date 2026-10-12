@@ -72,7 +72,7 @@ class StudentRegisterView(APIView):
             password=serializer.validated_data["password"],
             student_id_number=serializer.validated_data.get("student_id_number", ""),
             college_name=serializer.validated_data.get("college_name", ""),
-            batch_code=serializer.validated_data.get("batch_code", "BATCH-2026-A"),
+            batch_code=serializer.validated_data.get("batch_code", ""),
             graduation_year=serializer.validated_data.get("graduation_year", 2026),
             ip_address=ip_address,
             user_agent=user_agent,

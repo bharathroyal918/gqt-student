@@ -69,10 +69,29 @@ def root_status_view(request):
     )
 
 
+from apps.common.health import (
+    DatabaseHealthCheckView,
+    HealthCheckView,
+    LivenessCheckView,
+    ReadinessCheckView,
+    RedisHealthCheckView,
+)
+
 urlpatterns = [
     path("", root_status_view, name="root_status"),
     path("admin/", admin.site.urls),
-    path("health/", include("apps.common.urls")),
+    # Canonical Root-Level Infrastructure Health Endpoints (Lightweight, unthrottled for Render / Orchestrators)
+    path("health/", HealthCheckView.as_view(), name="root_health_check"),
+    path("health/live/", LivenessCheckView.as_view(), name="root_health_live"),
+    path("health/ready/", ReadinessCheckView.as_view(), name="root_health_ready"),
+    path("health/database/", DatabaseHealthCheckView.as_view(), name="root_health_database"),
+    path("health/redis/", RedisHealthCheckView.as_view(), name="root_health_redis"),
+    # Backward-Compatibility Aliases (Gracefully handles legacy Render services hitting duplicated /health/health/* paths)
+    path("health/health/", HealthCheckView.as_view(), name="legacy_health_check"),
+    path("health/health/live/", LivenessCheckView.as_view(), name="legacy_health_live"),
+    path("health/health/ready/", ReadinessCheckView.as_view(), name="legacy_health_ready"),
+    path("health/health/database/", DatabaseHealthCheckView.as_view(), name="legacy_health_database"),
+    path("health/health/redis/", RedisHealthCheckView.as_view(), name="legacy_health_redis"),
     path(
         "certificates/verify/<str:identifier>/",
         PublicCertificateVerifyView.as_view(),

@@ -24,18 +24,58 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Single-flight refresh token queue to prevent race conditions during concurrent API 401s
+let isRefreshing = false;
+let refreshSubscribers: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  refreshSubscribers.forEach((subscriber) => {
+    if (error) {
+      subscriber.reject(error);
+    } else if (token) {
+      subscriber.resolve(token);
+    }
+  });
+  refreshSubscribers = [];
+};
+
 // Response Interceptor: Token Refresh & Standard Envelope Unwrapping
 apiClient.interceptors.response.use(
   (response) => {
-    // Return standard success payload
     return response;
   },
   async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Handle 401 Unauthorized with Token Refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 Unauthorized with Single-Flight Token Refresh
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      // Don't retry token refresh endpoint itself
+      if (originalRequest.url?.includes("/auth/token/refresh/") || originalRequest.url?.includes("/auth/login/")) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
+
+      if (isRefreshing) {
+        // Queue this request until the in-flight refresh completes
+        return new Promise<string>((resolve, reject) => {
+          refreshSubscribers.push({ resolve, reject });
+        })
+          .then((newAccessToken) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            }
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      isRefreshing = true;
       const refreshToken = localStorage.getItem("gqt_refresh_token");
 
       if (refreshToken) {
@@ -45,19 +85,27 @@ apiClient.interceptors.response.use(
             { refresh: refreshToken }
           );
 
-          localStorage.setItem("gqt_access_token", data.data.access);
+          const newAccessToken = data.data.access;
+          localStorage.setItem("gqt_access_token", newAccessToken);
           if (data.data.refresh) {
             localStorage.setItem("gqt_refresh_token", data.data.refresh);
           }
 
+          processQueue(null, newAccessToken);
+
           if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${data.data.access}`;
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           }
           return apiClient(originalRequest);
         } catch (refreshError) {
+          processQueue(refreshError, null);
+
           // Invalidate tokens and redirect to portal-specific login
           localStorage.removeItem("gqt_access_token");
           localStorage.removeItem("gqt_refresh_token");
+          localStorage.removeItem("gqt_user");
+          localStorage.removeItem("gqt_profile");
+
           const path = window.location.pathname;
           if (path.startsWith("/admin")) {
             window.location.href = "/admin/login";
@@ -67,6 +115,8 @@ apiClient.interceptors.response.use(
             window.location.href = "/login";
           }
           return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
       }
     }

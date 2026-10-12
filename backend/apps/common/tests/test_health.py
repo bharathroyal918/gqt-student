@@ -71,3 +71,49 @@ class HealthCheckTests(APITestCase):
         self.assertFalse(data["success"])
         self.assertEqual(data["error"]["code"], "REDIS_UNAVAILABLE")
         self.assertIn("Cannot connect to Redis", data["error"]["details"]["error"])
+
+    def test_canonical_root_liveness_check(self):
+        """Root canonical /health/live/ must return 200 without authentication or DB access."""
+        with self.assertNumQueries(0):
+            response = self.client.get("/health/live/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["data"]["status"], "alive")
+
+    def test_canonical_root_readiness_check(self):
+        """Root canonical /health/ready/ must return 200 and report DB/cache readiness."""
+        response = self.client.get("/health/ready/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["data"]["status"], "ready")
+        self.assertEqual(data["data"]["database"], "connected")
+
+    def test_canonical_root_health_check(self):
+        """Root canonical /health/ must return 200."""
+        response = self.client.get("/health/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["data"]["status"], "healthy")
+
+    def test_legacy_compatibility_health_routes(self):
+        """Legacy /health/health/live/ and /health/health/ready/ must remain functional for backward compatibility."""
+        resp_live = self.client.get("/health/health/live/")
+        self.assertEqual(resp_live.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_live.json()["data"]["status"], "alive")
+
+        resp_ready = self.client.get("/health/health/ready/")
+        self.assertEqual(resp_ready.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_ready.json()["data"]["status"], "ready")
+
+    def test_health_check_throttle_immunity(self):
+        """Repeated high-frequency health probes must NOT encounter HTTP 429 Too Many Requests."""
+        for _ in range(150):
+            response = self.client.get("/health/live/")
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_200_OK,
+                "Health check was unexpectedly throttled with 429",
+            )

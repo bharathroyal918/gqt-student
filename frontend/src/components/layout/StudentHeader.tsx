@@ -33,14 +33,15 @@ export const StudentHeader: React.FC<StudentHeaderProps> = ({ onToggleMobileSide
     queryKey: ["student", "notifications", "unread-count"],
     queryFn: studentApi.getUnreadNotificationsCount,
     refetchInterval: 30000,
+    staleTime: 30000,
     enabled: !!user,
   });
 
   const { data: dashboardData } = useQuery({
-    queryKey: ["student", "dashboard"],
+    queryKey: ["student", "dashboard", user?.id],
     queryFn: studentApi.getDashboard,
-    enabled: !!user && user.role === "STUDENT",
-    staleTime: 10000,
+    enabled: !!user && user.role === "STUDENT" && !!user?.id,
+    staleTime: 1000 * 30,
   });
 
   const handleLogout = async () => {

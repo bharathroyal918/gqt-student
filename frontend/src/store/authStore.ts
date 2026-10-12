@@ -93,12 +93,12 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     const currentUser = get().user;
     const updatedUser = currentUser
       ? {
-          ...currentUser,
-          student_profile: {
-            ...((currentUser as any).student_profile || {}),
-            ...studentProfile,
-          },
-        }
+        ...currentUser,
+        student_profile: {
+          ...((currentUser as any).student_profile || {}),
+          ...studentProfile,
+        },
+      }
       : currentUser;
     if (updatedUser) {
       setStorageItem("gqt_user", JSON.stringify(updatedUser));

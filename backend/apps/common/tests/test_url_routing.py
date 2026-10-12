@@ -24,6 +24,17 @@ class URLRoutingAndNamespaceTests(TestCase):
         self.assertEqual(reverse("api_v1:health-database"), "/api/v1/health/database/")
         self.assertEqual(reverse("api_v1:health-redis"), "/api/v1/health/redis/")
 
+        # Root-level health endpoints
+        self.assertEqual(reverse("root_health_check"), "/health/")
+        self.assertEqual(reverse("root_health_live"), "/health/live/")
+        self.assertEqual(reverse("root_health_ready"), "/health/ready/")
+        self.assertEqual(reverse("root_health_database"), "/health/database/")
+        self.assertEqual(reverse("root_health_redis"), "/health/redis/")
+
+        # Legacy compatibility aliases
+        self.assertEqual(reverse("legacy_health_live"), "/health/health/live/")
+        self.assertEqual(reverse("legacy_health_ready"), "/health/health/ready/")
+
     def test_auth_routes_reverse(self):
         """Authentication routes must reverse properly."""
         self.assertEqual(

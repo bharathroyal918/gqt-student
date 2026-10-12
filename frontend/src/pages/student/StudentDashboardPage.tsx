@@ -60,7 +60,7 @@ export const StudentDashboardPage: React.FC = () => {
     queryFn: studentApi.getDashboard,
     enabled: !!user?.id,
     staleTime: 1000 * 30, // 30 seconds
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) {
