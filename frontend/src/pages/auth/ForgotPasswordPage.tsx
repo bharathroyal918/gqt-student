@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { authApi } from "../../api/authApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useThemeStore } from "../../store/themeStore";
 import { useToast } from "../../context/ToastContext";
 import { Button } from "../../components/ui/Button";
@@ -115,11 +116,11 @@ export const ForgotPasswordPage: React.FC = () => {
       setCooldownSeconds(60);
       setCurrentStep(2);
       success("OTP Dispatched", res.message);
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Unable to dispatch OTP. Please check your details and try again.";
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(
+        err,
+        "Unable to dispatch OTP. Please check your details and try again."
+      );
       toastError("Request Failed", msg);
     } finally {
       setIsLoading(false);
@@ -133,11 +134,8 @@ export const ForgotPasswordPage: React.FC = () => {
       const res = await authApi.requestPasswordResetOtp(identifier);
       setCooldownSeconds(60);
       success("OTP Resent", res.message);
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to resend OTP code.";
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, "Failed to resend OTP code.");
       toastError("Resend Failed", msg);
     } finally {
       setIsLoading(false);
@@ -152,11 +150,8 @@ export const ForgotPasswordPage: React.FC = () => {
       setVerifiedOtp(data.otp);
       setCurrentStep(3);
       success("OTP Verified", "Please choose your new secure password.");
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Invalid or expired OTP code.";
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, "Invalid or expired OTP code.");
       toastError("Verification Failed", msg);
     } finally {
       setIsLoading(false);
@@ -174,11 +169,11 @@ export const ForgotPasswordPage: React.FC = () => {
       );
       setCurrentStep(4);
       success("Password Reset Complete", "Your password has been successfully updated.");
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Unable to reset password. Please request a new OTP.";
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(
+        err,
+        "Unable to reset password. Please request a new OTP."
+      );
       toastError("Reset Failed", msg);
     } finally {
       setIsLoading(false);

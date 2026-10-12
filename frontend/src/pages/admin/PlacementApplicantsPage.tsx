@@ -171,11 +171,12 @@ export const PlacementApplicantsPage: React.FC = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (app.resume_url) {
           window.open(app.resume_url, "_blank", "noopener,noreferrer");
         } else {
-          alert(err?.message || "Unable to download resume file.");
+          const message = err instanceof Error ? err.message : "Unable to download resume file.";
+          alert(message);
         }
       } finally {
         setDownloadingResumeId(null);
@@ -188,7 +189,7 @@ export const PlacementApplicantsPage: React.FC = () => {
   const handleExportCSV = () => {
     if (!applications.length) return;
 
-    const escapeCsv = (val: any): string => {
+    const escapeCsv = (val: unknown): string => {
       if (val === null || val === undefined) return '""';
       const str = String(val).replace(/"/g, '""').replace(/[\r\n]+/g, " ");
       return `"${str}"`;

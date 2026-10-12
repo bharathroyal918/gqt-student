@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { KeyRound, Lock, ArrowLeft, Sun, Moon } from "lucide-react";
 
 import { authApi } from "../../api/authApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useThemeStore } from "../../store/themeStore";
 import { Button } from "../../components/ui/Button";
 import { FormField, Input } from "../../components/ui/Form";
@@ -44,11 +45,11 @@ export const ResetPasswordPage: React.FC = () => {
       await authApi.resetPassword(data.token, data.new_password);
       success("Password Reset Complete", "You may now sign in using your new credentials.");
       navigate("/login");
-    } catch (err: any) {
-      const apiMsg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Invalid or expired password reset token.";
+    } catch (err: unknown) {
+      const apiMsg = getApiErrorMessage(
+        err,
+        "Invalid or expired password reset token."
+      );
       toastError("Reset Failed", apiMsg);
     } finally {
       setIsLoading(false);

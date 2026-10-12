@@ -56,7 +56,7 @@ export const AssignmentDetailPage: React.FC = () => {
 
   // Mutations
   const addTestCaseMutation = useMutation({
-    mutationFn: (payload: any) => adminApi.addTestCase(id!, payload),
+    mutationFn: (payload: Parameters<typeof adminApi.addTestCase>[1]) => adminApi.addTestCase(id!, payload),
     onSuccess: () => {
       success("Test Case Added", "Test case registered to test suite.");
       setIsAddTestCaseOpen(false);
@@ -67,7 +67,7 @@ export const AssignmentDetailPage: React.FC = () => {
   });
 
   const updateTestCaseMutation = useMutation({
-    mutationFn: ({ testCaseId, payload }: { testCaseId: string; payload: any }) =>
+    mutationFn: ({ testCaseId, payload }: { testCaseId: string; payload: Parameters<typeof adminApi.updateTestCase>[1] }) =>
       adminApi.updateTestCase(testCaseId, payload),
     onSuccess: () => {
       success("Test Case Updated", "Changes saved.");

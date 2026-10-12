@@ -13,6 +13,7 @@ import {
   Layers,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import {
   TPOReportFilterPayload,
@@ -101,10 +102,12 @@ export const TPOReportsPage: React.FC = () => {
       setPreviewData(data);
       setPreviewError(null);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setPreviewError(
-        err?.response?.data?.error?.message ||
+        getApiErrorMessage(
+          err,
           "Failed to generate report preview. Please check your filter values."
+        )
       );
       setPreviewData(null);
     },
@@ -132,10 +135,12 @@ export const TPOReportsPage: React.FC = () => {
       setExportSuccessMessage(`Export generated successfully: ${filename}`);
       setTimeout(() => setExportSuccessMessage(null), 5000);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setPreviewError(
-        err?.response?.data?.error?.message ||
+        getApiErrorMessage(
+          err,
           "Failed to export report file. Please verify parameters and try again."
+        )
       );
     },
   });
@@ -157,10 +162,10 @@ export const TPOReportsPage: React.FC = () => {
     return (
       <ErrorState
         title="Failed to Load Report Definitions"
-        message={
-          (typesError as any)?.response?.data?.error?.message ||
+        message={getApiErrorMessage(
+          typesError,
           "Could not initialize reporting module. Please check your network connection."
-        }
+        )}
         onRetry={() => refetchTypes()}
       />
     );
@@ -538,7 +543,7 @@ export const TPOReportsPage: React.FC = () => {
             {!previewMutation.isPending && previewData && (
               <div className="mt-4 space-y-4">
                 {(() => {
-                  const rows = previewData.preview_rows || (previewData as any).sample_rows || [];
+                  const rows = previewData.preview_rows || previewData.sample_rows || [];
                   const cols = previewData.columns || [];
 
                   if (rows.length === 0) {
@@ -561,8 +566,8 @@ export const TPOReportsPage: React.FC = () => {
                         <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
                           <thead className="bg-slate-50 dark:bg-surface-950/80 text-slate-900 dark:text-white font-semibold border-b border-slate-200 dark:border-surface-800">
                             <tr>
-                              {cols.map((col: any, colIdx: number) => {
-                                const headerLabel = typeof col === "string" ? col : col?.label || col?.field || `Col ${colIdx + 1}`;
+                              {cols.map((col, colIdx: number) => {
+                                const headerLabel = typeof col === "string" ? col : col.label || col.field || `Col ${colIdx + 1}`;
                                 return (
                                   <th key={colIdx} className="px-3.5 py-3 whitespace-nowrap">
                                     {headerLabel}
@@ -572,17 +577,17 @@ export const TPOReportsPage: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-surface-800 bg-white dark:bg-surface-900">
-                            {rows.map((row: any, rowIdx: number) => (
+                            {rows.map((row, rowIdx: number) => (
                               <tr
                                 key={rowIdx}
                                 className="hover:bg-slate-50/80 dark:hover:bg-surface-800/50 transition-colors"
                               >
-                                {cols.map((col: any, colIdx: number) => {
+                                {cols.map((col, colIdx: number) => {
                                   const val = Array.isArray(row)
                                     ? row[colIdx]
                                     : typeof col === "string"
-                                    ? row[col]
-                                    : row[col?.field];
+                                    ? (row as Record<string, unknown>)[col]
+                                    : (row as Record<string, unknown>)[col.field || ""];
 
                                   return (
                                     <td

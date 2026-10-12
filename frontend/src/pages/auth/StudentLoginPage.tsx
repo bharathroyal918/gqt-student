@@ -14,6 +14,7 @@ import {
   Moon,
 } from "lucide-react";
 import { authApi } from "../../api/authApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { useToast } from "../../context/ToastContext";
@@ -26,7 +27,7 @@ const phoneSchema = z.object({
   mobile_number: z
     .string()
     .min(10, "Mobile number must be at least 10 digits")
-    .regex(/^\+?[0-9\s\-]+$/, "Please enter a valid mobile number with country code"),
+    .regex(/^\+?[0-9\s-]+$/, "Please enter a valid mobile number with country code"),
 });
 
 const otpSchema = z.object({
@@ -57,7 +58,7 @@ export const StudentLoginPage: React.FC = () => {
   const [targetPhone, setTargetPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const from = (location.state as any)?.from?.pathname || "/dashboard";
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || "/dashboard";
 
   // Forms
   const {
@@ -92,8 +93,8 @@ export const StudentLoginPage: React.FC = () => {
       setTargetPhone(data.mobile_number);
       setOtpStep("verify");
       success("OTP Dispatched", "If this number is approved, an access code was sent.");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to send OTP.";
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, "Failed to send OTP.");
       toastError("Request Failed", msg);
     } finally {
       setIsSubmitting(false);
@@ -115,8 +116,8 @@ export const StudentLoginPage: React.FC = () => {
       setAuth(res.user, { access: res.access, refresh: res.refresh }, res.user.student_profile);
       success("Welcome Back", `Logged in as ${studentName}`);
       navigate(from, { replace: true });
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Invalid or expired OTP.";
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, "Invalid or expired OTP.");
       toastError("Verification Failed", msg);
     } finally {
       setIsSubmitting(false);
@@ -138,8 +139,8 @@ export const StudentLoginPage: React.FC = () => {
       setAuth(res.user, { access: res.access, refresh: res.refresh }, res.user.student_profile);
       success("Welcome Back", `Logged in as ${studentName}`);
       navigate(from, { replace: true });
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Invalid email or password.";
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, "Invalid email or password.");
       toastError("Authentication Failed", msg);
     } finally {
       setIsSubmitting(false);

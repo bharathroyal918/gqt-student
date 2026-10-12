@@ -16,6 +16,7 @@ import {
   Edit3,
 } from "lucide-react";
 import { adminTpoApi } from "../../api/adminTpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { collegesApi } from "../../api/collegesApi";
 import {
   CreateTPOPayload,
@@ -127,8 +128,8 @@ export const TPOsPage: React.FC = () => {
       setIsInviteModalOpen(false);
       resetInviteForm();
     },
-    onError: (err: any) => {
-      setFormError(err?.response?.data?.error?.message || err?.response?.data?.message || "Failed to invite TPO.");
+    onError: (err: unknown) => {
+      setFormError(getApiErrorMessage(err, "Failed to invite TPO."));
     },
   });
 
@@ -140,8 +141,8 @@ export const TPOsPage: React.FC = () => {
       setApprovingTpo(null);
       setTargetCollegeId("");
     },
-    onError: (err: any) => {
-      alert(err?.response?.data?.error?.message || "Failed to grant TPO access.");
+    onError: (err: unknown) => {
+      alert(getApiErrorMessage(err, "Failed to grant TPO access."));
     },
   });
 
@@ -151,8 +152,8 @@ export const TPOsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tpos"] });
       setEditingTpo(null);
     },
-    onError: (err: any) => {
-      setFormError(err?.response?.data?.error?.message || err?.response?.data?.message || "Failed to update TPO.");
+    onError: (err: unknown) => {
+      setFormError(getApiErrorMessage(err, "Failed to update TPO."));
     },
   });
 
@@ -164,8 +165,8 @@ export const TPOsPage: React.FC = () => {
       setReassigningTpo(null);
       setTargetCollegeId("");
     },
-    onError: (err: any) => {
-      alert(err?.response?.data?.error?.message || "Failed to reassign college.");
+    onError: (err: unknown) => {
+      alert(getApiErrorMessage(err, "Failed to reassign college."));
     },
   });
 
@@ -175,8 +176,8 @@ export const TPOsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tpos"] });
       setStatusActionTpo(null);
     },
-    onError: (err: any) => {
-      alert(err?.response?.data?.error?.message || "Failed to deactivate TPO.");
+    onError: (err: unknown) => {
+      alert(getApiErrorMessage(err, "Failed to deactivate TPO."));
     },
   });
 
@@ -186,8 +187,8 @@ export const TPOsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tpos"] });
       setStatusActionTpo(null);
     },
-    onError: (err: any) => {
-      alert(err?.response?.data?.error?.message || "Failed to reactivate TPO.");
+    onError: (err: unknown) => {
+      alert(getApiErrorMessage(err, "Failed to reactivate TPO."));
     },
   });
 
@@ -351,7 +352,7 @@ export const TPOsPage: React.FC = () => {
           {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) => setStatusFilter(e.target.value as "ALL" | "PENDING" | "ACTIVE" | "INACTIVE")}
             className="rounded-xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-950 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
             <option value="ALL">All Status</option>

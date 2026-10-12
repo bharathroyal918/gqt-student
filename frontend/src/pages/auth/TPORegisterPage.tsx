@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { authApi } from "../../api/authApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { collegesApi } from "../../api/collegesApi";
 import { useThemeStore } from "../../store/themeStore";
 import { Button } from "../../components/ui/Button";
@@ -100,11 +101,11 @@ export const TPORegisterPage: React.FC = () => {
 
       setRegisteredCollegeName(collegeName || "your selected institution");
       setIsSuccessModalOpen(true);
-    } catch (err: any) {
-      const apiMsg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Registration failed. Please check the provided details and try again.";
+    } catch (err: unknown) {
+      const apiMsg = getApiErrorMessage(
+        err,
+        "Registration failed. Please check the provided details and try again."
+      );
       setErrorMessage(apiMsg);
     } finally {
       setIsLoading(false);

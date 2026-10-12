@@ -69,7 +69,7 @@ export interface TPOAuditLog {
   action: string;
   actor_email: string;
   ip_address?: string | null;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   created_at: string;
 }
 
@@ -399,8 +399,9 @@ export interface TPOReportPreviewResponse {
   college_id?: string;
   college_name?: string;
   total_rows: number;
-  columns: string[];
-  preview_rows: (string | number | boolean | null)[][];
+  columns: (string | { label?: string; field?: string })[];
+  preview_rows: (string | number | boolean | null)[][] | Record<string, unknown>[];
+  sample_rows?: (string | number | boolean | null)[][] | Record<string, unknown>[];
   generated_at: string;
   is_truncated?: boolean;
   limitations?: string;

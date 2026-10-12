@@ -1,12 +1,51 @@
+
 import { apiClient } from "./client";
 import { ApiSuccessResponse } from "../types/api";
 import { User, StudentProfile } from "../types/auth";
-import { RegisterTPOPayload } from "../types/tpo";
+import { RegisterTPOPayload, TPOProfile } from "../types/tpo";
+
+export interface AdminProfile {
+  id: string;
+  full_name: string;
+  designation: string;
+  department: string;
+  phone_number: string;
+  bio: string;
+  avatar_url: string;
+  can_review_projects: boolean;
+  can_manage_curriculum: boolean;
+}
+
+export interface TPORegistrationResult {
+  id: string;
+  email: string;
+  full_name: string;
+  college: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+  status: string;
+}
+
+export interface TPOLoginUser {
+  id: string;
+  email: string | null;
+  mobile_number: string | null;
+  role: User["role"];
+  is_active: boolean;
+  onboarding_status: User["onboarding_status"];
+  tpo_profile?: TPOProfile;
+  [key: string]: unknown;
+}
 
 export interface LoginResult {
   access: string;
   refresh: string;
-  user: User & { student_profile?: StudentProfile; admin_profile?: any };
+  user: User & {
+    student_profile?: StudentProfile;
+    admin_profile?: AdminProfile;
+  };
 }
 
 export interface RegisterStudentPayload {
@@ -33,7 +72,9 @@ export interface OTPVerifyResult {
 
 export const authApi = {
   // Student Registration
-  registerStudent: async (payload: RegisterStudentPayload): Promise<LoginResult> => {
+  registerStudent: async (
+    payload: RegisterStudentPayload
+  ): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/auth/register/",
       payload
@@ -42,16 +83,20 @@ export const authApi = {
   },
 
   // TPO Registration
-  registerTPO: async (payload: RegisterTPOPayload): Promise<any> => {
-    const { data } = await apiClient.post<ApiSuccessResponse<any>>(
-      "/tpo/auth/register/",
-      payload
-    );
+  registerTPO: async (
+    payload: RegisterTPOPayload
+  ): Promise<TPORegistrationResult> => {
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<TPORegistrationResult>
+    >("/tpo/auth/register/", payload);
     return data.data;
   },
 
   // Dedicated Role-Based Logins
-  loginStudent: async (email: string, password: string): Promise<LoginResult> => {
+  loginStudent: async (
+    email: string,
+    password: string
+  ): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/auth/login/student/",
       { email, password }
@@ -59,7 +104,10 @@ export const authApi = {
     return data.data;
   },
 
-  loginAdmin: async (email: string, password: string): Promise<LoginResult> => {
+  loginAdmin: async (
+    email: string,
+    password: string
+  ): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/auth/login/admin/",
       { email, password }
@@ -67,7 +115,10 @@ export const authApi = {
     return data.data;
   },
 
-  loginTPO: async (email: string, password: string): Promise<LoginResult> => {
+  loginTPO: async (
+    email: string,
+    password: string
+  ): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/tpo/auth/login/",
       { email, password }
@@ -75,7 +126,10 @@ export const authApi = {
     return data.data;
   },
 
-  loginEmail: async (email: string, password: string): Promise<LoginResult> => {
+  loginEmail: async (
+    email: string,
+    password: string
+  ): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/auth/login/email/",
       { email, password }
@@ -84,15 +138,19 @@ export const authApi = {
   },
 
   // OTP Login
-  requestOtp: async (mobile_number: string): Promise<{ mobile_number: string }> => {
-    const { data } = await apiClient.post<ApiSuccessResponse<{ mobile_number: string }>>(
-      "/auth/otp/request/",
-      { mobile_number }
-    );
+  requestOtp: async (
+    mobile_number: string
+  ): Promise<{ mobile_number: string }> => {
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<{ mobile_number: string }>
+    >("/auth/otp/request/", { mobile_number });
     return data.data;
   },
 
-  verifyOtp: async (mobile_number: string, otp: string): Promise<LoginResult> => {
+  verifyOtp: async (
+    mobile_number: string,
+    otp: string
+  ): Promise<LoginResult> => {
     const { data } = await apiClient.post<ApiSuccessResponse<LoginResult>>(
       "/auth/otp/verify/",
       { mobile_number, otp }
@@ -101,27 +159,31 @@ export const authApi = {
   },
 
   // OTP Password Recovery
-  requestPasswordResetOtp: async (identifier: string): Promise<OTPRequestResult> => {
-    const { data } = await apiClient.post<ApiSuccessResponse<OTPRequestResult>>(
-      "/auth/password/forgot-otp/",
-      { identifier }
-    );
+  requestPasswordResetOtp: async (
+    identifier: string
+  ): Promise<OTPRequestResult> => {
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<OTPRequestResult>
+    >("/auth/password/forgot-otp/", { identifier });
     return data.data;
   },
 
-  verifyPasswordResetOtp: async (identifier: string, otp: string): Promise<OTPVerifyResult> => {
-    const { data } = await apiClient.post<ApiSuccessResponse<OTPVerifyResult>>(
-      "/auth/password/verify-reset-otp/",
-      { identifier, otp }
-    );
+  verifyPasswordResetOtp: async (
+    identifier: string,
+    otp: string
+  ): Promise<OTPVerifyResult> => {
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<OTPVerifyResult>
+    >("/auth/password/verify-reset-otp/", { identifier, otp });
     return data.data;
   },
 
-  requestPasswordReset: async (email: string): Promise<{ email: string }> => {
-    const { data } = await apiClient.post<ApiSuccessResponse<{ email: string }>>(
-      "/auth/password/forgot/",
-      { email }
-    );
+  requestPasswordReset: async (
+    email: string
+  ): Promise<{ email: string }> => {
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<{ email: string }>
+    >("/auth/password/forgot/", { email });
     return data.data;
   },
 
@@ -131,20 +193,28 @@ export const authApi = {
     identifier?: string,
     otp?: string
   ): Promise<void> => {
-    await apiClient.post<ApiSuccessResponse<{}>>("/auth/password/reset/", {
-      token,
-      new_password,
-      identifier,
-      otp,
-    });
+    await apiClient.post<ApiSuccessResponse<unknown>>(
+      "/auth/password/reset/",
+      {
+        token,
+        new_password,
+        identifier,
+        otp,
+      }
+    );
   },
 
   getMe: async (): Promise<User> => {
-    const { data } = await apiClient.get<ApiSuccessResponse<{ user: User }>>("/auth/me/");
+    const { data } = await apiClient.get<
+      ApiSuccessResponse<{ user: User }>
+    >("/auth/me/");
     return data.data.user;
   },
 
   logout: async (refresh: string): Promise<void> => {
-    await apiClient.post<ApiSuccessResponse<{}>>("/auth/logout/", { refresh });
+    await apiClient.post<ApiSuccessResponse<unknown>>(
+      "/auth/logout/",
+      { refresh }
+    );
   },
 };

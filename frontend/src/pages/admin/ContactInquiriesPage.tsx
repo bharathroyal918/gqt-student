@@ -20,10 +20,11 @@ import {
 } from "lucide-react";
 import { adminApi, AdminContactInquiryItem } from "../../api/adminApi";
 import { Card } from "../../components/ui/Card";
-import { Badge } from "../../components/ui/Badge";
+import { Badge, BadgeVariant } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Input, Select, Textarea } from "../../components/ui/Form";
 import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/errors";
 
 export const ContactInquiriesPage: React.FC = () => {
   const { id: routeInquiryId } = useParams<{ id?: string }>();
@@ -61,8 +62,8 @@ export const ContactInquiriesPage: React.FC = () => {
       setSelectedInquiry(updated);
       success("Ticket Updated", `Inquiry #${updated.id.slice(0, 8)} updated to ${updated.status}.`);
     },
-    onError: (err: any) => {
-      toastError("Update Failed", err?.response?.data?.error?.message || "Could not update inquiry.");
+    onError: (err: unknown) => {
+      toastError("Update Failed", getApiErrorMessage(err, "Could not update inquiry."));
     },
   });
 
@@ -121,7 +122,7 @@ export const ContactInquiriesPage: React.FC = () => {
     { key: "CLOSED", label: "Closed", count: closedCount },
   ];
 
-  const getCategoryBadgeVariant = (cat: string) => {
+  const getCategoryBadgeVariant = (cat: string): BadgeVariant => {
     switch (cat) {
       case "TECHNICAL_SUPPORT":
         return "rose";
@@ -136,7 +137,7 @@ export const ContactInquiriesPage: React.FC = () => {
     }
   };
 
-  const getStatusBadgeVariant = (st: string) => {
+  const getStatusBadgeVariant = (st: string): BadgeVariant => {
     switch (st) {
       case "RESOLVED":
         return "emerald";
@@ -314,10 +315,10 @@ export const ContactInquiriesPage: React.FC = () => {
                             <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
                               {item.subject}
                             </span>
-                            <Badge variant={getStatusBadgeVariant(item.status) as any} size="sm">
+                            <Badge variant={getStatusBadgeVariant(item.status)} size="sm">
                               {item.status}
                             </Badge>
-                            <Badge variant={getCategoryBadgeVariant(item.category) as any} size="sm">
+                            <Badge variant={getCategoryBadgeVariant(item.category)} size="sm">
                               {item.category.replace(/_/g, " ")}
                             </Badge>
                           </div>
@@ -356,7 +357,7 @@ export const ContactInquiriesPage: React.FC = () => {
               {/* Header Info */}
               <div className="border-b border-slate-200 dark:border-surface-800 pb-4">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <Badge variant={getCategoryBadgeVariant(selectedInquiry.category) as any} size="sm">
+                  <Badge variant={getCategoryBadgeVariant(selectedInquiry.category)} size="sm">
                     {selectedInquiry.category.replace(/_/g, " ")}
                   </Badge>
                   <span className="font-mono text-xs text-slate-400">
@@ -376,7 +377,7 @@ export const ContactInquiriesPage: React.FC = () => {
                       <User className="h-3.5 w-3.5 text-brand-500" />
                       <span><strong>Student:</strong> {selectedInquiry.name}</span>
                     </div>
-                    <Badge variant={getStatusBadgeVariant(selectedInquiry.status) as any} size="sm">
+                    <Badge variant={getStatusBadgeVariant(selectedInquiry.status)} size="sm">
                       {selectedInquiry.status}
                     </Badge>
                   </div>

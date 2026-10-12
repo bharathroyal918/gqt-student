@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { placementsApi } from "../../api/placementsApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import {
   PlacementDrive,
   CreatePlacementDrivePayload,
@@ -80,11 +81,11 @@ export const PlacementDrivesPage: React.FC = () => {
       setFormError(null);
       resetForm();
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to publish placement drive. Please verify the form inputs.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(
+        err,
+        "Failed to publish placement drive. Please verify the form inputs."
+      );
       setFormError(msg);
     },
   });
@@ -98,11 +99,11 @@ export const PlacementDrivesPage: React.FC = () => {
       setFormError(null);
       resetForm();
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to update placement drive.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(
+        err,
+        "Failed to update placement drive."
+      );
       setFormError(msg);
     },
   });

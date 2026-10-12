@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     queryClient.removeQueries({ queryKey: ["student"] });
     queryClient.clear();
 
-    const profile = studentProfile || (user as any).student_profile || null;
+    const profile = studentProfile || user.student_profile || null;
     setStorageItem("gqt_access_token", tokens.access);
     setStorageItem("gqt_refresh_token", tokens.refresh);
     setStorageItem("gqt_user", JSON.stringify(user));
@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
   updateUser: (user) => {
     setStorageItem("gqt_user", JSON.stringify(user));
-    const studentProfile = (user as any)?.student_profile || get().studentProfile;
+    const studentProfile = user?.student_profile || get().studentProfile;
     if (studentProfile) {
       setStorageItem("gqt_profile", JSON.stringify(studentProfile));
     }
@@ -95,7 +95,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       ? {
         ...currentUser,
         student_profile: {
-          ...((currentUser as any).student_profile || {}),
+          ...(currentUser.student_profile || {}),
           ...studentProfile,
         },
       }
@@ -139,7 +139,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         set({ isLoading: true });
       }
       const user = await authApi.getMe();
-      const studentProfile = (user as any).student_profile || null;
+      const studentProfile = user.student_profile || null;
 
       setStorageItem("gqt_user", JSON.stringify(user));
       if (studentProfile) {
@@ -153,9 +153,14 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         isLoading: false,
       });
       return user;
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If 401 or network failure
-      if (err.response?.status === 401) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        (err as { response?: { status?: number } }).response?.status === 401
+      ) {
         get().clearAuth();
       }
       set({ isLoading: false });

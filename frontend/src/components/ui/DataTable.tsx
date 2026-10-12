@@ -80,13 +80,12 @@ export function DataTable<T>({
               {columns.map((col, idx) => (
                 <th
                   key={col.key || idx}
-                  className={`px-5 py-3.5 whitespace-nowrap ${
-                    col.align === "right"
-                      ? "text-right"
-                      : col.align === "center"
+                  className={`px-5 py-3.5 whitespace-nowrap ${col.align === "right"
+                    ? "text-right"
+                    : col.align === "center"
                       ? "text-center"
                       : "text-left"
-                  } ${col.headerClassName || col.className || ""}`}
+                    } ${col.headerClassName || col.className || ""}`}
                 >
                   {col.header}
                 </th>
@@ -102,17 +101,17 @@ export function DataTable<T>({
               </tr>
             ) : (
               data.map((row, rowIdx) => {
+                const hasId = typeof row === "object" && row !== null && "id" in row;
                 const rowKey = keyExtractor
                   ? keyExtractor(row, rowIdx)
-                  : ((row as any).id || rowIdx);
+                  : (hasId ? String((row as { id: unknown }).id) : rowIdx);
 
                 return (
                   <tr
                     key={rowKey}
                     onClick={() => onRowClick && onRowClick(row)}
-                    className={`transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-surface-800/60 ${
-                      onRowClick ? "cursor-pointer" : ""
-                    }`}
+                    className={`transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-surface-800/60 ${onRowClick ? "cursor-pointer" : ""
+                      }`}
                   >
                     {columns.map((col, colIdx) => {
                       let cellContent: React.ReactNode = null;
@@ -127,13 +126,12 @@ export function DataTable<T>({
                       return (
                         <td
                           key={col.key || colIdx}
-                          className={`px-5 py-4 whitespace-nowrap text-slate-800 dark:text-slate-100 ${
-                            col.align === "right"
-                              ? "text-right"
-                              : col.align === "center"
+                          className={`px-5 py-4 whitespace-nowrap text-slate-800 dark:text-slate-100 ${col.align === "right"
+                            ? "text-right"
+                            : col.align === "center"
                               ? "text-center"
                               : "text-left"
-                          } ${col.className || ""}`}
+                            } ${col.className || ""}`}
                         >
                           {cellContent}
                         </td>

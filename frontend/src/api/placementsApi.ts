@@ -126,7 +126,7 @@ export const placementsApi = {
     driveId: string,
     payload: ApplyPlacementPayload
   ) => {
-    let body: any = payload;
+    let body: ApplyPlacementPayload | FormData = payload;
 
     if (payload.resume_file instanceof File) {
       const formData = new FormData();

@@ -9,6 +9,7 @@ import {
   Code2,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { TaskItem, CodingQuestionListItem } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
@@ -67,8 +68,8 @@ export const TasksPage: React.FC = () => {
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create task";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create task");
       toastError("Creation Failed", msg);
     },
   });

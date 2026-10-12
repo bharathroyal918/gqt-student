@@ -30,6 +30,7 @@ export interface StudentEnrollment {
 export interface StudentDetail extends StudentListItem {
   avatar_url: string;
   enrollments: StudentEnrollment[];
+  attendance_percentage?: number | string;
 }
 
 export interface StudentProgressOverview {
@@ -98,6 +99,23 @@ export interface StudentRankData {
   current_streak_days: number;
   highest_streak_days: number;
 }
+
+
+export interface StudentAttendanceRecord {
+  id: string;
+  date: string;
+  session_title: string;
+  status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+  remarks: string | null;
+}
+
+export interface StudentAttendanceData {
+  attendance_percentage: number | string;
+  attended_classes: number;
+  total_classes: number;
+  records: StudentAttendanceRecord[];
+}
+
 
 export interface CourseItem {
   id: string;
@@ -313,15 +331,15 @@ export interface ExportJobItem {
   id: string;
   user_email: string;
   report_type:
-    | "STUDENT_PERFORMANCE"
-    | "COURSE_STATISTICS"
-    | "ASSIGNMENT_COMPLETION"
-    | "PROJECT_PERFORMANCE"
-    | "MONTHLY_ACTIVITY"
-    | "FULL_EXECUTIVE";
+  | "STUDENT_PERFORMANCE"
+  | "COURSE_STATISTICS"
+  | "ASSIGNMENT_COMPLETION"
+  | "PROJECT_PERFORMANCE"
+  | "MONTHLY_ACTIVITY"
+  | "FULL_EXECUTIVE";
   format: "CSV" | "JSON";
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   file_name: string;
   file_size_bytes: number;
   row_count: number;

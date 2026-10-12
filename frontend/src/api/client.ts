@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { ApiErrorResponse, ApiSuccessResponse } from "../types/api";
 
-const rawApiBaseUrl = (import.meta as any).env?.VITE_API_BASE_URL || "/api/v1";
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 export const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, "");
 
 export const apiClient = axios.create({
@@ -28,10 +28,10 @@ apiClient.interceptors.request.use(
 let isRefreshing = false;
 let refreshSubscribers: Array<{
   resolve: (token: string) => void;
-  reject: (error: any) => void;
+  reject: (error: unknown) => void;
 }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   refreshSubscribers.forEach((subscriber) => {
     if (error) {
       subscriber.reject(error);

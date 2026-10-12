@@ -14,6 +14,7 @@ import {
   Code2,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { ModuleItem, ModulePrerequisiteItem } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
@@ -73,7 +74,16 @@ export const CourseDetailPage: React.FC = () => {
 
   // Mutations
   const createModuleMutation = useMutation({
-    mutationFn: (payload: any) => adminApi.createModule({ ...payload, course_id: id! }),
+    mutationFn: (payload: {
+      title: string;
+      slug?: string;
+      order_index?: number;
+      summary?: string;
+      lecture_content?: string;
+      passing_percentage?: number;
+      is_published?: boolean;
+      prerequisite_ids?: string[];
+    }) => adminApi.createModule({ ...payload, course_id: id! }),
     onSuccess: (mod) => {
       success("Module Created", `Module '${mod.title}' added to curriculum.`);
       setIsAddModuleOpen(false);
@@ -81,14 +91,14 @@ export const CourseDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-modules"] });
       queryClient.invalidateQueries({ queryKey: ["admin-course-detail", id] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create module";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create module");
       toastError("Creation Failed", msg);
     },
   });
 
   const updateModuleMutation = useMutation({
-    mutationFn: ({ modId, payload }: { modId: string; payload: any }) =>
+    mutationFn: ({ modId, payload }: { modId: string; payload: Parameters<typeof adminApi.updateModule>[1] }) =>
       adminApi.updateModule(modId, payload),
     onSuccess: () => {
       success("Module Updated", "Changes saved.");
@@ -144,7 +154,7 @@ export const CourseDetailPage: React.FC = () => {
       order_index: mod.order_index,
       summary: mod.summary || "",
       lecture_content: mod.lecture_content || "",
-      passing_percentage: parseFloat(mod.passing_percentage as any) || 70,
+      passing_percentage: parseFloat(mod.passing_percentage) || 70,
       is_published: mod.is_published,
     });
   };

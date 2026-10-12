@@ -37,13 +37,45 @@ import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { UserAvatar } from "../../components/ui/UserAvatar";
 
+function getApiErrorMessage(
+  error: unknown,
+  fallback: string
+): string {
+  if (typeof error === "object" && error !== null) {
+    const candidate = error as {
+      message?: unknown;
+      response?: {
+        data?: {
+          error?: {
+            message?: unknown;
+          };
+        };
+      };
+    };
+
+    const apiMessage = candidate.response?.data?.error?.message;
+
+    if (typeof apiMessage === "string" && apiMessage.trim()) {
+      return apiMessage;
+    }
+
+    if (typeof candidate.message === "string" && candidate.message.trim()) {
+      return candidate.message;
+    }
+  }
+
+  return fallback;
+}
+
+type AdminProfileTab = "profile" | "security" | "activity" | "permissions";
+
 export const AdminProfilePage: React.FC = () => {
   const { user, updateUser } = useAuthStore();
   const queryClient = useQueryClient();
   const { success, error: toastError } = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"profile" | "security" | "activity" | "permissions">("profile");
+  const [activeTab, setActiveTab] = useState<AdminProfileTab>("profile");
 
   // Profile Form State
   const [profileForm, setProfileForm] = useState<AdminProfileUpdatePayload>({
@@ -80,7 +112,7 @@ export const AdminProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (adminData) {
-      const p = adminData.profile || (adminData.user as any)?.admin_profile;
+      const p = adminData.profile ?? adminData.user.admin_profile;
       setProfileForm({
         full_name: p?.full_name || "Administrator",
         designation: p?.designation || "Portal Administrator",
@@ -102,12 +134,25 @@ export const AdminProfilePage: React.FC = () => {
       success("Profile Updated", "Your administrative profile details have been saved.");
       queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
       if (user && res?.user) {
-        updateUser({ ...user, ...res.user });
+        updateUser({
+          ...user,
+          email: res.user.email ?? user.email,
+          mobile_number: res.user.mobile_number ?? user.mobile_number,
+          is_active: res.user.is_active ?? user.is_active,
+          onboarding_status:
+            res.user.onboarding_status === "PENDING_ACTIVATION" ||
+            res.user.onboarding_status === "ACTIVE" ||
+            res.user.onboarding_status === "SUSPENDED"
+              ? res.user.onboarding_status
+              : user.onboarding_status,
+        });
       }
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message || err?.message || "Failed to update admin profile.";
-      toastError("Update Failed", msg);
+    onError: (err: unknown) => {
+      toastError(
+        "Update Failed",
+        getApiErrorMessage(err, "Failed to update admin profile.")
+      );
     },
   });
 
@@ -117,14 +162,18 @@ export const AdminProfilePage: React.FC = () => {
     onSuccess: (data) => {
       success("Profile Photo Updated", "Your profile photo is now active across the admin header and sidebar.");
       setProfileForm((prev) => ({ ...prev, avatar_url: data.avatar_url }));
-      if (data.user) {
-        updateUser(data.user);
+      if (user && data.avatar_url) {
+        updateUser({
+          ...user,
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message || err?.message || "Failed to upload photo.";
-      toastError("Upload Failed", msg);
+    onError: (err: unknown) => {
+      toastError(
+        "Upload Failed",
+        getApiErrorMessage(err, "Failed to upload photo.")
+      );
     },
   });
 
@@ -165,9 +214,11 @@ export const AdminProfilePage: React.FC = () => {
       });
       setPasswordErrors({});
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message || err?.message || "Failed to change password.";
-      toastError("Password Change Failed", msg);
+    onError: (err: unknown) => {
+      toastError(
+        "Password Change Failed",
+        getApiErrorMessage(err, "Failed to change password.")
+      );
     },
   });
 
@@ -221,7 +272,11 @@ export const AdminProfilePage: React.FC = () => {
     .slice(0, 2)
     .toUpperCase();
 
-  const tabs = [
+  const tabs: {
+    id: AdminProfileTab;
+    label: string;
+    icon: typeof User;
+  }[] = [
     { id: "profile", label: "Profile Overview & Details", icon: User },
     { id: "security", label: "Security & Credentials", icon: Lock },
     { id: "activity", label: "Login & Audit History", icon: History },
@@ -356,7 +411,7 @@ export const AdminProfilePage: React.FC = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${isActive
                 ? "bg-brand-600 text-white shadow-md shadow-brand-500/25 font-bold"
                 : "bg-white dark:bg-surface-900/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-800"

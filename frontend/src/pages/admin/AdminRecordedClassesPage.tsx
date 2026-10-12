@@ -31,6 +31,7 @@ import { FormField, Input, Textarea, Checkbox, Select } from "../../components/u
 import { LoadingState } from "../../components/ui/LoadingState";
 import { useToast } from "../../context/ToastContext";
 import { UserAvatar } from "../../components/ui/UserAvatar";
+import { getApiErrorMessage } from "../../utils/errors";
 
 export const AdminRecordedClassesPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -205,8 +206,8 @@ export const AdminRecordedClassesPage: React.FC = () => {
         setExpandedFolders((prev) => ({ ...prev, [newFolder.id]: true }));
       }
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create folder";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create folder");
       toastError("Creation Failed", msg);
     },
   });
@@ -223,8 +224,8 @@ export const AdminRecordedClassesPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-recorded-videos", selectedCourseId] });
       queryClient.invalidateQueries({ queryKey: ["student", "recorded-classes"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to update folder";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to update folder");
       toastError("Update Failed", msg);
     },
   });
@@ -255,8 +256,8 @@ export const AdminRecordedClassesPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-course-modules", selectedCourseId] });
       queryClient.invalidateQueries({ queryKey: ["student", "recorded-classes"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create video";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create video");
       toastError("Creation Failed", msg);
     },
   });
@@ -272,8 +273,8 @@ export const AdminRecordedClassesPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-course-modules", selectedCourseId] });
       queryClient.invalidateQueries({ queryKey: ["student", "recorded-classes"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to update video";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to update video");
       toastError("Update Failed", msg);
     },
   });
@@ -305,8 +306,8 @@ export const AdminRecordedClassesPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-course-enrollments", selectedCourseId] });
       queryClient.invalidateQueries({ queryKey: ["student", "recorded-classes"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || "Failed to allocate course.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to allocate course.");
       toastError("Allocation Failed", msg);
     },
   });

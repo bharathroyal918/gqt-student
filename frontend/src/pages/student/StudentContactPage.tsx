@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { studentApi, CompanyInfoData } from "../../api/studentApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -58,8 +59,12 @@ export const StudentContactPage: React.FC = () => {
       });
       setErrors({});
     },
-    onError: (err: any) => {
-      const errPayload = err?.response?.data?.error;
+    onError: (err: unknown) => {
+      let errPayload: { message?: string; details?: Record<string, unknown> } | undefined;
+      if (typeof err === "object" && err !== null && "response" in err) {
+        const resp = (err as { response?: { data?: { error?: { message?: string; details?: Record<string, unknown> } } } }).response;
+        errPayload = resp?.data?.error;
+      }
       if (errPayload?.details) {
         const fieldErrors: Record<string, string> = {};
         for (const [field, val] of Object.entries(errPayload.details)) {
@@ -69,7 +74,7 @@ export const StudentContactPage: React.FC = () => {
       }
       toastError(
         "Submission Failed",
-        errPayload?.message || "Could not submit inquiry. Please verify the form."
+        getApiErrorMessage(err, "Could not submit inquiry. Please verify the form.")
       );
     },
   });

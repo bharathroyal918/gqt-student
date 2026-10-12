@@ -23,7 +23,7 @@ const RouteLoadingFallback: React.FC = () => (
 );
 
 // Wrapper to wrap lazy elements in Suspense
-const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
+const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<RouteLoadingFallback />}>
     <Component />
   </Suspense>

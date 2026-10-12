@@ -1,5 +1,6 @@
 import { apiClient } from "./client";
 import { ApiSuccessResponse } from "../types/api";
+import { User, StudentProfile } from "../types/auth";
 
 export interface DashboardProfile {
   id: string;
@@ -397,19 +398,31 @@ export const studentApi = {
     return data.data;
   },
 
-  updateProfile: async (payload: StudentProfileUpdatePayload): Promise<any> => {
-    const { data } = await apiClient.patch<ApiSuccessResponse<any>>(
+  updateProfile: async (payload: StudentProfileUpdatePayload): Promise<StudentProfile> => {
+    const { data } = await apiClient.patch<ApiSuccessResponse<StudentProfile>>(
       "/students/me/profile/",
       payload
     );
     return data.data;
   },
 
-  uploadAvatar: async (file: File): Promise<{ avatar_url: string; relative_url?: string; user?: any; student_profile?: any }> => {
+  uploadAvatar: async (
+    file: File
+  ): Promise<{
+    avatar_url: string;
+    relative_url?: string;
+    user?: User;
+    student_profile?: StudentProfile;
+  }> => {
     const formData = new FormData();
     formData.append("avatar", file);
     const { data } = await apiClient.post<
-      ApiSuccessResponse<{ avatar_url: string; relative_url?: string; user?: any; student_profile?: any }>
+      ApiSuccessResponse<{
+        avatar_url: string;
+        relative_url?: string;
+        user?: User;
+        student_profile?: StudentProfile;
+      }>
     >("/auth/avatar/upload/", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -612,8 +625,8 @@ export const studentApi = {
   submitProject: async (
     projectId: string,
     payload: StudentProjectSubmitPayload
-  ): Promise<any> => {
-    const { data } = await apiClient.post<ApiSuccessResponse<any>>(
+  ): Promise<StudentProjectSubmissionResult> => {
+    const { data } = await apiClient.post<ApiSuccessResponse<StudentProjectSubmissionResult>>(
       `/students/projects/${projectId}/submit/`,
       payload
     );
@@ -932,7 +945,16 @@ export interface StudentNotificationItem {
   read_at: string | null;
   action_url: string;
   created_at: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
+}
+
+export interface StudentProjectSubmissionResult {
+  submission_id: string;
+  project_id: string;
+  status: string;
+  github_repository_url: string;
+  files_count: number;
+  submitted_at: string;
 }
 
 export interface StudentAnnouncementItem {
@@ -965,7 +987,7 @@ export interface StudentTaskItem {
   submission_notes: string;
 }
 
-export interface StudentTaskDetail extends StudentTaskItem { }
+export type StudentTaskDetail = StudentTaskItem;
 
 export interface StudentTaskCompletionResponse {
   id: string;

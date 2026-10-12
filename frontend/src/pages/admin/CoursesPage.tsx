@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { CourseItem } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
@@ -65,8 +66,8 @@ export const CoursesPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard-stats"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create course";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create course");
       toastError("Creation Failed", msg);
     },
   });
@@ -79,8 +80,8 @@ export const CoursesPage: React.FC = () => {
       setEditingCourse(null);
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to update course";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to update course");
       toastError("Update Failed", msg);
     },
   });

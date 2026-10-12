@@ -34,6 +34,7 @@ import {
   StudentAttendanceSummary,
   StudentProfileUpdatePayload,
 } from "../../api/studentApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { collegesApi } from "../../api/collegesApi";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -52,14 +53,14 @@ export const StudentProfilePage: React.FC = () => {
 
   // Editable Profile Form State
   const [formData, setFormData] = useState<StudentProfileUpdatePayload>({
-    dob: (studentProfile as any)?.dob || "",
+    dob: studentProfile?.dob || "",
     avatar_url: studentProfile?.avatar_url || "",
-    branch: (studentProfile as any)?.branch || "",
+    branch: studentProfile?.branch || "",
     college_name: studentProfile?.college_name || "",
     graduation_year: studentProfile?.graduation_year || 2027,
-    bio: (studentProfile as any)?.bio || "",
-    github_url: (studentProfile as any)?.github_url || "",
-    linkedin_url: (studentProfile as any)?.linkedin_url || "",
+    bio: studentProfile?.bio || "",
+    github_url: studentProfile?.github_url || "",
+    linkedin_url: studentProfile?.linkedin_url || "",
   });
 
   // Verification lookup state
@@ -99,8 +100,8 @@ export const StudentProfilePage: React.FC = () => {
       }
       queryClient.invalidateQueries({ queryKey: ["student"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || "Failed to update profile. Please try again.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to update profile. Please try again.");
       toastError("Update Failed", msg);
     },
   });
@@ -121,8 +122,8 @@ export const StudentProfilePage: React.FC = () => {
       }
       queryClient.invalidateQueries({ queryKey: ["student"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || err?.message || "Failed to upload photo.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to upload photo.");
       toastError("Upload Failed", msg);
     },
   });
@@ -155,14 +156,14 @@ export const StudentProfilePage: React.FC = () => {
   useEffect(() => {
     if (studentProfile) {
       setFormData({
-        dob: (studentProfile as any)?.dob || "",
+        dob: studentProfile?.dob || "",
         avatar_url: studentProfile?.avatar_url || "",
-        branch: (studentProfile as any)?.branch || "",
+        branch: studentProfile?.branch || "",
         college_name: studentProfile?.college_name || "",
         graduation_year: studentProfile?.graduation_year || 2026,
-        bio: (studentProfile as any)?.bio || "",
-        github_url: (studentProfile as any)?.github_url || "",
-        linkedin_url: (studentProfile as any)?.linkedin_url || "",
+        bio: studentProfile?.bio || "",
+        github_url: studentProfile?.github_url || "",
+        linkedin_url: studentProfile?.linkedin_url || "",
       });
     }
   }, [studentProfile]);
@@ -194,10 +195,11 @@ export const StudentProfilePage: React.FC = () => {
     try {
       const result = await studentApi.verifyCertificate(lookupIdentifier.trim());
       setLookupResult(result);
-    } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.error?.message ||
-        "Certificate could not be verified or record not found.";
+    } catch (err: unknown) {
+      const errorMsg = getApiErrorMessage(
+        err,
+        "Certificate could not be verified or record not found."
+      );
       setLookupError(errorMsg);
     } finally {
       setLookupLoading(false);
@@ -206,7 +208,7 @@ export const StudentProfilePage: React.FC = () => {
 
   const pointsFormatted = (studentProfile?.total_points || 0).toLocaleString();
   const displayName = studentProfile?.full_name || user?.email || "Student";
-  const courseOpted = (studentProfile as any)?.course_opted || studentProfile?.batch_code || "Full Stack Software & Assessment Track";
+  const courseOpted = studentProfile?.course_opted || studentProfile?.batch_code || "Full Stack Software & Assessment Track";
   const unlockedCount = badges.filter((b) => b.is_unlocked).length;
 
   return (
@@ -356,7 +358,7 @@ export const StudentProfilePage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 <GraduationCap className="h-4 w-4 text-slate-400 shrink-0" />
-                <span>Class: {formData.graduation_year || studentProfile?.graduation_year || "2026"} • Branch: {formData.branch || (studentProfile as any)?.branch || "CSE"}</span>
+                <span>Class: {formData.graduation_year || studentProfile?.graduation_year || "2026"} • Branch: {formData.branch || studentProfile?.branch || "CSE"}</span>
               </div>
             </div>
           </div>

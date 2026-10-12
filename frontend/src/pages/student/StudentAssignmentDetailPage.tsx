@@ -37,6 +37,7 @@ import {
   CodeRunResponse,
   CodeSubmitResponse,
 } from "../../api/studentApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -85,7 +86,8 @@ export const StudentAssignmentDetailPage: React.FC = () => {
     return saved ? parseInt(saved) : 13;
   });
   const [editorTheme, setEditorTheme] = useState<"vs-dark" | "vs-light" | "hc-black">(() => {
-    return (localStorage.getItem("gqt_editor_theme") as any) || "vs-light";
+    const saved = localStorage.getItem("gqt_editor_theme");
+    return saved === "vs-dark" || saved === "vs-light" || saved === "hc-black" ? saved : "vs-light";
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showProblemPeek, setShowProblemPeek] = useState(false);
@@ -214,8 +216,8 @@ export const StudentAssignmentDetailPage: React.FC = () => {
         setConsoleHeight("normal");
       }
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message || "Execution error occurred.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Execution error occurred.");
       toastError("Run Failed", msg);
     },
   });
@@ -251,8 +253,8 @@ export const StudentAssignmentDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["student"] });
       hydrateAuth(true);
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message || "Submission failed.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Submission failed.");
       toastError("Submission Error", msg);
     },
   });
@@ -777,7 +779,7 @@ export const StudentAssignmentDetailPage: React.FC = () => {
 
                 <select
                   value={editorTheme}
-                  onChange={(e) => handleThemeChange(e.target.value as any)}
+                  onChange={(e) => handleThemeChange(e.target.value as "vs-dark" | "vs-light" | "hc-black")}
                   className="hidden sm:block rounded-lg border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-300 font-medium focus:outline-none"
                   title="Editor Theme"
                 >

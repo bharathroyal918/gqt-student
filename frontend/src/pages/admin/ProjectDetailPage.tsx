@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
@@ -62,14 +63,15 @@ export const ProjectDetailPage: React.FC = () => {
 
   // Mutation
   const reviewMutation = useMutation({
-    mutationFn: (payload: any) => adminApi.reviewSubmission(id!, payload),
+    mutationFn: (payload: Parameters<typeof adminApi.reviewSubmission>[1]) =>
+      adminApi.reviewSubmission(id!, payload),
     onSuccess: () => {
       success("Review Recorded", "Grading evaluation and feedback saved successfully.");
       queryClient.invalidateQueries({ queryKey: ["admin-submission-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-project-submissions"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to save review";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to save review");
       toastError("Review Failed", msg);
     },
   });

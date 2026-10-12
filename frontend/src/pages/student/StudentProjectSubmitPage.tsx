@@ -17,6 +17,7 @@ import { Badge } from "../../components/ui/Badge";
 import { FormField, Input, Textarea, Select } from "../../components/ui/Form";
 import { useToast } from "../../context/ToastContext";
 import { studentApi } from "../../api/studentApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 
 export const StudentProjectSubmitPage: React.FC = () => {
@@ -90,8 +91,8 @@ export const StudentProjectSubmitPage: React.FC = () => {
       success("Deliverables Submitted!", "Your project deliverables have been submitted for faculty review.");
       navigate("/projects");
     },
-    onError: (err: any) => {
-      toastError("Submission Error", err?.response?.data?.message || "Failed to submit project deliverables.");
+    onError: (err: unknown) => {
+      toastError("Submission Error", getApiErrorMessage(err, "Failed to submit project deliverables."));
     },
   });
 

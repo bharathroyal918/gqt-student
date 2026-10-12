@@ -46,7 +46,7 @@ export const TPOSidebar: React.FC<TPOSidebarProps> = ({ isOpen, onCloseMobile })
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken);
-      } catch (e) {
+      } catch {
         // Silently continue
       }
     }

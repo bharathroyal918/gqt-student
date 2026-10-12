@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { studentApi } from "../../api/studentApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -186,11 +187,8 @@ export const StudentModuleDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["student", "courses"] });
       queryClient.invalidateQueries({ queryKey: ["student", "dashboard"] });
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to mark module as complete.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to mark module as complete.");
       toastError("Completion Failed", msg);
     },
   });
@@ -205,10 +203,12 @@ export const StudentModuleDetailPage: React.FC = () => {
 
   if (isError || !moduleData) {
     // Handle locked module specifically
-    const errorCode = (error as any)?.response?.data?.error?.code;
-    const errorMsg =
-      (error as any)?.response?.data?.error?.message ||
-      (error instanceof Error ? error.message : "Failed to load module.");
+    let errorCode: string | undefined;
+    if (typeof error === "object" && error !== null && "response" in error) {
+      const resp = (error as { response?: { data?: { error?: { code?: string } } } }).response;
+      errorCode = resp?.data?.error?.code;
+    }
+    const errorMsg = getApiErrorMessage(error, "Failed to load module.");
 
     if (errorCode === "MODULE_LOCKED") {
       return (
@@ -303,11 +303,10 @@ export const StudentModuleDetailPage: React.FC = () => {
               <div className="flex items-center gap-3 mt-3">
                 <div className="h-2 w-32 overflow-hidden rounded-full bg-slate-200 dark:bg-surface-800">
                   <div
-                    className={`h-full rounded-full ${
-                      moduleData.score_percentage >= moduleData.passing_percentage
-                        ? "bg-emerald-500"
-                        : "bg-amber-500"
-                    }`}
+                    className={`h-full rounded-full ${moduleData.score_percentage >= moduleData.passing_percentage
+                      ? "bg-emerald-500"
+                      : "bg-amber-500"
+                      }`}
                     style={{ width: `${Math.min(moduleData.score_percentage, 100)}%` }}
                   />
                 </div>

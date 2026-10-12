@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { adminApi, AdminAttendanceOverviewData, AdminScanQRResponse } from "../../api/adminApi";
 import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -86,11 +87,8 @@ export const AdminAttendancePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "attendance"] });
       toastSuccess("Attendance Marked!", data.message);
     },
-    onError: (err: any) => {
-      const errMsg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to record attendance from scanned QR.";
+    onError: (err: unknown) => {
+      const errMsg = getApiErrorMessage(err, "Failed to record attendance from scanned QR.");
       setScannerError(errMsg);
       toastError("Scan Verification Error", errMsg);
     },
@@ -121,8 +119,8 @@ export const AdminAttendancePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "attendance"] });
       toastSuccess("Updated", "Student attendance status updated.");
     },
-    onError: (err: any) => {
-      toastError("Update Failed", err?.response?.data?.message || "Could not update status.");
+    onError: (err: unknown) => {
+      toastError("Update Failed", getApiErrorMessage(err, "Could not update status."));
     },
   });
 
@@ -134,8 +132,8 @@ export const AdminAttendancePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "attendance"] });
       toastSuccess("Bulk Attendance Complete", data.message);
     },
-    onError: (err: any) => {
-      toastError("Bulk Mark Failed", err?.response?.data?.message || "Could not mark batch.");
+    onError: (err: unknown) => {
+      toastError("Bulk Mark Failed", getApiErrorMessage(err, "Could not mark batch."));
     },
   });
 
@@ -164,7 +162,7 @@ export const AdminAttendancePage: React.FC = () => {
           // Continuous scanning ticks
         }
       );
-    } catch (err: any) {
+    } catch {
       setIsCameraActive(false);
       setScannerError("Camera access failed or permission denied. You can enter Student ID manually below.");
     }
@@ -177,7 +175,7 @@ export const AdminAttendancePage: React.FC = () => {
           await scannerRef.current.stop();
         }
         scannerRef.current.clear();
-      } catch (e) {
+      } catch {
         // Ignored during cleanup
       }
       scannerRef.current = null;
@@ -749,7 +747,7 @@ export const AdminAttendancePage: React.FC = () => {
               <label className="font-semibold block mb-1">Mark Status As:</label>
               <select
                 value={bulkStatus}
-                onChange={(e) => setBulkStatus(e.target.value as any)}
+                onChange={(e) => setBulkStatus(e.target.value as "PRESENT" | "ABSENT")}
                 className="w-full rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-800 px-3 py-2 font-bold"
               >
                 <option value="PRESENT">✓ PRESENT</option>

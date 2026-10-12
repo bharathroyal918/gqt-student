@@ -22,6 +22,7 @@ import {
   Download,
 } from "lucide-react";
 import { placementsApi } from "../../api/placementsApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import {
   PlacementDrive,
@@ -86,11 +87,11 @@ export const StudentPlacementsPage: React.FC = () => {
       setApplyingDrive(null);
       setApplyError(null);
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to submit application. Please verify your details and uploaded resume.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(
+        err,
+        "Failed to submit application. Please verify your details and uploaded resume."
+      );
       setApplyError(msg);
     },
   });
@@ -183,7 +184,7 @@ export const StudentPlacementsPage: React.FC = () => {
           throw new Error(msg);
         }
 
-        let filename = app.resume_filename || "my_resume.pdf";
+        const filename = app.resume_filename || "my_resume.pdf";
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -192,11 +193,12 @@ export const StudentPlacementsPage: React.FC = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (app.resume_url) {
           window.open(app.resume_url, "_blank", "noopener,noreferrer");
         } else {
-          alert(err?.message || "Unable to download resume file.");
+          const message = err instanceof Error ? err.message : "Unable to download resume file.";
+          alert(message);
         }
       } finally {
         setDownloadingResumeId(null);

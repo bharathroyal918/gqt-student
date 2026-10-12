@@ -7,6 +7,7 @@ import {
   RecordedClassItem,
   CourseEnrollmentItem,
 } from "../types/recordedClasses";
+import { ModuleItem } from "../types/admin";
 
 export const recordedClassesApi = {
   // ---------------------------------------------------------------------------
@@ -132,16 +133,20 @@ export const recordedClassesApi = {
   // ---------------------------------------------------------------------------
 
   /** Admin list all folders / modules for a course */
-  getCourseModules: async (courseId: string): Promise<any[]> => {
-    const res = await apiClient.get<any>("/admin/modules/", {
+  getCourseModules: async (courseId: string): Promise<ModuleItem[]> => {
+    const res = await apiClient.get<
+      | { results?: ModuleItem[]; data?: { results?: ModuleItem[] } | ModuleItem[] }
+      | ModuleItem[]
+    >("/admin/modules/", {
       params: { course_id: courseId, page_size: 100 },
     });
-    if (res.data?.results) return res.data.results;
-    if (res.data?.data) {
-      if (Array.isArray(res.data.data)) return res.data.data;
-      if (res.data.data.results) return res.data.data.results;
+    const data = res.data;
+    if ("results" in data && Array.isArray(data.results)) return data.results;
+    if ("data" in data && data.data) {
+      if (Array.isArray(data.data)) return data.data;
+      if ("results" in data.data && Array.isArray(data.data.results)) return data.data.results;
     }
-    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(data)) return data;
     return [];
   },
 
@@ -151,18 +156,30 @@ export const recordedClassesApi = {
     title: string;
     summary?: string;
     order_index?: number;
-  }): Promise<any> => {
-    const res = await apiClient.post<any>("/admin/modules/", payload);
-    return res.data?.data || res.data;
+  }): Promise<ModuleItem> => {
+    const res = await apiClient.post<ApiSuccessResponse<ModuleItem> | ModuleItem>(
+      "/admin/modules/",
+      payload
+    );
+    if ("data" in res.data && res.data.data) {
+      return res.data.data;
+    }
+    return res.data as ModuleItem;
   },
 
   /** Admin update / rename folder module component */
   updateCourseModule: async (
     moduleId: string,
     payload: { title?: string; summary?: string; order_index?: number }
-  ): Promise<any> => {
-    const res = await apiClient.patch<any>(`/admin/modules/${moduleId}/`, payload);
-    return res.data?.data || res.data;
+  ): Promise<ModuleItem> => {
+    const res = await apiClient.patch<ApiSuccessResponse<ModuleItem> | ModuleItem>(
+      `/admin/modules/${moduleId}/`,
+      payload
+    );
+    if ("data" in res.data && res.data.data) {
+      return res.data.data;
+    }
+    return res.data as ModuleItem;
   },
 
   /** Admin delete a folder module component */

@@ -8,6 +8,7 @@ import {
   FileCheck,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { ProjectItem, ProjectSubmissionItem, CourseItem } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
@@ -92,8 +93,8 @@ export const ProjectsPage: React.FC = () => {
       resetProjectForm();
       queryClient.invalidateQueries({ queryKey: ["admin-projects-list"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create project";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create project");
       toastError("Creation Failed", msg);
     },
   });

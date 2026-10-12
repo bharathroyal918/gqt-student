@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -49,10 +50,10 @@ export const TPOLearningProgressPage: React.FC = () => {
     return (
       <ErrorState
         title="Failed to Load Learning Progress"
-        message={
-          (error as any)?.response?.data?.error?.message ||
+        message={getApiErrorMessage(
+          error,
           "Could not retrieve curriculum progression records for your assigned institution."
-        }
+        )}
         onRetry={() => refetch()}
       />
     );

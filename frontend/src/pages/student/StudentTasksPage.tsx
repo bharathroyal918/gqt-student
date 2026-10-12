@@ -19,6 +19,7 @@ import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { Textarea } from "../../components/ui/Form";
 import { studentApi, StudentTaskItem } from "../../api/studentApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useToast } from "../../context/ToastContext";
 import { useAuthStore } from "../../store/authStore";
 
@@ -50,8 +51,8 @@ export const StudentTasksPage: React.FC = () => {
       setSelectedTaskForComplete(null);
       setSubmissionNotes("");
     },
-    onError: (err: any) => {
-      toastError("Completion Failed", err?.response?.data?.message || "Failed to mark task complete.");
+    onError: (err: unknown) => {
+      toastError("Completion Failed", getApiErrorMessage(err, "Failed to mark task complete."));
     },
   });
 
@@ -106,8 +107,8 @@ export const StudentTasksPage: React.FC = () => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${activeTab === tab.key
-                  ? "bg-brand-600 text-white shadow-md shadow-brand-500/20"
-                  : "bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-brand-600 text-white shadow-md shadow-brand-500/20"
+                : "bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
             >
               {tab.label}
@@ -152,16 +153,16 @@ export const StudentTasksPage: React.FC = () => {
             <Card
               key={task.id}
               className={`p-5 transition-all hover:border-brand-500/40 ${task.is_completed
-                  ? "bg-slate-50/50 dark:bg-surface-900/40 border-emerald-500/20"
-                  : "hover:shadow-md"
+                ? "bg-slate-50/50 dark:bg-surface-900/40 border-emerald-500/20"
+                : "hover:shadow-md"
                 }`}
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-4">
                   <div
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${task.is_completed
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/20"
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                      : "bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/20"
                       }`}
                   >
                     {task.is_completed ? (

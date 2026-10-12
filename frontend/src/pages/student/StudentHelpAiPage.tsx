@@ -22,6 +22,7 @@ import {
   AIConversationDetail,
   AIMessageItem,
 } from "../../api/studentApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
@@ -256,8 +257,8 @@ export const StudentHelpAiPage: React.FC = () => {
       setInputVal("");
       setErrorBanner(null);
     },
-    onError: (err: any) => {
-      setErrorBanner(err?.response?.data?.error?.message || "Failed to start conversation.");
+    onError: (err: unknown) => {
+      setErrorBanner(getApiErrorMessage(err, "Failed to start conversation."));
     },
   });
 
@@ -305,14 +306,14 @@ export const StudentHelpAiPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["student", "ai", "conversations"] });
       setInputVal("");
     },
-    onError: (err: any, _content, context) => {
+    onError: (err: unknown, _content, context) => {
       if (context?.previousConv) {
         queryClient.setQueryData(
           ["student", "ai", "conversation", selectedConvId],
           context.previousConv
         );
       }
-      setErrorBanner(err?.response?.data?.error?.message || "Failed to send message.");
+      setErrorBanner(getApiErrorMessage(err, "Failed to send message."));
     },
   });
 
@@ -328,8 +329,8 @@ export const StudentHelpAiPage: React.FC = () => {
       });
       setErrorBanner(null);
     },
-    onError: (err: any) => {
-      setErrorBanner(err?.response?.data?.error?.message || "Failed to retry response.");
+    onError: (err: unknown) => {
+      setErrorBanner(getApiErrorMessage(err, "Failed to retry response."));
     },
   });
 

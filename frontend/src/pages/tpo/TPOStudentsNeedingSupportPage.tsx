@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -48,10 +49,10 @@ export const TPOStudentsNeedingSupportPage: React.FC = () => {
     return (
       <ErrorState
         title="Failed to Load Support Signals"
-        message={
-          (error as any)?.response?.data?.error?.message ||
+        message={getApiErrorMessage(
+          error,
           "Could not analyze student records for academic support needs."
-        }
+        )}
         onRetry={() => refetch()}
       />
     );

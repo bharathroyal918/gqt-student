@@ -17,6 +17,7 @@ import { Modal } from "../../components/ui/Modal";
 import { FormField, Input, Textarea, Select, Checkbox } from "../../components/ui/Form";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/errors";
 
 export const AnnouncementsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -59,8 +60,8 @@ export const AnnouncementsPage: React.FC = () => {
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create announcement";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create announcement");
       toastError("Creation Failed", msg);
     },
   });
@@ -305,7 +306,7 @@ export const AnnouncementsPage: React.FC = () => {
             <FormField label="Priority Level">
               <Select
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value as AnnouncementItem["priority"] })}
               >
                 <option value="LOW">Low</option>
                 <option value="NORMAL">Normal</option>
@@ -396,7 +397,7 @@ export const AnnouncementsPage: React.FC = () => {
             <FormField label="Priority Level">
               <Select
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value as AnnouncementItem["priority"] })}
               >
                 <option value="LOW">Low</option>
                 <option value="NORMAL">Normal</option>

@@ -13,6 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -46,10 +47,10 @@ export const TPOAttendanceAnalyticsPage: React.FC = () => {
     return (
       <ErrorState
         title="Failed to Load Attendance Analytics"
-        message={
-          (error as any)?.response?.data?.error?.message ||
+        message={getApiErrorMessage(
+          error,
           "Could not retrieve institutional attendance distribution records."
-        }
+        )}
         onRetry={() => refetch()}
       />
     );

@@ -9,6 +9,7 @@ import {
   FileText,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { ExportJobItem } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
@@ -92,7 +93,7 @@ export const ReportsPage: React.FC = () => {
 
   // Asynchronous Export Mutation
   const exportMutation = useMutation({
-    mutationFn: (payload: { report_type: string; format: "CSV" | "JSON"; filters?: Record<string, any> }) =>
+    mutationFn: (payload: { report_type: string; format: "CSV" | "JSON"; filters?: Record<string, unknown> }) =>
       adminApi.createExportJob(payload),
     onSuccess: (job: ExportJobItem) => {
       queryClient.invalidateQueries({ queryKey: ["admin-export-jobs"] });
@@ -102,10 +103,10 @@ export const ReportsPage: React.FC = () => {
       );
       setShowExportsDrawer(true);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toastError(
         "Export Initiation Failed",
-        err?.response?.data?.error?.message || "Could not dispatch background export job."
+        getApiErrorMessage(err, "Could not dispatch background export job.")
       );
     },
   });
@@ -129,7 +130,7 @@ export const ReportsPage: React.FC = () => {
 
   const handleTriggerExport = (format: "CSV" | "JSON") => {
     const reportEnum = getBackendReportTypeEnum(reportType);
-    const filters: Record<string, any> = {};
+    const filters: Record<string, unknown> = {};
     if (batchFilter) filters.batch_code = batchFilter;
 
     exportMutation.mutate({

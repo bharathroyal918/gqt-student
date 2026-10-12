@@ -31,7 +31,7 @@ export const TPOHeader: React.FC<TPOHeaderProps> = ({ onToggleMobileSidebar }) =
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken);
-      } catch (e) {
+      } catch {
         // Silently continue
       }
     }

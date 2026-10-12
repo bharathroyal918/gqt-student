@@ -18,7 +18,8 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
-import { CourseItem } from "../../types/admin";
+import { getApiErrorMessage } from "../../utils/errors";
+import { CourseItem, StudentDetail, StudentAttendanceRecord } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { StatusDot } from "../../components/ui/StatusDot";
@@ -99,14 +100,14 @@ export const StudentDetailPage: React.FC = () => {
 
   // Mutations
   const updateMutation = useMutation({
-    mutationFn: (payload: any) => adminApi.updateStudent(id!, payload),
+    mutationFn: (payload: Partial<StudentDetail>) => adminApi.updateStudent(id!, payload),
     onSuccess: () => {
       success("Status Updated", "Student profile updated successfully.");
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message || err?.response?.data?.error?.message || "Could not update student status.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Could not update student status.");
       toastError("Update Failed", msg);
     },
   });
@@ -118,8 +119,8 @@ export const StudentDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message || err?.response?.data?.error?.message || "Could not grant access.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Could not grant access.");
       toastError("Grant Failed", msg);
     },
   });
@@ -131,22 +132,28 @@ export const StudentDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message || err?.response?.data?.error?.message || "Could not revoke access.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Could not revoke access.");
       toastError("Revoke Failed", msg);
     },
   });
 
   const markAttendanceMutation = useMutation({
-    mutationFn: (payload: any) => adminApi.markStudentAttendance(id!, payload),
+    mutationFn: (payload: {
+      date: string;
+      status: string;
+      technology?: string;
+      session_title?: string;
+      remarks?: string;
+    }) => adminApi.markStudentAttendance(id!, payload),
     onSuccess: () => {
       success("Attendance Logged", "Session attendance recorded successfully.");
       setIsAttendanceModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin-student-attendance", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || "Could not record attendance.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Could not record attendance.");
       toastError("Attendance Error", msg);
     },
   });
@@ -308,7 +315,7 @@ export const StudentDetailPage: React.FC = () => {
             <div className="text-xs text-slate-500 dark:text-slate-400">Attendance Rate</div>
             <div className="text-lg font-bold text-emerald-500 flex items-center gap-1">
               <CalendarCheck className="h-5 w-5" />
-              {(student as any).attendance_percentage || 100}%
+              {student.attendance_percentage || 100}%
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 p-3">
@@ -497,7 +504,7 @@ export const StudentDetailPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-surface-800/60">
-                    {attendanceData.records.map((rec: any) => (
+                    {attendanceData.records.map((rec: StudentAttendanceRecord) => (
                       <tr key={rec.id} className="py-2.5">
                         <td className="py-3 font-medium text-slate-900 dark:text-white">
                           {new Date(rec.date).toLocaleDateString("en-US", {
@@ -797,7 +804,7 @@ export const StudentDetailPage: React.FC = () => {
           <FormField label="Attendance Status" required>
             <Select
               value={attendanceForm.status}
-              onChange={(e) => setAttendanceForm({ ...attendanceForm, status: e.target.value as any })}
+              onChange={(e) => setAttendanceForm({ ...attendanceForm, status: e.target.value as "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" })}
             >
               <option value="PRESENT">PRESENT</option>
               <option value="ABSENT">ABSENT</option>

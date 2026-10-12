@@ -8,6 +8,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -66,10 +67,9 @@ export const TPOProfilePage: React.FC = () => {
       setSaveError(null);
       setTimeout(() => setSaveSuccess(false), 4000);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setSaveError(
-        err?.response?.data?.error?.message ||
-          "Failed to update profile. Please review the inputs."
+        getApiErrorMessage(err, "Failed to update profile. Please review the inputs.")
       );
     },
   });
@@ -87,10 +87,7 @@ export const TPOProfilePage: React.FC = () => {
     return (
       <ErrorState
         title="Profile Inaccessible"
-        message={
-          (error as any)?.response?.data?.error?.message ||
-          "Could not retrieve your TPO profile."
-        }
+        message={getApiErrorMessage(error, "Could not retrieve your TPO profile.")}
         onRetry={() => refetch()}
       />
     );

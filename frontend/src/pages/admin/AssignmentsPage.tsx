@@ -18,6 +18,7 @@ import { Modal } from "../../components/ui/Modal";
 import { FormField, Input, Textarea, Select, Checkbox } from "../../components/ui/Form";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/errors";
 
 export const AssignmentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -72,8 +73,8 @@ export const AssignmentsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-questions"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard-stats"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to create question";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create question");
       toastError("Creation Failed", msg);
     },
   });

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { collegesApi } from "../../api/collegesApi";
 import { College, CreateCollegePayload, UpdateCollegePayload } from "../../types/college";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
@@ -58,11 +59,8 @@ export const CollegesPage: React.FC = () => {
       setIsCreateModalOpen(false);
       resetForm();
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to create institutional college option.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to create institutional college option.");
       setFormError(msg);
     },
   });
@@ -77,11 +75,8 @@ export const CollegesPage: React.FC = () => {
       setEditingCollege(null);
       resetForm();
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Failed to update college.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to update college.");
       setFormError(msg);
     },
   });
@@ -94,8 +89,8 @@ export const CollegesPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["student-colleges"] });
       setDeletingCollege(null);
     },
-    onError: (err: any) => {
-      alert(err?.response?.data?.message || "Failed to remove college.");
+    onError: (err: unknown) => {
+      alert(getApiErrorMessage(err, "Failed to remove college."));
     },
   });
 
@@ -252,7 +247,7 @@ export const CollegesPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as any)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as "ALL" | "ACTIVE" | "INACTIVE")}
             className="rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-950 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="ALL">All Statuses ({colleges.length})</option>

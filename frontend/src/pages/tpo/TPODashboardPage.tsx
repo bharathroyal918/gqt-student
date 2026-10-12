@@ -13,6 +13,7 @@ import {
   Percent,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -46,10 +47,10 @@ export const TPODashboardPage: React.FC = () => {
     return (
       <ErrorState
         title="Failed to Load College Dashboard"
-        message={
-          (error as any)?.response?.data?.error?.message ||
+        message={getApiErrorMessage(
+          error,
           "Could not retrieve aggregated performance metrics for your assigned college."
-        }
+        )}
         onRetry={() => refetch()}
       />
     );
@@ -185,8 +186,8 @@ export const TPODashboardPage: React.FC = () => {
           <div className="mt-2 text-xs text-slate-400">
             {summary.total_submissions > 0
               ? `${Math.round(
-                  (summary.accepted_submissions / summary.total_submissions) * 100
-                )}% pass rate`
+                (summary.accepted_submissions / summary.total_submissions) * 100
+              )}% pass rate`
               : "No lab submissions yet"}
           </div>
         </Card>
@@ -262,15 +263,14 @@ export const TPODashboardPage: React.FC = () => {
                       >
                         <td className="px-4 py-3.5">
                           <span
-                            className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                              idx === 0
+                            className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${idx === 0
                                 ? "bg-amber-500 text-white shadow-sm shadow-amber-500/30"
                                 : idx === 1
-                                ? "bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white"
-                                : idx === 2
-                                ? "bg-amber-700/80 text-white"
-                                : "bg-slate-100 dark:bg-surface-800 text-slate-500"
-                            }`}
+                                  ? "bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white"
+                                  : idx === 2
+                                    ? "bg-amber-700/80 text-white"
+                                    : "bg-slate-100 dark:bg-surface-800 text-slate-500"
+                              }`}
                           >
                             {idx + 1}
                           </span>
@@ -298,11 +298,10 @@ export const TPODashboardPage: React.FC = () => {
                         </td>
                         <td className="px-4 py-3.5">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
-                              performer.attendance_percentage >= 75
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${performer.attendance_percentage >= 75
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                 : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                            }`}
+                              }`}
                           >
                             {performer.attendance_percentage}%
                           </span>

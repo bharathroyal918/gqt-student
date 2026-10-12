@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ShieldAlert, Sun, Moon } from "lucide-react";
 
 import { authApi } from "../../api/authApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { Button } from "../../components/ui/Button";
@@ -53,11 +54,11 @@ export const TPOLoginPage: React.FC = () => {
       setAuth(result.user, { access: result.access, refresh: result.refresh });
       success("Welcome Back", "Successfully authenticated to the TPO Portal.");
       navigate("/tpo/dashboard", { replace: true });
-    } catch (err: any) {
-      const apiMsg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Invalid TPO credentials. Please verify your email and password.";
+    } catch (err: unknown) {
+      const apiMsg = getApiErrorMessage(
+        err,
+        "Invalid TPO credentials. Please verify your email and password."
+      );
 
       setErrorMessage(apiMsg);
       toastError("Authentication Failed", apiMsg);

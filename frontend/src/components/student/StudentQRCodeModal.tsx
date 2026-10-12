@@ -41,13 +41,13 @@ export const StudentQRCodeModal: React.FC<StudentQRCodeModalProps> = ({
   const hasCourse = Boolean(
     (attendanceData?.student?.has_enrollments) ||
     (attendanceData?.student?.enrolled_courses && attendanceData.student.enrolled_courses.length > 0) ||
-    ((studentProfile as any)?.course_opted && (studentProfile as any).course_opted.trim().length > 0) ||
+    (studentProfile?.course_opted && studentProfile.course_opted.trim().length > 0) ||
     (attendanceData?.student?.course_name && attendanceData.student.course_name !== "Not Enrolled")
   );
 
   const courseName =
     attendanceData?.student?.course_name ||
-    (studentProfile as any)?.course_opted ||
+    studentProfile?.course_opted ||
     (hasCourse ? "Full Stack Software Development" : "Not Enrolled");
 
   // QR Code Payload for Classroom Scanner / Admin Terminal

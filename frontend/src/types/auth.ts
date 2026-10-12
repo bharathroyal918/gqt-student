@@ -7,6 +7,18 @@ export interface User {
   role: UserRole;
   is_active: boolean;
   onboarding_status: "PENDING_ACTIVATION" | "ACTIVE" | "SUSPENDED";
+  student_profile?: StudentProfile;
+  admin_profile?: {
+    id?: string;
+    full_name?: string;
+    designation?: string;
+    department?: string;
+    phone_number?: string;
+    bio?: string;
+    avatar_url?: string;
+    can_review_projects?: boolean;
+    can_manage_curriculum?: boolean;
+  };
 }
 
 export interface StudentProfile {
@@ -20,6 +32,13 @@ export interface StudentProfile {
   highest_streak_days: number;
   total_points: number;
   avatar_url?: string;
+  course_opted?: string;
+  course_name?: string;
+  dob?: string;
+  branch?: string;
+  bio?: string;
+  github_url?: string;
+  linkedin_url?: string;
 }
 
 export interface AuthTokens {

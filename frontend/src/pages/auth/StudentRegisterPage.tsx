@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { authApi } from "../../api/authApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { collegesApi } from "../../api/collegesApi";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
@@ -37,7 +38,7 @@ const registerSchema = z
     mobile_number: z
       .string()
       .min(10, "Mobile number must be at least 10 digits")
-      .regex(/^\+?[0-9\s\-]+$/, "Please enter a valid mobile number"),
+      .regex(/^\+?[0-9\s-]+$/, "Please enter a valid mobile number"),
     college_name: z.string().optional(),
     student_id_number: z.string().optional(),
     graduation_year: z.coerce
@@ -130,11 +131,11 @@ export const StudentRegisterPage: React.FC = () => {
         `Welcome to GQT Portal, ${result.user.student_profile?.full_name || data.full_name}!`
       );
       navigate("/dashboard", { replace: true });
-    } catch (err: any) {
-      const apiMsg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        "Registration failed. Please check your details and try again.";
+    } catch (err: unknown) {
+      const apiMsg = getApiErrorMessage(
+        err,
+        "Registration failed. Please check your details and try again."
+      );
       toastError("Registration Error", apiMsg);
     } finally {
       setIsSubmitting(false);

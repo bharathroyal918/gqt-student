@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { useAuthStore } from "../../store/authStore";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -200,7 +201,7 @@ export const TPOStudentsPage: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => {
-                setStatusFilter(e.target.value as any);
+                setStatusFilter(e.target.value as "ALL" | "ACTIVE" | "INACTIVE");
                 setPage(1);
               }}
               className="w-1/2 rounded-xl border border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900 px-2 py-2 text-xs text-slate-900 dark:text-white focus:border-brand-500 focus:outline-none"
@@ -235,11 +236,10 @@ export const TPOStudentsPage: React.FC = () => {
       ) : isError ? (
         <ErrorState
           title="Error Loading Roster"
-          message={
-            (error as any)?.response?.data?.error?.message ||
-            (error as any)?.response?.data?.message ||
+          message={getApiErrorMessage(
+            error,
             "Unable to fetch student roster for your assigned college."
-          }
+          )}
           onRetry={() => refetch()}
         />
       ) : students.length === 0 ? (

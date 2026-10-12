@@ -29,7 +29,7 @@ interface AdminSidebarProps {
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onCloseMobile }) => {
   const { user } = useAuthStore();
-  const adminProfile = (user as any)?.admin_profile;
+  const adminProfile = user?.admin_profile;
   const adminName = adminProfile?.full_name || user?.email || "Admin User";
   const adminAvatar = adminProfile?.avatar_url;
   const adminInitials = adminName.slice(0, 2).toUpperCase();

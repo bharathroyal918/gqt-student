@@ -13,8 +13,9 @@ import {
   MailCheck,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { collegesApi } from "../../api/collegesApi";
-import { StudentListItem } from "../../types/admin";
+import { StudentListItem, StudentDetail } from "../../types/admin";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { StatusDot } from "../../components/ui/StatusDot";
@@ -90,8 +91,8 @@ export const StudentsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard-stats"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to provision student";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to provision student");
       toastError("Provisioning Failed", msg);
     },
   });
@@ -110,23 +111,23 @@ export const StudentsPage: React.FC = () => {
       });
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || "Failed to grant access by email.";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to grant access by email.");
       toastError("Authorization Failed", msg);
     },
   });
 
   // Update Student Mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<StudentListItem> }) =>
-      adminApi.updateStudent(id, payload as any),
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<StudentDetail> }) =>
+      adminApi.updateStudent(id, payload),
     onSuccess: () => {
       success("Student Updated", "Account records have been saved.");
       setEditingStudent(null);
       queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || "Failed to update student";
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Failed to update student");
       toastError("Update Failed", msg);
     },
   });
@@ -199,7 +200,7 @@ export const StudentsPage: React.FC = () => {
     } else if (action === "revoke") {
       revokeAccessMutation.mutate(student.id);
     } else {
-      let payload: any = {};
+      let payload: Partial<StudentDetail> = {};
       if (action === "activate") payload = { is_active: true };
       if (action === "deactivate") payload = { is_active: false };
       updateMutation.mutate({ id: student.id, payload });
@@ -709,7 +710,7 @@ export const StudentsPage: React.FC = () => {
                 college_name: formData.college_name,
                 graduation_year: Number(formData.graduation_year) || null,
                 avatar_url: formData.avatar_url || "",
-              } as any,
+              },
             });
           }}
           className="space-y-4"

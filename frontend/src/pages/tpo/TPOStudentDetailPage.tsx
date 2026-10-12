@@ -11,6 +11,7 @@ import {
   Percent,
 } from "lucide-react";
 import { tpoApi } from "../../api/tpoApi";
+import { getApiErrorMessage } from "../../utils/errors";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { LoadingState } from "../../components/ui/LoadingState";
@@ -41,10 +42,10 @@ export const TPOStudentDetailPage: React.FC = () => {
     return (
       <ErrorState
         title="Student Record Inaccessible"
-        message={
-          (error as any)?.response?.data?.error?.message ||
+        message={getApiErrorMessage(
+          error,
           "Student does not exist or does not belong to your assigned college."
-        }
+        )}
         onRetry={() => refetch()}
       />
     );
