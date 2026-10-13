@@ -87,6 +87,7 @@ export const StudentLoginPage: React.FC = () => {
 
   // Step 1: Request OTP
   const onSendOtp = async (data: PhoneFormValues) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       await authApi.requestOtp(data.mobile_number);
@@ -103,6 +104,7 @@ export const StudentLoginPage: React.FC = () => {
 
   // Step 2: Verify OTP
   const onVerifyOtp = async (data: OtpFormValues) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await authApi.verifyOtp(targetPhone, data.otp);
@@ -126,6 +128,7 @@ export const StudentLoginPage: React.FC = () => {
 
   // Email + Password Login
   const onEmailLogin = async (data: EmailFormValues) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await authApi.loginStudent(data.email, data.password);

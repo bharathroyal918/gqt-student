@@ -2,7 +2,8 @@
 
 import logging
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -19,10 +20,12 @@ from apps.students.tpo_serializers import (
     TPOCollegeSummarySerializer,
     TPOLeaderboardItemSerializer,
     TPOLearningProgressResponseSerializer,
+    TPOLoginResponseSerializer,
     TPOLoginSerializer,
     TPOPerformanceTrendsResponseSerializer,
     TPOProfileDetailSerializer,
     TPOProfileUpdateSerializer,
+    TPORegisterResponseSerializer,
     TPORegisterSerializer,
     TPOReportExportRequestSerializer,
     TPOReportPreviewRequestSerializer,
@@ -42,9 +45,17 @@ class TPORegisterView(APIView):
     """Dedicated registration endpoint for Training & Placement Officers."""
 
     permission_classes = [AllowAny]
+    serializer_class = TPORegisterSerializer
 
     @extend_schema(
         request=TPORegisterSerializer,
+        responses={
+            201: OpenApiResponse(
+                response=TPORegisterResponseSerializer,
+                description="TPO registration submitted successfully, pending administrator approval.",
+            ),
+            400: OpenApiResponse(description="Validation error or missing college selection."),
+        },
         summary="TPO Portal Registration",
         tags=["TPO Portal"],
     )
@@ -97,9 +108,21 @@ class TPOLoginView(APIView):
     """Dedicated authentication endpoint for Training & Placement Officers."""
 
     permission_classes = [AllowAny]
+    serializer_class = TPOLoginSerializer
 
     @extend_schema(
         request=TPOLoginSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=TPOLoginResponseSerializer,
+                description="TPO authentication successful, returning JWT tokens and user payload.",
+            ),
+            400: OpenApiResponse(description="Validation error or missing credentials."),
+            401: OpenApiResponse(description="Invalid email or password."),
+            403: OpenApiResponse(
+                description="Forbidden: account is pending approval, deactivated, or lacks college assignment."
+            ),
+        },
         summary="TPO Portal Login",
         tags=["TPO Portal"],
     )
@@ -459,6 +482,7 @@ class TPOReportTypesListView(APIView):
     """List available report templates, supported export formats, and filter options."""
 
     permission_classes = [IsTPO]
+    throttle_scope = "reports"
 
     @extend_schema(
         responses={200: TPOReportTypeSerializer(many=True)},
@@ -478,6 +502,8 @@ class TPOReportPreviewView(APIView):
     """Preview report headers and first sample records before exporting."""
 
     permission_classes = [IsTPO]
+    serializer_class = TPOReportPreviewRequestSerializer
+    throttle_scope = "reports"
 
     @extend_schema(
         request=TPOReportPreviewRequestSerializer,
@@ -510,9 +536,23 @@ class TPOReportExportView(APIView):
     """Generate and stream secure, injection-mitigated CSV or JSON export artifact."""
 
     permission_classes = [IsTPO]
+    serializer_class = TPOReportExportRequestSerializer
+    throttle_scope = "reports"
 
     @extend_schema(
         request=TPOReportExportRequestSerializer,
+        responses={
+            (200, "text/csv"): OpenApiResponse(
+                response=OpenApiTypes.BINARY,
+                description="Downloadable CSV report file attachment.",
+            ),
+            (200, "application/json"): OpenApiResponse(
+                response=OpenApiTypes.BINARY,
+                description="Downloadable JSON report file attachment.",
+            ),
+            400: OpenApiResponse(description="Invalid report type or unsupported format."),
+            403: OpenApiResponse(description="Forbidden: TPO not assigned to active college."),
+        },
         summary="Export College-Scoped Report (CSV/JSON)",
         tags=["TPO Portal - Reports"],
     )

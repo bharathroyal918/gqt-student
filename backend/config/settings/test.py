@@ -37,6 +37,8 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "otp": "1000/minute",
     "submissions": "1000/minute",
     "ai": "1000/minute",
+    "reports": "1000/minute",
+    "cert_verify": "1000/minute",
 }
 
 

@@ -10,10 +10,11 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
-from apps.common.permissions import IsAdmin, IsStudent
+from apps.accounts.models import User
+from apps.common.permissions import IsAdmin, IsApprovedStudent, IsStudent
 from apps.common.responses import api_error, api_success
 from apps.placements.models import PlacementApplication, PlacementDrive
 from apps.placements.serializers import (
@@ -22,6 +23,7 @@ from apps.placements.serializers import (
     PlacementDriveSerializer,
     StudentApplyPlacementSerializer,
     UpdateApplicationStatusSerializer,
+    is_safe_resume_url,
 )
 from apps.placements.services import PlacementService
 
@@ -313,7 +315,7 @@ class AdminPlacementStatsView(APIView):
 class StudentPlacementDriveListView(APIView):
     """Student endpoint to explore active / upcoming placement drives."""
 
-    permission_classes = [IsStudent]
+    permission_classes = [IsApprovedStudent]
     serializer_class = PlacementDriveSerializer
 
     @extend_schema(
@@ -376,7 +378,7 @@ class StudentPlacementDriveListView(APIView):
 class StudentPlacementDriveDetailView(APIView):
     """Student endpoint to view full details of a specific placement drive."""
 
-    permission_classes = [IsStudent]
+    permission_classes = [IsApprovedStudent]
     serializer_class = PlacementDriveSerializer
 
     @extend_schema(
@@ -408,7 +410,7 @@ class StudentPlacementDriveDetailView(APIView):
 class StudentPlacementApplyView(APIView):
     """Student endpoint to submit application for a placement drive with resume upload."""
 
-    permission_classes = [IsStudent]
+    permission_classes = [IsApprovedStudent]
     serializer_class = StudentApplyPlacementSerializer
     parser_classes = [
         MultiPartParser,
@@ -523,7 +525,7 @@ class StudentPlacementApplyView(APIView):
 class StudentMyApplicationsView(APIView):
     """Student endpoint to list all drives applied by the logged-in student."""
 
-    permission_classes = [IsStudent]
+    permission_classes = [IsApprovedStudent]
     serializer_class = PlacementApplicationSerializer
 
     @extend_schema(responses={200: PlacementApplicationSerializer(many=True)})
@@ -553,21 +555,59 @@ class StudentMyApplicationsView(APIView):
         )
 
 
-@method_decorator(
-    xframe_options_exempt,
-    name="dispatch",
-)
 class PlacementResumeDownloadView(APIView):
     """Secure endpoint to view or download uploaded student resume."""
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: OpenApiTypes.BINARY})
     def get(self, request, application_id):
         try:
-            application = PlacementApplication.objects.get(id=application_id)
+            application = (
+                PlacementApplication.objects.select_related(
+                    "student__user", "student__college"
+                ).get(id=application_id)
+            )
         except (PlacementApplication.DoesNotExist, ValueError):
             raise Http404("Application not found.")
+
+        # Object-level authorization check: Admin, owner Student, or assigned-college TPO
+        is_admin = (
+            getattr(request.user, "role", None) == User.RoleChoices.ADMIN
+            or request.user.is_staff
+            or request.user.is_superuser
+        )
+        is_owner = (
+            getattr(request.user, "role", None) == User.RoleChoices.STUDENT
+            and application.student.user_id == request.user.id
+        )
+        is_authorized_tpo = False
+        if getattr(request.user, "role", None) == User.RoleChoices.TPO and request.user.is_active:
+            tpo_profile = getattr(request.user, "tpo_profile", None)
+            if (
+                tpo_profile
+                and tpo_profile.is_active
+                and tpo_profile.college
+                and tpo_profile.college.is_active
+            ):
+                assigned_college = tpo_profile.college
+                if application.student.college_id is not None:
+                    is_authorized_tpo = (
+                        application.student.college_id == assigned_college.id
+                    )
+                elif application.student.college_name:
+                    is_authorized_tpo = (
+                        application.student.college_name.strip().lower()
+                        == assigned_college.name.strip().lower()
+                    )
+
+        if not (is_admin or is_owner or is_authorized_tpo):
+            return api_error(
+                code="PERMISSION_DENIED",
+                message="You do not have authorization to view or download this resume.",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
         is_download = request.query_params.get("download") in ["1", "true", "True"]
         if application.resume_file:
             try:
@@ -604,5 +644,11 @@ class PlacementResumeDownloadView(APIView):
             except FileNotFoundError:
                 raise Http404("Resume file not found on storage backend.")
         if application.resume_url:
-            return HttpResponseRedirect(application.resume_url)
+            if is_safe_resume_url(application.resume_url):
+                return HttpResponseRedirect(application.resume_url)
+            return api_error(
+                code="UNSAFE_RESUME_URL",
+                message="The external resume link is not from an approved safe domain.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         raise Http404("No resume found for this application.")

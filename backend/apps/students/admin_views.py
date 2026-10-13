@@ -471,6 +471,7 @@ class CollegeAdminListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [IsAdmin]
     serializer_class = CollegeAdminSerializer
+    queryset = College.objects.all()
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,

@@ -92,6 +92,9 @@ class StudentAdminService:
 
         user.onboarding_status = User.OnboardingStatusChoices.SUSPENDED
         user.save(update_fields=["onboarding_status", "updated_at"])
+        from apps.accounts.services import AuthService
+
+        AuthService.revoke_all_user_tokens(user)
 
         AuditLog.objects.create(
             actor=admin_user,

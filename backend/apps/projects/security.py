@@ -88,8 +88,9 @@ class FileSecurityValidator:
     @classmethod
     def sanitize_filename(cls, filename: str) -> str:
         """Strips path traversal sequences and normalizes filename to safe alphanumeric chars."""
-        # 1. Strip directories (defend against ../ and ..\)
-        base_name = os.path.basename(filename).strip()
+        # 1. Normalize both Windows backslashes and POSIX forward slashes, then extract base name
+        normalized = str(filename).replace("\\", "/").strip()
+        base_name = normalized.rsplit("/", 1)[-1].strip()
         # 2. Replace dangerous characters with underscores
         clean_name = re.sub(r"[^\w\.\-]", "_", base_name)
         # 3. Collapse multiple dots to prevent extension masking

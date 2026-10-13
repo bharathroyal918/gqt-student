@@ -1,11 +1,14 @@
+import io
 import logging
 import os
 import time
 import uuid
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from drf_spectacular.types import OpenApiTypes
+from PIL import Image
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -647,21 +650,68 @@ class AvatarUploadView(APIView):
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Validate extension & content type
-        allowed_extensions = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"}
+        # Allow only supported raster extensions
+        allowed_extensions = {".jpg", ".jpeg", ".png", ".webp"}
         ext = os.path.splitext(avatar_file.name)[1].lower()
         if ext not in allowed_extensions:
             return api_error(
                 code="INVALID_FILE_TYPE",
-                message="Allowed image formats: JPG, JPEG, PNG, WEBP, GIF, SVG.",
+                message="Allowed image formats: JPG, JPEG, PNG, WEBP. Vector formats such as SVG are not permitted.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate decoded image contents via Pillow and re-encode to a safe raster format
+        try:
+            # 1. Structural integrity verification
+            avatar_file.seek(0)
+            img = Image.open(avatar_file)
+            img.verify()
+
+            # 2. Re-open to inspect format and dimensions (verify consumes image stream)
+            avatar_file.seek(0)
+            img = Image.open(avatar_file)
+            format_name = (img.format or "").upper()
+            if format_name not in ("JPEG", "PNG", "WEBP"):
+                return api_error(
+                    code="INVALID_IMAGE_FORMAT",
+                    message="Uploaded image content is not a supported raster format (JPEG, PNG, WEBP).",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 3. Dimension boundaries check (max 4096 x 4096)
+            if img.width > 4096 or img.height > 4096:
+                return api_error(
+                    code="IMAGE_TOO_LARGE",
+                    message="Image dimensions exceed maximum allowable limit (4096x4096px).",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 4. Re-encode image to strip any embedded scripts, metadata, or polyglot payloads
+            output_buffer = io.BytesIO()
+            if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+                clean_img = img.convert("RGBA")
+                clean_img.save(output_buffer, format="PNG", optimize=True)
+                sanitized_ext = ".png"
+            else:
+                clean_img = img.convert("RGB")
+                clean_img.save(output_buffer, format="JPEG", quality=90, optimize=True)
+                sanitized_ext = ".jpg"
+
+            output_buffer.seek(0)
+            file_to_save = ContentFile(output_buffer.read())
+        except Exception as exc:
+            logger.warning("[AVATAR UPLOAD] Failed to decode image for user_id=%s: %s", request.user.id, exc)
+            return api_error(
+                code="CORRUPT_IMAGE",
+                message="The uploaded file is corrupt or not a valid raster image.",
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         # Generate unique sanitized path
         timestamp = int(time.time())
         unique_id = uuid.uuid4().hex[:8]
-        filename = f"avatars/{request.user.id}_{timestamp}_{unique_id}{ext}"
-        saved_path = default_storage.save(filename, avatar_file)
+        filename = f"avatars/{request.user.id}_{timestamp}_{unique_id}{sanitized_ext}"
+        saved_path = default_storage.save(filename, file_to_save)
 
         # Build absolute or relative URL
         avatar_url = f"{settings.MEDIA_URL.rstrip('/')}/{saved_path.lstrip('/')}"
@@ -736,6 +786,7 @@ class ChangePasswordView(APIView):
 
         request.user.set_password(new_password)
         request.user.save(update_fields=["password"])
+        AuthService.revoke_all_user_tokens(request.user)
 
         return api_success(
             data={},

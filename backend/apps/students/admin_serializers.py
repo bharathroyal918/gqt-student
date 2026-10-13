@@ -1,5 +1,6 @@
 """Admin serializers for student management and academic tracking."""
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.accounts.models import User
@@ -24,7 +25,8 @@ class CollegeAdminSerializer(serializers.ModelSerializer):
             "student_count",
         ]
 
-    def get_student_count(self, obj):
+    @extend_schema_field(serializers.IntegerField)
+    def get_student_count(self, obj) -> int:
         return StudentProfile.objects.filter(college_name__iexact=obj.name).count()
 
 

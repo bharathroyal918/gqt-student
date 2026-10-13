@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.certificates.models import Certificate
@@ -159,6 +160,8 @@ class PublicCertificateVerifyView(APIView):
     """Public verification endpoint for employers, institutions, and students."""
 
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "cert_verify"
 
     @extend_schema(
         summary="Verify Certificate Publicly",

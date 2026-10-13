@@ -32,15 +32,13 @@ class PublicCollegeListView(APIView):
         tags=["Students"],
     )
     def get(self, request):
-        if not College.objects.exists():
-            from apps.students.seeds import seed_default_colleges
-
-            seed_default_colleges()
-
-        search = request.query_params.get("search", "").strip()
+        search = request.query_params.get("search", "").strip()[:100]
         queryset = College.objects.filter(is_active=True).order_by("name")
         if search:
             queryset = queryset.filter(name__icontains=search)
+
+        # Bound maximum results to protect database and network while preserving full compatibility
+        queryset = queryset[:200]
 
         serializer = CollegeSerializer(queryset, many=True)
         return api_success(

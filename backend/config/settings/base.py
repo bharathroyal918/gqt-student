@@ -209,6 +209,8 @@ REST_FRAMEWORK = {
         "otp": "5/minute",
         "submissions": "20/minute",
         "ai": "30/hour",
+        "reports": "60/minute",
+        "cert_verify": "60/minute",
     },
     # OpenAPI Schema Documentation
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -241,24 +243,39 @@ CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=False)
 
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+    default=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "http://localhost:3000",
+    ],
 )
 
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https:\/\/.*\.vercel\.app$",
-    r"^https:\/\/.*\.onrender\.com$",
-]
+CORS_ALLOWED_ORIGIN_REGEXES = []
 
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS",
     default=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
         "http://localhost:3000",
-        "https://*.vercel.app",
-        "https://*.onrender.com",
     ],
 )
+
+# Ensure standard local Vite development and preview origins are present in base configuration
+for local_origin in [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+]:
+    if local_origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(local_origin)
+    if local_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(local_origin)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "DELETE",
@@ -348,6 +365,7 @@ SPECTACULAR_SETTINGS = {
         "PlacementApplicationStatusEnum": "apps.placements.models.PlacementApplication.ApplicationStatus",
         "StudentModuleStatusEnum": "apps.modules.models.StudentModuleProgress.ModuleStatus",
         "ExportJobStatusEnum": "apps.analytics.models.ExportJob.JobStatus",
+        "ExportJobFormatEnum": "apps.analytics.models.ExportJob.ExportFormat",
         "LoginStatusEnum": "apps.accounts.models.LoginActivity.LoginStatus",
     },
     "DISABLE_ERRORS_AND_WARNINGS": False,

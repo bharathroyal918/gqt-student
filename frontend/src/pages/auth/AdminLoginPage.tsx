@@ -38,6 +38,7 @@ export const AdminLoginPage: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    if (isLoading) return;
     setIsLoading(true);
     setErrorMessage(null);
 

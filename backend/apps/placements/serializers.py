@@ -1,8 +1,104 @@
+import os
+import urllib.parse
+import zipfile
 from decimal import Decimal
 
 from rest_framework import serializers
 
 from apps.placements.models import PlacementApplication, PlacementDrive
+
+ALLOWED_RESUME_HOSTS = {
+    "drive.google.com",
+    "docs.google.com",
+    "onedrive.live.com",
+    "1drv.ms",
+    "dropbox.com",
+    "www.dropbox.com",
+    "github.com",
+    "www.github.com",
+    "linkedin.com",
+    "www.linkedin.com",
+    "gitlab.com",
+    "notion.so",
+    "www.notion.so",
+    "notion.site",
+}
+
+
+def is_safe_resume_url(url: str) -> bool:
+    """Validate external resume link scheme, hostname, and absence of deceptive elements."""
+    if not url or not isinstance(url, str):
+        return False
+    try:
+        parsed = urllib.parse.urlparse(url.strip())
+        if parsed.scheme.lower() != "https":
+            return False
+        if parsed.username or parsed.password or (parsed.port and parsed.port != 443):
+            return False
+        host = (parsed.hostname or "").lower()
+        if not host:
+            return False
+        for allowed in ALLOWED_RESUME_HOSTS:
+            if host == allowed or host.endswith("." + allowed):
+                return True
+        return False
+    except Exception:
+        return False
+
+
+def validate_resume_file_content(file_obj) -> None:
+    """Validate uploaded resume file size, allowed extensions, and file signatures/structure."""
+    max_size = 10 * 1024 * 1024  # 10 MB limit
+    if file_obj.size > max_size:
+        raise serializers.ValidationError(
+            {"resume_file": "Resume file size exceeds the maximum allowable limit of 10 MB."}
+        )
+
+    filename = getattr(file_obj, "name", "")
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower()
+    if ext not in (".pdf", ".docx", ".doc"):
+        raise serializers.ValidationError(
+            {"resume_file": "Allowed resume formats are PDF, DOCX, and DOC. Executable and script formats are strictly forbidden."}
+        )
+
+    file_obj.seek(0)
+    header = file_obj.read(1024)
+    file_obj.seek(0)
+
+    if ext == ".pdf":
+        if not header.startswith(b"%PDF-"):
+            raise serializers.ValidationError(
+                {"resume_file": "Invalid PDF file: Missing standard %PDF- header signature."}
+            )
+    elif ext == ".docx":
+        if not (header.startswith(b"PK\x03\x04") or header.startswith(b"PK\x05\x06")):
+            raise serializers.ValidationError(
+                {"resume_file": "Invalid DOCX file: File content is not a valid zip container."}
+            )
+        try:
+            with zipfile.ZipFile(file_obj, "r") as zf:
+                namelist = zf.namelist()
+                if not any(
+                    name in namelist for name in ("[Content_Types].xml", "word/document.xml")
+                ):
+                    raise serializers.ValidationError(
+                        {"resume_file": "Invalid DOCX document: Missing standard Word document components."}
+                    )
+                total_decompressed = sum(info.file_size for info in zf.infolist())
+                if total_decompressed > 50 * 1024 * 1024 or len(zf.infolist()) > 500:
+                    raise serializers.ValidationError(
+                        {"resume_file": "Document exceeds safe decompression thresholds."}
+                    )
+        except zipfile.BadZipFile:
+            raise serializers.ValidationError({"resume_file": "Corrupt or malformed DOCX document."})
+        finally:
+            file_obj.seek(0)
+    elif ext == ".doc":
+        if not header.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
+            raise serializers.ValidationError(
+                {"resume_file": "Invalid DOC file: Missing Microsoft Compound Document header signature."}
+            )
 
 
 class PlacementDriveSerializer(serializers.ModelSerializer):
@@ -270,9 +366,26 @@ class StudentApplyPlacementSerializer(serializers.Serializer):
         if not resume_file and not resume_url:
             raise serializers.ValidationError(
                 {
-                    "resume_file": "Please upload a resume file (PDF/DOCX) or provide a resume link."
+                    "resume_file": "Please upload a resume file (PDF/DOCX/DOC) or provide an approved cloud resume link."
                 }
             )
+
+        if resume_file:
+            validate_resume_file_content(resume_file)
+
+        if resume_url and resume_url.strip():
+            clean_url = resume_url.strip()
+            if not is_safe_resume_url(clean_url):
+                raise serializers.ValidationError(
+                    {
+                        "resume_url": (
+                            "Invalid or unapproved resume URL. Links must use HTTPS and point to "
+                            "an approved cloud storage provider (Google Drive, OneDrive, Dropbox, GitHub, LinkedIn, Notion)."
+                        )
+                    }
+                )
+            attrs["resume_url"] = clean_url
+
         return attrs
 
 

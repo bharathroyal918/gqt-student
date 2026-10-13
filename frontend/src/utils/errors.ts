@@ -18,12 +18,17 @@ export function getApiErrorMessage(
       };
     };
 
-    const responseData = candidate.response?.data;
+    const responseData = candidate.response?.data as
+      | { message?: unknown; error?: { message?: unknown }; detail?: unknown }
+      | undefined;
     if (typeof responseData?.message === "string" && responseData.message.trim()) {
       return responseData.message;
     }
     if (typeof responseData?.error?.message === "string" && responseData.error.message.trim()) {
       return responseData.error.message;
+    }
+    if (typeof responseData?.detail === "string" && responseData.detail.trim()) {
+      return responseData.detail;
     }
     if (typeof candidate.message === "string" && candidate.message.trim()) {
       return candidate.message;

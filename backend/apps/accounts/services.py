@@ -706,24 +706,75 @@ class AuthService:
         return user, access_token, refresh_token, user_data
 
     @classmethod
+    def revoke_all_user_tokens(cls, user: User) -> int:
+        """Centralized, idempotent revocation helper for all outstanding refresh tokens of a user."""
+        from rest_framework_simplejwt.token_blacklist.models import (
+            BlacklistedToken,
+            OutstandingToken,
+        )
+
+        if not user or not getattr(user, "is_authenticated", True):
+            return 0
+
+        revoked_count = 0
+        try:
+            tokens = OutstandingToken.objects.filter(user=user)
+            for token in tokens:
+                _, created = BlacklistedToken.objects.get_or_create(token=token)
+                if created:
+                    revoked_count += 1
+        except Exception as exc:
+            logger.warning(
+                "[TOKEN REVOCATION] Error blacklisting tokens for user_id=%s: %s",
+                getattr(user, "id", None),
+                exc,
+            )
+        return revoked_count
+
+    @classmethod
     def rotate_token(
         cls,
         refresh_token_str: str,
     ) -> tuple[str, str]:
-        """Rotate JWT refresh token and issue new token pair."""
+        """Rotate JWT refresh token and issue new token pair after enforcing eligibility."""
         try:
             old_refresh = RefreshToken(refresh_token_str)
             user_id = old_refresh.payload.get("user_id")
             user = User.objects.filter(
                 id=user_id,
-                is_active=True,
             ).first()
-            if not user:
+            if not user or not user.is_active:
                 raise DomainException(
-                    "User is inactive or not found.",
+                    "User account is inactive or not found.",
                     code="USER_INACTIVE",
                     status_code=401,
                 )
+            if user.onboarding_status == User.OnboardingStatusChoices.SUSPENDED:
+                raise DomainException(
+                    "Your account has been suspended. Please contact institutional operations.",
+                    code="ACCOUNT_SUSPENDED",
+                    status_code=403,
+                )
+            if user.onboarding_status == User.OnboardingStatusChoices.PENDING_ACTIVATION:
+                raise DomainException(
+                    "Your account registration is pending administrative approval.",
+                    code="ACCOUNT_UNAPPROVED",
+                    status_code=403,
+                )
+            if user.role == User.RoleChoices.TPO:
+                tpo_profile = getattr(user, "tpo_profile", None)
+                if not tpo_profile or not tpo_profile.is_active:
+                    raise DomainException(
+                        "Your TPO access has been suspended or deactivated.",
+                        code="TPO_INACTIVE",
+                        status_code=403,
+                    )
+                if not tpo_profile.college or not tpo_profile.college.is_active:
+                    raise DomainException(
+                        "Your TPO account has no active college assignment.",
+                        code="TPO_NO_COLLEGE",
+                        status_code=403,
+                    )
             old_refresh.blacklist()
             new_refresh = RefreshToken.for_user(user)
             new_refresh["role"] = user.role
@@ -1020,6 +1071,7 @@ class AuthService:
         user.save(update_fields=["password", "updated_at"])
         reset_req.is_used = True
         reset_req.save(update_fields=["is_used", "updated_at"])
+        cls.revoke_all_user_tokens(user)
         AuditLog.objects.create(
             actor=user,
             action="PASSWORD_RESET_COMPLETED",
@@ -1286,6 +1338,8 @@ class StudentProvisioningService:
             user.onboarding_status = onboarding_status
             update_fields.append("onboarding_status")
         user.save(update_fields=update_fields)
+        if not user.is_active or user.onboarding_status == User.OnboardingStatusChoices.SUSPENDED:
+            cls.revoke_all_user_tokens(user) if hasattr(cls, "revoke_all_user_tokens") else AuthService.revoke_all_user_tokens(user)
         AuditLog.objects.create(
             actor=admin_user,
             action="STUDENT_STATUS_UPDATED",

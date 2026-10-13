@@ -44,7 +44,13 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Development CORS configuration
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+    default=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "http://localhost:3000",
+    ],
 )
 CORS_ALLOW_CREDENTIALS = True
 

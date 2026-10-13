@@ -1,5 +1,6 @@
 """TPO Serializers for profile, college summary, roster, and student performance."""
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.accounts.models import TPOProfile
@@ -151,7 +152,8 @@ class TPOStudentRosterSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_college_name(self, obj):
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_college_name(self, obj) -> str | None:
         return obj.college.name if obj.college else obj.college_name
 
 
@@ -453,6 +455,16 @@ class TPOReportPreviewRequestSerializer(serializers.Serializer):
     report_type = serializers.CharField(required=True)
     filters = serializers.DictField(required=False, default=dict)
 
+    def validate(self, data):
+        report_type = data.get("report_type")
+        raw_filters = data.get("filters") or {}
+        from apps.students.tpo_reports_services import TPOReportsService
+
+        data["filters"] = TPOReportsService.validate_report_filters(
+            report_type, raw_filters
+        )
+        return data
+
 
 class TPOReportPreviewResponseSerializer(serializers.Serializer):
     report_type = serializers.CharField()
@@ -468,4 +480,34 @@ class TPOReportExportRequestSerializer(serializers.Serializer):
     format = serializers.ChoiceField(choices=["CSV", "JSON", "csv", "json"], default="CSV")
     filters = serializers.DictField(required=False, default=dict)
 
+    def validate(self, data):
+        report_type = data.get("report_type")
+        raw_filters = data.get("filters") or {}
+        from apps.students.tpo_reports_services import TPOReportsService
 
+        data["filters"] = TPOReportsService.validate_report_filters(
+            report_type, raw_filters
+        )
+        return data
+
+
+class TPORegisterResponseSerializer(serializers.Serializer):
+    """Response payload for successful TPO self-registration."""
+
+    id = serializers.CharField(help_text="Unique TPO profile UUID")
+    email = serializers.EmailField(help_text="Registered TPO user institutional email")
+    full_name = serializers.CharField(help_text="Full name of registered TPO")
+    college = TPOCollegeBriefSerializer(
+        allow_null=True, help_text="Assigned college metadata or null"
+    )
+    status = serializers.CharField(
+        help_text="Account onboarding status (e.g. PENDING_APPROVAL)"
+    )
+
+
+class TPOLoginResponseSerializer(serializers.Serializer):
+    """Response payload for successful TPO authentication."""
+
+    access = serializers.CharField(help_text="JWT access token")
+    refresh = serializers.CharField(help_text="JWT refresh token")
+    user = serializers.DictField(help_text="Authenticated user profile data dictionary")

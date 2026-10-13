@@ -93,7 +93,7 @@ class PlacementService:
                 f"Synced Placement Application {application.id} for student {application.student_name} to Supabase"
             )
             return True
-        except (ValueError, TypeError, KeyError, RuntimeError, OSError) as exc:
+        except Exception as exc:
             logger.warning(f"Supabase application sync skipped or not ready: {exc}")
             return False
 

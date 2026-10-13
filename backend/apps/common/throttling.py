@@ -23,3 +23,9 @@ class AIRateThrottle(ScopedRateThrottle):
     """Rate limit for external AI LLM tutor requests per student."""
 
     scope = "ai"
+
+
+class ReportRateThrottle(ScopedRateThrottle):
+    """Rate limit for TPO report listing, preview, and export operations."""
+
+    scope = "reports"

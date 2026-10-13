@@ -25,6 +25,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const recentToastsRef = React.useRef<Map<string, number>>(new Map());
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -32,9 +33,30 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toast = useCallback(
     ({ type, title, message, duration = 4000 }: Omit<ToastMessage, "id">) => {
+      const key = `${type}::${title}::${message || ""}`;
+      const now = Date.now();
+      const lastDispatched = recentToastsRef.current.get(key);
+
+      // Throttle identical notifications dispatched within 1500ms
+      if (lastDispatched !== undefined && now - lastDispatched < 1500) {
+        return;
+      }
+      recentToastsRef.current.set(key, now);
+
       const id = Math.random().toString(36).substring(2, 9);
       const newToast: ToastMessage = { id, type, title, message, duration };
-      setToasts((prev) => [...prev, newToast]);
+
+      setToasts((prev) => {
+        // Prevent duplicate toasts if an identical one is currently displayed
+        if (
+          prev.some(
+            (t) => t.type === type && t.title === title && t.message === message
+          )
+        ) {
+          return prev;
+        }
+        return [...prev, newToast];
+      });
 
       if (duration > 0) {
         setTimeout(() => {
