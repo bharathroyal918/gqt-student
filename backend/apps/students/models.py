@@ -2,6 +2,7 @@ import logging
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
 
 from apps.common.models import BaseModel, TimeStampedModel, UUIDModel
@@ -200,6 +201,12 @@ class StudentProfile(BaseModel):
                 "Failed to invalidate leaderboard cache for batch_code=%s",
                 self.batch_code,
             )
+        try:
+            cache.delete(f"student_dashboard:{self.id}")
+            if self.user_id:
+                cache.delete(f"student_dashboard:user:{self.user_id}")
+        except Exception:
+            pass
 
     def __str__(self):
         return f"{self.full_name} ({self.student_id_number})"

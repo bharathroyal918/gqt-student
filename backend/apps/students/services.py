@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
 
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404
@@ -21,7 +22,7 @@ from apps.courses.models import Course, CourseEnrollment
 from apps.modules.models import Module, StudentModuleProgress
 from apps.notifications.models import Notification
 from apps.scoring.models import ScoreEvent, ScoreRecord
-from apps.students.models import AttendanceRecord, StudentProfile
+from apps.students.models import AttendanceRecord, College, StudentProfile
 from apps.tasks.models import StudentTask
 
 
@@ -642,12 +643,17 @@ class StudentAdminService:
         student_id: str,
         admin_user: User,
         full_name: str | None = None,
+        student_id_number: str | None = None,
         batch_code: str | None = None,
+        college_id: str | None = None,
         college_name: str | None = None,
         graduation_year: int | None = None,
         dob=None,
         branch: str | None = None,
         course_opted: str | None = None,
+        bio: str | None = None,
+        github_url: str | None = None,
+        linkedin_url: str | None = None,
         avatar_url: str | None = None,
         email: str | None = None,
         mobile_number: str | None = None,
@@ -655,6 +661,8 @@ class StudentAdminService:
         onboarding_status: str | None = None,
         total_classes: int | None = None,
         attended_classes: int | None = None,
+        total_points: Decimal | float | int | str | None = None,
+        current_streak_days: int | None = None,
         ip_address: str | None = None,
     ) -> StudentProfile:
         student = cls.get_student_detail(student_id)
@@ -663,23 +671,58 @@ class StudentAdminService:
         updated_fields_user = ["updated_at"]
 
         if full_name is not None:
-            student.full_name = full_name.strip()
+            clean_name = full_name.strip()
+            if not clean_name:
+                raise DomainException("Full name cannot be empty.")
+            student.full_name = clean_name
             updated_fields_profile.append("full_name")
 
+        if student_id_number is not None:
+            clean_sid = student_id_number.strip()
+            if not clean_sid:
+                raise DomainException("Student ID / Roll No. cannot be empty.")
+            if (
+                StudentProfile.objects.filter(student_id_number__iexact=clean_sid)
+                .exclude(id=student.id)
+                .exists()
+            ):
+                raise DomainException(f"A student with Student ID '{clean_sid}' already exists.")
+            student.student_id_number = clean_sid
+            updated_fields_profile.append("student_id_number")
+
         if batch_code is not None:
-            student.batch_code = batch_code.strip()
+            clean_batch = batch_code.strip()
+            if not clean_batch:
+                raise DomainException("Batch code cannot be empty.")
+            student.batch_code = clean_batch
             updated_fields_profile.append("batch_code")
 
-        if college_name is not None:
-            student.college_name = college_name.strip()
-            matching_col = College.objects.filter(
-                name__iexact=student.college_name, is_active=True
-            ).first()
-            student.college = matching_col
+        # College association by ID or Name
+        if college_id is not None:
+            matched_college = College.objects.filter(id=college_id, is_active=True).first()
+            student.college = matched_college
+            student.college_name = matched_college.name if matched_college else ""
+            updated_fields_profile.extend(["college_name", "college"])
+        elif college_name is not None:
+            clean_col = college_name.strip()
+            student.college_name = clean_col
+            if clean_col:
+                matching_col = College.objects.filter(
+                    Q(name__iexact=clean_col) | Q(code__iexact=clean_col),
+                    is_active=True,
+                ).first()
+                if not matching_col:
+                    matching_col = College.objects.filter(
+                        name__icontains=clean_col,
+                        is_active=True,
+                    ).first()
+                student.college = matching_col
+            else:
+                student.college = None
             updated_fields_profile.extend(["college_name", "college"])
 
         if graduation_year is not None:
-            student.graduation_year = graduation_year
+            student.graduation_year = graduation_year if graduation_year > 0 else None
             updated_fields_profile.append("graduation_year")
 
         if dob is not None:
@@ -694,44 +737,79 @@ class StudentAdminService:
             student.course_opted = course_opted.strip()
             updated_fields_profile.append("course_opted")
 
+        if bio is not None:
+            student.bio = bio.strip()
+            updated_fields_profile.append("bio")
+
+        if github_url is not None:
+            student.github_url = github_url.strip()
+            updated_fields_profile.append("github_url")
+
+        if linkedin_url is not None:
+            student.linkedin_url = linkedin_url.strip()
+            updated_fields_profile.append("linkedin_url")
+
         if avatar_url is not None:
-            student.avatar_url = (avatar_url or "").strip()
+            clean_avatar = avatar_url.strip()
+            student.avatar_url = clean_avatar[:500] if len(clean_avatar) > 500 else clean_avatar
             updated_fields_profile.append("avatar_url")
 
         if total_classes is not None:
-            student.total_classes = total_classes
+            student.total_classes = max(0, total_classes)
             updated_fields_profile.append("total_classes")
 
         if attended_classes is not None:
-            student.attended_classes = attended_classes
+            student.attended_classes = max(0, attended_classes)
             updated_fields_profile.append("attended_classes")
 
         if total_classes is not None or attended_classes is not None:
             student.recalculate_attendance()
             updated_fields_profile.append("attendance_percentage")
 
+        if total_points is not None:
+            student.total_points = Decimal(str(total_points))
+            updated_fields_profile.append("total_points")
+
+        if current_streak_days is not None:
+            clean_streak = max(0, current_streak_days)
+            student.current_streak_days = clean_streak
+            if clean_streak > student.highest_streak_days:
+                student.highest_streak_days = clean_streak
+                updated_fields_profile.append("highest_streak_days")
+            updated_fields_profile.append("current_streak_days")
+
         if email is not None:
-            email_clean = email.strip().lower()
-            if (
-                email_clean
-                and User.objects.filter(email=email_clean).exclude(id=user.id).exists()
-            ):
-                raise DomainException("An account with this email already exists.")
-            user.email = email_clean or None
+            email_clean = email.strip().lower() if email else ""
+            if email_clean:
+                if (
+                    User.objects.filter(email__iexact=email_clean)
+                    .exclude(id=user.id)
+                    .exists()
+                ):
+                    raise DomainException("An account with this email already exists.")
+                user.email = email_clean
+            else:
+                user.email = None
+            if not user.email and not user.mobile_number:
+                raise DomainException("Student must have at least an email or mobile number.")
             updated_fields_user.append("email")
 
         if mobile_number is not None:
-            mob_clean = mobile_number.strip()
-            if (
-                mob_clean
-                and User.objects.filter(mobile_number=mob_clean)
-                .exclude(id=user.id)
-                .exists()
-            ):
-                raise DomainException(
-                    "An account with this mobile number already exists."
-                )
-            user.mobile_number = mob_clean or None
+            mob_clean = mobile_number.strip() if mobile_number else ""
+            if mob_clean:
+                if (
+                    User.objects.filter(mobile_number=mob_clean)
+                    .exclude(id=user.id)
+                    .exists()
+                ):
+                    raise DomainException(
+                        "An account with this mobile number already exists."
+                    )
+                user.mobile_number = mob_clean
+            else:
+                user.mobile_number = None
+            if not user.email and not user.mobile_number:
+                raise DomainException("Student must have at least an email or mobile number.")
             updated_fields_user.append("mobile_number")
 
         if is_active is not None:
@@ -744,13 +822,23 @@ class StudentAdminService:
             user.onboarding_status = onboarding_status
             updated_fields_user.append("onboarding_status")
 
+        # Deduplicate update field lists
+        updated_fields_user = list(dict.fromkeys(updated_fields_user))
+        updated_fields_profile = list(dict.fromkeys(updated_fields_profile))
+
         if len(updated_fields_user) > 1:
             user.save(update_fields=updated_fields_user)
         if len(updated_fields_profile) > 1:
             student.save(update_fields=updated_fields_profile)
 
+        # Invalidate student and college cached summaries
+        cache.delete(f"student_dashboard:{student.id}")
+        cache.delete(f"student_dashboard:user:{student.user_id}")
+        if student.college_id:
+            cache.delete(f"tpo_summary:{student.college_id}")
+
         AuditLog.objects.create(
-            actor=admin_user,
+            actor=admin_user if getattr(admin_user, "is_authenticated", False) else None,
             action="STUDENT_UPDATED",
             target_model="StudentProfile",
             target_id=str(student.id),
@@ -772,12 +860,24 @@ class StudentAdminService:
         ip_address: str | None = None,
     ) -> list[CourseEnrollment]:
         student = cls.get_student_detail(student_id)
-        courses = Course.objects.filter(id__in=course_ids, is_deleted=False)
-        if len(courses) != len(course_ids):
+        target_course_ids = [str(cid) for cid in course_ids if cid]
+        target_course_ids = list(dict.fromkeys(target_course_ids))
+
+        courses = list(Course.objects.filter(id__in=target_course_ids, is_deleted=False))
+        if len(courses) != len(target_course_ids):
             raise DomainException(
                 "One or more specified courses do not exist or are deleted."
             )
 
+        # 1. Remove enrollments for courses that are no longer assigned
+        removed_qs = CourseEnrollment.objects.filter(student=student).exclude(
+            course_id__in=target_course_ids
+        )
+        removed_course_ids = list(removed_qs.values_list("course_id", flat=True))
+        if removed_qs.exists():
+            removed_qs.delete()
+
+        # 2. Add or re-activate assigned courses
         enrollments = []
         for course in courses:
             enrollment, created = CourseEnrollment.objects.get_or_create(
@@ -793,15 +893,71 @@ class StudentAdminService:
                 enrollment.save(update_fields=["status", "updated_at"])
             enrollments.append(enrollment)
 
+        # 3. Synchronize student.course_opted
+        if courses:
+            student.course_opted = ", ".join(c.title for c in courses)[:200]
+        else:
+            student.course_opted = ""
+        student.save(update_fields=["course_opted", "updated_at"])
+
         AuditLog.objects.create(
             actor=admin_user,
             action="COURSES_ASSIGNED",
             target_model="StudentProfile",
             target_id=str(student.id),
             ip_address=ip_address,
-            payload={"course_ids": [str(c.id) for c in courses]},
+            payload={
+                "course_ids": [str(c.id) for c in courses],
+                "removed_course_ids": [str(cid) for cid in removed_course_ids],
+            },
         )
         return enrollments
+
+    @classmethod
+    @transaction.atomic
+    def unassign_course(
+        cls,
+        student_id: str,
+        course_id: str,
+        admin_user: User,
+        ip_address: str | None = None,
+    ) -> None:
+        student = cls.get_student_detail(student_id)
+        enrollment = CourseEnrollment.objects.filter(
+            student=student, course_id=course_id
+        ).first()
+        if not enrollment:
+            raise DomainException(
+                "Student is not enrolled in this course.",
+                status_code=404,
+            )
+
+        enrollment.delete()
+
+        # Resynchronize student.course_opted with remaining active courses
+        remaining_courses = list(
+            Course.objects.filter(
+                enrollments__student=student,
+                enrollments__status=CourseEnrollment.EnrollmentStatus.ACTIVE,
+                is_deleted=False,
+            )
+            .distinct()
+            .order_by("created_at")
+        )
+        if remaining_courses:
+            student.course_opted = ", ".join(c.title for c in remaining_courses)[:200]
+        else:
+            student.course_opted = ""
+        student.save(update_fields=["course_opted", "updated_at"])
+
+        AuditLog.objects.create(
+            actor=admin_user,
+            action="COURSE_UNASSIGNED",
+            target_model="StudentProfile",
+            target_id=str(student.id),
+            ip_address=ip_address,
+            payload={"course_id": str(course_id)},
+        )
 
     @classmethod
     def get_student_progress(cls, student_id: str) -> dict[str, Any]:
@@ -947,7 +1103,9 @@ class StudentDashboardService:
     """Service providing aggregated dashboard telemetry and leaderboard standing for the authenticated student."""
 
     @classmethod
-    def get_dashboard_data(cls, user: User) -> dict[str, Any]:
+    def get_dashboard_data(
+        cls, user: User, force_refresh: bool = False
+    ) -> dict[str, Any]:
         if not user.is_authenticated:
             raise DomainException("Authentication required.")
 
@@ -956,6 +1114,13 @@ class StudentDashboardService:
         )
         if not profile:
             raise DomainException("User does not have an active student profile.")
+
+        cache_key_user = f"student_dashboard:user:{user.id}"
+        cache_key_profile = f"student_dashboard:{profile.id}"
+        if not force_refresh:
+            cached = cache.get(cache_key_user) or cache.get(cache_key_profile)
+            if cached is not None:
+                return cached
 
         # 1. PROFILE & COURSE
         higher_global = StudentProfile.objects.filter(
@@ -1223,7 +1388,7 @@ class StudentDashboardService:
         activity_heatmap = cls.get_student_activity_heatmap_data(profile=profile)
         profile_data["current_streak_days"] = activity_heatmap["current_streak"]
 
-        return {
+        dashboard_dict = {
             "profile": profile_data,
             "leaderboard": {
                 "top_10": top_10,
@@ -1238,6 +1403,18 @@ class StudentDashboardService:
             },
             "activity_heatmap": activity_heatmap,
         }
+
+        # Cache for 60 seconds to ensure sub-5ms repeated page visits and fast tab switching
+        cache.set(cache_key_user, dashboard_dict, timeout=60)
+        cache.set(cache_key_profile, dashboard_dict, timeout=60)
+
+        return dashboard_dict
+
+    @classmethod
+    def invalidate_dashboard_cache(cls, student_or_user_id: str) -> None:
+        """Explicitly clear student dashboard cached metrics."""
+        cache.delete(f"student_dashboard:{student_or_user_id}")
+        cache.delete(f"student_dashboard:user:{student_or_user_id}")
 
     @classmethod
     def get_student_activity_heatmap_data(

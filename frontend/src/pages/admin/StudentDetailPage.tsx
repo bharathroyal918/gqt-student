@@ -14,8 +14,9 @@ import {
   Calendar,
   Building,
   GraduationCap,
-  Code2,
   CalendarCheck,
+  Trash2,
+  Code2,
 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
 import { getApiErrorMessage } from "../../utils/errors";
@@ -25,6 +26,7 @@ import { Badge } from "../../components/ui/Badge";
 import { StatusDot } from "../../components/ui/StatusDot";
 import { Card } from "../../components/ui/Card";
 import { Modal } from "../../components/ui/Modal";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { FormField, Input, Select } from "../../components/ui/Form";
 import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
@@ -42,6 +44,7 @@ export const StudentDetailPage: React.FC = () => {
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
+  const [courseToUnassign, setCourseToUnassign] = useState<{ id: string; title: string } | null>(null);
 
   // Attendance Form State
   const [attendanceForm, setAttendanceForm] = useState<{
@@ -161,12 +164,30 @@ export const StudentDetailPage: React.FC = () => {
   const enrollMutation = useMutation({
     mutationFn: (courseIds: string[]) => adminApi.assignCourses(id!, courseIds),
     onSuccess: () => {
-      success("Enrollments Updated", "Courses have been assigned to student.");
+      success("Enrollments Updated", "Courses have been updated for student.");
       setIsEnrollModalOpen(false);
       setSelectedCourseIds([]);
       queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-students"] });
     },
-    onError: () => toastError("Enrollment Failed", "Could not update course enrollments."),
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Could not update course enrollments.");
+      toastError("Enrollment Failed", msg);
+    },
+  });
+
+  const unassignMutation = useMutation({
+    mutationFn: (courseId: string) => adminApi.unassignCourse(id!, courseId),
+    onSuccess: () => {
+      success("Course Unassigned", "Course enrollment removed successfully.");
+      setCourseToUnassign(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-student-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-students"] });
+    },
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, "Could not unassign course.");
+      toastError("Unassign Failed", msg);
+    },
   });
 
   if (isStudentLoading) {
@@ -190,7 +211,9 @@ export const StudentDetailPage: React.FC = () => {
   };
 
   const openEnrollModal = () => {
-    const existing = student.enrollments.map((e) => e.course_id);
+    const existing = (student.enrollments || [])
+      .filter((e) => e.status === "ACTIVE" || e.status === "COMPLETED")
+      .map((e) => e.course_id);
     setSelectedCourseIds(existing);
     setIsEnrollModalOpen(true);
   };
@@ -224,8 +247,8 @@ export const StudentDetailPage: React.FC = () => {
                     student.onboarding_status === "ACTIVE"
                       ? "emerald"
                       : student.onboarding_status === "PENDING_ACTIVATION"
-                      ? "amber"
-                      : "rose"
+                        ? "amber"
+                        : "rose"
                   }
                 >
                   {student.onboarding_status}
@@ -338,51 +361,46 @@ export const StudentDetailPage: React.FC = () => {
       <div className="flex border-b border-slate-200 dark:border-surface-800">
         <button
           onClick={() => setActiveTab("overview")}
-          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
-            activeTab === "overview"
-              ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
+          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${activeTab === "overview"
+            ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+            : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
         >
           Enrolled Courses
         </button>
         <button
           onClick={() => setActiveTab("attendance")}
-          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
-            activeTab === "attendance"
-              ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
+          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${activeTab === "attendance"
+            ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+            : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
         >
           Attendance & Sessions
         </button>
         <button
           onClick={() => setActiveTab("progress")}
-          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
-            activeTab === "progress"
-              ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
+          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${activeTab === "progress"
+            ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+            : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
         >
           Curriculum Progress
         </button>
         <button
           onClick={() => setActiveTab("scores")}
-          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
-            activeTab === "scores"
-              ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
+          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${activeTab === "scores"
+            ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+            : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
         >
           Scores & Points Ledger
         </button>
         <button
           onClick={() => setActiveTab("rank")}
-          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
-            activeTab === "rank"
-              ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
+          className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${activeTab === "rank"
+            ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
+            : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
         >
           Leaderboard & Rank
         </button>
@@ -432,6 +450,17 @@ export const StudentDetailPage: React.FC = () => {
                         </div>
                       )}
                     </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-surface-800 flex items-center justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCourseToUnassign({ id: enr.course_id, title: enr.course_title })}
+                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 text-xs h-8 px-2.5"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" />
+                      Unassign
+                    </Button>
                   </div>
                 </Card>
               ))}
@@ -522,10 +551,10 @@ export const StudentDetailPage: React.FC = () => {
                               rec.status === "PRESENT"
                                 ? "emerald"
                                 : rec.status === "LATE"
-                                ? "amber"
-                                : rec.status === "EXCUSED"
-                                ? "indigo"
-                                : "rose"
+                                  ? "amber"
+                                  : rec.status === "EXCUSED"
+                                    ? "indigo"
+                                    : "rose"
                             }
                             size="sm"
                           >
@@ -590,8 +619,8 @@ export const StudentDetailPage: React.FC = () => {
                             m.status === "COMPLETED"
                               ? "emerald"
                               : m.status === "IN_PROGRESS"
-                              ? "indigo"
-                              : "slate"
+                                ? "indigo"
+                                : "slate"
                           }
                           size="sm"
                         >
@@ -748,11 +777,10 @@ export const StudentDetailPage: React.FC = () => {
                 <div
                   key={c.id}
                   onClick={() => handleToggleCourseSelect(c.id)}
-                  className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                    isSelected
-                      ? "border-brand-500 bg-brand-500/10 text-white"
-                      : "border-surface-800 bg-surface-900/40 text-slate-300 hover:border-surface-700"
-                  }`}
+                  className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${isSelected
+                    ? "border-brand-500 bg-brand-500/10 text-white"
+                    : "border-surface-800 bg-surface-900/40 text-slate-300 hover:border-surface-700"
+                    }`}
                 >
                   <div className="font-medium text-sm">{c.title}</div>
                   <div className="h-5 w-5 rounded border flex items-center justify-center border-surface-700 bg-surface-950">
@@ -839,6 +867,22 @@ export const StudentDetailPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Unassign Course Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(courseToUnassign)}
+        onClose={() => setCourseToUnassign(null)}
+        onConfirm={() => {
+          if (courseToUnassign) {
+            unassignMutation.mutate(courseToUnassign.id);
+          }
+        }}
+        title="Unassign Course"
+        message={`Are you sure you want to remove ${courseToUnassign?.title ? `"${courseToUnassign.title}"` : "this course"} from ${student.full_name}? The student will lose curriculum access to this course.`}
+        confirmText="Unassign Course"
+        variant="danger"
+        isLoading={unassignMutation.isPending}
+      />
     </div>
   );
 };

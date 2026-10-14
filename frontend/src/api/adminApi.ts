@@ -124,6 +124,17 @@ export const adminApi = {
     return data.data;
   },
 
+  unassignCourse: async (
+    id: string,
+    courseId?: string
+  ): Promise<void> => {
+    const params = courseId ? { course_id: courseId } : {};
+    await apiClient.delete<ApiSuccessResponse<null>>(
+      `/admin/students/${id}/courses/`,
+      { params }
+    );
+  },
+
   getStudentProgress: async (id: string): Promise<StudentProgressData> => {
     const { data } = await apiClient.get<
       ApiSuccessResponse<StudentProgressData>

@@ -24,7 +24,6 @@ import {
 import { adminApi } from "../../api/adminApi";
 import { Card } from "../../components/ui/Card";
 import { ChartCard } from "../../components/ui/ChartCard";
-import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 
 export const DashboardPage: React.FC = () => {
@@ -37,17 +36,29 @@ export const DashboardPage: React.FC = () => {
   } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: () => adminApi.getAnalyticsDashboard(),
-    staleTime: 30000,
+    staleTime: 1000 * 60 * 3,
   });
 
   const { data: activityData } = useQuery({
     queryKey: ["admin", "reports", "monthly-activity", 7],
     queryFn: () => adminApi.getMonthlyActivityReport(7),
-    staleTime: 60000,
+    staleTime: 1000 * 60 * 3,
   });
 
   if (isLoading) {
-    return <LoadingState message="Aggregating platform metrics..." />;
+    return (
+      <div className="space-y-8 pb-12 animate-pulse">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-6" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 h-96 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900" />
+          <div className="h-96 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900" />
+        </div>
+      </div>
+    );
   }
 
   if (isError) {

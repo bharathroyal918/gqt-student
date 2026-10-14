@@ -3,7 +3,7 @@
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import filters, generics, status
 from rest_framework.views import APIView
 
@@ -145,9 +145,12 @@ class StudentAdminDetailUpdateView(APIView):
             message="Student profile updated successfully.",
         )
 
+    def put(self, request, pk):
+        return self.patch(request, pk)
+
 
 class StudentAdminCoursesView(APIView):
-    """Admin endpoint to enroll/assign courses to a student."""
+    """Admin endpoint to enroll/assign courses to a student or unassign them."""
 
     permission_classes = [IsAdmin]
     serializer_class = AssignCoursesSerializer
@@ -165,7 +168,7 @@ class StudentAdminCoursesView(APIView):
 
         enrollments = StudentAdminService.assign_courses(
             student_id=str(pk),
-            course_ids=serializer.validated_data["course_ids"],
+            course_ids=serializer.validated_data.get("course_ids", []),
             admin_user=request.user,
             ip_address=ip_address,
         )
@@ -173,6 +176,49 @@ class StudentAdminCoursesView(APIView):
             data=StudentEnrollmentBriefSerializer(enrollments, many=True).data,
             message="Courses assigned successfully.",
         )
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="course_id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Optional course UUID to unassign. If omitted, all courses are unassigned.",
+            )
+        ],
+        responses={200: OpenApiTypes.OBJECT},
+        summary="Admin Unassign Courses from Student",
+        tags=["Admin Student Management"],
+    )
+    def delete(self, request, pk):
+        course_id = request.query_params.get("course_id")
+        if not course_id and isinstance(request.data, dict):
+            course_id = request.data.get("course_id")
+        ip_address = get_client_ip(request)
+
+        if course_id:
+            StudentAdminService.unassign_course(
+                student_id=str(pk),
+                course_id=str(course_id),
+                admin_user=request.user,
+                ip_address=ip_address,
+            )
+            return api_success(
+                data=None,
+                message="Course unassigned successfully.",
+            )
+        else:
+            StudentAdminService.assign_courses(
+                student_id=str(pk),
+                course_ids=[],
+                admin_user=request.user,
+                ip_address=ip_address,
+            )
+            return api_success(
+                data=None,
+                message="All courses unassigned successfully.",
+            )
 
 
 class StudentAdminProgressView(APIView):

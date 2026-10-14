@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { authApi } from "../../api/authApi";
-import { studentApi } from "../../api/studentApi";
+import type { StudentDashboardData } from "../../api/studentApi";
 import { Badge } from "../ui/Badge";
 import { UserAvatar } from "../ui/UserAvatar";
 
@@ -37,11 +37,10 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ isOpen, onCloseM
   const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
 
-  const { data: dashboardData } = useQuery({
-    queryKey: ["student", "dashboard"],
-    queryFn: studentApi.getDashboard,
-    enabled: !!user && user.role === "STUDENT",
-    staleTime: 10000,
+  // Consume cached student telemetry if available without triggering duplicate network fetches
+  const { data: dashboardData } = useQuery<StudentDashboardData>({
+    queryKey: ["student", "dashboard", user?.id],
+    enabled: false,
   });
 
   const handleLogout = async () => {

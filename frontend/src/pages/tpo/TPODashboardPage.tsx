@@ -18,7 +18,6 @@ import { useAuthStore } from "../../store/authStore";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
-import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { UserAvatar } from "../../components/ui/UserAvatar";
 
@@ -36,11 +35,24 @@ export const TPODashboardPage: React.FC = () => {
   } = useQuery({
     queryKey: ["tpo-college-summary", user?.id],
     queryFn: tpoApi.getCollegeSummary,
-    staleTime: 60 * 1000,
+    staleTime: 1000 * 60 * 3,
   });
 
   if (isLoading) {
-    return <LoadingState message="Loading college telemetry & performance data..." />;
+    return (
+      <div className="space-y-6 pb-12 animate-pulse">
+        <div className="h-28 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-80 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-6" />
+          <div className="h-80 rounded-2xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-6" />
+        </div>
+      </div>
+    );
   }
 
   if (isError || !summary) {
@@ -264,12 +276,12 @@ export const TPODashboardPage: React.FC = () => {
                         <td className="px-4 py-3.5">
                           <span
                             className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${idx === 0
-                                ? "bg-amber-500 text-white shadow-sm shadow-amber-500/30"
-                                : idx === 1
-                                  ? "bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white"
-                                  : idx === 2
-                                    ? "bg-amber-700/80 text-white"
-                                    : "bg-slate-100 dark:bg-surface-800 text-slate-500"
+                              ? "bg-amber-500 text-white shadow-sm shadow-amber-500/30"
+                              : idx === 1
+                                ? "bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white"
+                                : idx === 2
+                                  ? "bg-amber-700/80 text-white"
+                                  : "bg-slate-100 dark:bg-surface-800 text-slate-500"
                               }`}
                           >
                             {idx + 1}
@@ -299,8 +311,8 @@ export const TPODashboardPage: React.FC = () => {
                         <td className="px-4 py-3.5">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${performer.attendance_percentage >= 75
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                               }`}
                           >
                             {performer.attendance_percentage}%

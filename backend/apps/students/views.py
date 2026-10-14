@@ -173,7 +173,13 @@ class StudentDashboardView(APIView):
                 status_code=status.HTTP_403_FORBIDDEN,
             )
 
-        dashboard_data = StudentDashboardService.get_dashboard_data(request.user)
+        force_refresh = request.query_params.get("refresh", "").lower() in (
+            "true",
+            "1",
+        )
+        dashboard_data = StudentDashboardService.get_dashboard_data(
+            request.user, force_refresh=force_refresh
+        )
         return api_success(
             data=dashboard_data,
             message="Student dashboard telemetry retrieved successfully.",

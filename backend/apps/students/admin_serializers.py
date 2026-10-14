@@ -88,7 +88,7 @@ class StudentAdminListSerializer(serializers.ModelSerializer):
 
 
 class StudentAdminDetailSerializer(StudentAdminListSerializer):
-    enrollments = StudentEnrollmentBriefSerializer(many=True, read_only=True)
+    enrollments = serializers.SerializerMethodField()
 
     class Meta(StudentAdminListSerializer.Meta):
         fields = StudentAdminListSerializer.Meta.fields + [
@@ -98,10 +98,26 @@ class StudentAdminDetailSerializer(StudentAdminListSerializer):
             "enrollments",
         ]
 
+    @extend_schema_field(StudentEnrollmentBriefSerializer(many=True))
+    def get_enrollments(self, obj):
+        active_enrollments = (
+            obj.enrollments.filter(
+                status__in=[
+                    CourseEnrollment.EnrollmentStatus.ACTIVE,
+                    CourseEnrollment.EnrollmentStatus.COMPLETED,
+                ]
+            )
+            .select_related("course")
+            .order_by("enrolled_at")
+        )
+        return StudentEnrollmentBriefSerializer(active_enrollments, many=True).data
+
 
 class StudentAdminUpdateSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=150, required=False)
+    student_id_number = serializers.CharField(max_length=50, required=False)
     batch_code = serializers.CharField(max_length=50, required=False)
+    college_id = serializers.UUIDField(required=False, allow_null=True)
     college_name = serializers.CharField(
         max_length=255, required=False, allow_blank=True
     )
@@ -111,23 +127,53 @@ class StudentAdminUpdateSerializer(serializers.Serializer):
     course_opted = serializers.CharField(
         max_length=200, required=False, allow_blank=True
     )
-    avatar_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
-    email = serializers.EmailField(required=False, allow_null=True)
+    bio = serializers.CharField(required=False, allow_blank=True)
+    github_url = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    linkedin_url = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    avatar_url = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
     mobile_number = serializers.CharField(
-        max_length=20, required=False, allow_null=True
+        max_length=20, required=False, allow_null=True, allow_blank=True
     )
     is_active = serializers.BooleanField(required=False)
     onboarding_status = serializers.ChoiceField(
         choices=User.OnboardingStatusChoices.choices, required=False
     )
-    total_classes = serializers.IntegerField(required=False)
-    attended_classes = serializers.IntegerField(required=False)
+    total_classes = serializers.IntegerField(required=False, allow_null=True)
+    attended_classes = serializers.IntegerField(required=False, allow_null=True)
+    total_points = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True
+    )
+    current_streak_days = serializers.IntegerField(required=False, allow_null=True)
+
+    def to_internal_value(self, data):
+        # Normalize empty string values for nullable fields from web forms
+        if hasattr(data, "copy"):
+            data = data.copy()
+        else:
+            data = dict(data)
+        for field in [
+            "email",
+            "mobile_number",
+            "dob",
+            "graduation_year",
+            "college_id",
+            "total_classes",
+            "attended_classes",
+            "total_points",
+            "current_streak_days",
+        ]:
+            if field in data and (data[field] == "" or data[field] is None):
+                data[field] = None
+        return super().to_internal_value(data)
 
 
 class AssignCoursesSerializer(serializers.Serializer):
     course_ids = serializers.ListField(
         child=serializers.UUIDField(),
-        allow_empty=False,
+        allow_empty=True,
+        required=False,
+        default=list,
         help_text="List of course UUIDs to enroll student into",
     )
 

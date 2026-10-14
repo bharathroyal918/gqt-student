@@ -4,6 +4,7 @@ import logging
 from decimal import Decimal
 from typing import Any
 
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Avg, Count, Max, Q, Sum
 from django.db.models.functions import TruncMonth
@@ -47,6 +48,11 @@ class TPODashboardService:
     def get_college_summary(cls, tpo_user) -> dict[str, Any]:
         """Compute real, verified summary metrics for the assigned college dashboard."""
         college = cls.get_assigned_college_or_fail(tpo_user)
+        cache_key = f"tpo_college_summary:{tpo_user.id}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         students_qs = cls.get_college_students_queryset(tpo_user)
 
         total_students = students_qs.count()
@@ -146,7 +152,7 @@ class TPODashboardService:
             for s in top_students
         ]
 
-        return {
+        summary_dict = {
             "college": {
                 "id": str(college.id),
                 "name": college.name,
@@ -168,6 +174,13 @@ class TPODashboardService:
             "graduation_year_distribution": graduation_year_distribution,
             "top_performers": top_performers,
         }
+        cache.set(cache_key, summary_dict, timeout=60)
+        return summary_dict
+
+    @classmethod
+    def invalidate_college_summary_cache(cls, tpo_user_id) -> None:
+        """Clear cached college dashboard summary metrics."""
+        cache.delete(f"tpo_college_summary:{tpo_user_id}")
 
     @classmethod
     def get_student_detail(cls, tpo_user, student_id) -> dict[str, Any]:
