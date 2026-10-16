@@ -125,66 +125,6 @@ def seed():
             f"{'Created' if created else 'Updated'} drive: {drive.company_name} - {drive.role}"
         )
 
-    # Seed sample applications for existing student profiles
-    students = list(StudentProfile.objects.all()[:6])
-    if students and created_drives:
-        statuses = [
-            (
-                PlacementApplication.ApplicationStatus.SELECTED,
-                "Candidate excelled in technical interview and system design. Extended formal offer.",
-                "",
-            ),
-            (
-                PlacementApplication.ApplicationStatus.SHORTLISTED,
-                "Cleared round 1 online assessment. Scheduled for final technical panel.",
-                "",
-            ),
-            (
-                PlacementApplication.ApplicationStatus.REJECTED,
-                "Does not meet the mandatory criteria or failed coding test cutoff.",
-                "Coding assessment cut-off was not met in Section 2 (Data Structures).",
-            ),
-            (
-                PlacementApplication.ApplicationStatus.UNDER_REVIEW,
-                "Resume submitted for initial technical screening by the talent acquisition team.",
-                "",
-            ),
-            (PlacementApplication.ApplicationStatus.APPLIED, "", ""),
-        ]
-
-        for i, student in enumerate(students):
-            for j, drive in enumerate(created_drives[:3]):
-                status_idx = (i + j) % len(statuses)
-                st, admin_note, rej_reason = statuses[status_idx]
-
-                _app, created = PlacementApplication.objects.update_or_create(
-                    drive=drive,
-                    student=student,
-                    defaults={
-                        "status": st,
-                        "student_name": student.full_name or student.user.email,
-                        "student_id_number": student.student_id_number,
-                        "email": student.user.email,
-                        "phone_number": "+91 9876543210",
-                        "college_name": student.college_name
-                        or "GQT Engineering Academy",
-                        "branch": student.branch or "Computer Science",
-                        "graduation_year": student.graduation_year or 2026,
-                        "cgpa_or_percentage": "8.85 CGPA",
-                        "resume_url": "https://drive.google.com/file/d/sample-student-resume/view",
-                        "portfolio_url": "https://github.com",
-                        "github_url": student.github_url or "https://github.com",
-                        "linkedin_url": student.linkedin_url or "https://linkedin.com",
-                        "skills_summary": "Java, Python, React, PostgreSQL, Docker, Data Structures",
-                        "cover_note": "I am passionate about building high-performance systems and have completed capstone projects in full stack web development.",
-                        "admin_notes": admin_note,
-                        "rejection_reason": rej_reason,
-                    },
-                )
-                print(
-                    f"  -> Application: {student.full_name} for {drive.company_name} [{st}]"
-                )
-
     print("Placement seeding completed successfully!")
 
 

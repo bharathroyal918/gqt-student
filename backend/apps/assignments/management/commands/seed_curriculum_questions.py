@@ -2320,12 +2320,16 @@ class Command(BaseCommand):
             )
         )
 
-        courses = list(Course.objects.filter(is_published=True))
+        courses = list(
+            Course.objects.filter(is_published=True).exclude(
+                slug__in=["java-full-stack-development", "python-ai-fullstack-mastery"]
+            )
+        )
         if not courses:
             c, _ = Course.objects.get_or_create(
-                slug="agentic-ai-java-full-stack",
+                slug="agentic-ai-python-full-stack",
                 defaults={
-                    "title": "Agentic AI with Java Full Stack",
+                    "title": "Agentic AI Python Full Stack",
                     "is_published": True,
                 },
             )

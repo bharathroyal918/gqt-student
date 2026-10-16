@@ -95,9 +95,9 @@ def create_credentials():
             "batch_code": "BATCH-2026-A",
             "college_name": "Global Institute of Technology",
             "graduation_year": 2026,
-            "total_points": Decimal("150.00"),
-            "current_streak_days": 5,
-            "highest_streak_days": 7,
+            "total_points": Decimal("0.00"),
+            "current_streak_days": 0,
+            "highest_streak_days": 0,
         },
     )
     student_profile.full_name = "Rahul Sharma"
