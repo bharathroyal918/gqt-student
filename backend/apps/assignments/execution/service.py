@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from apps.assignments.execution.interfaces import BaseExecutionProvider
+from apps.assignments.execution.judge0_provider import Judge0ExecutionProvider
 from apps.assignments.execution.mock_provider import MockExecutionProvider
 from apps.assignments.models import (
     CodeSubmission,
@@ -34,7 +35,7 @@ class CodeExecutionService:
     RATE_LIMIT_COOLDOWN_SECONDS = 3  # Minimum seconds between executions
     RATE_LIMIT_MAX_PER_MINUTE = 20  # Max executions per minute
 
-    _provider: BaseExecutionProvider = MockExecutionProvider()
+    _provider: BaseExecutionProvider | None = None
 
     @classmethod
     def set_provider(cls, provider: BaseExecutionProvider) -> None:
@@ -43,6 +44,16 @@ class CodeExecutionService:
 
     @classmethod
     def get_provider(cls) -> BaseExecutionProvider:
+        if cls._provider is None:
+            from django.conf import settings
+
+            provider_name = getattr(
+                settings, "CODE_EXECUTION_PROVIDER", "judge0"
+            ).lower()
+            if provider_name == "mock":
+                cls._provider = MockExecutionProvider()
+            else:
+                cls._provider = Judge0ExecutionProvider()
         return cls._provider
 
     @classmethod
@@ -143,9 +154,11 @@ class CodeExecutionService:
                 "status": output.status,
                 "stdout": output.stdout,
                 "stderr": output.stderr,
+                "compilation_output": output.compilation_output,
                 "execution_time_ms": int(output.execution_time_seconds * 1000),
                 "peak_memory_kb": output.memory_kb,
                 "exit_code": output.exit_code,
+                "engine": "Judge0 CE",
             }
 
         # Mode B: Visible sample test cases execution
@@ -172,6 +185,7 @@ class CodeExecutionService:
                         "actual_output": output.stdout,
                         "status": output.status,
                         "stderr": output.stderr,
+                        "compilation_output": output.compilation_output,
                         "execution_time_ms": int(output.execution_time_seconds * 1000),
                         "memory_kb": output.memory_kb,
                     }
@@ -192,9 +206,12 @@ class CodeExecutionService:
             )
 
             tc_status = output.status
+            clean_actual = (output.stdout or "").replace("\r\n", "\n").strip()
+            clean_expected = (tc.expected_output or "").replace("\r\n", "\n").strip()
+
             if (
                 tc_status == CodeSubmission.SubmissionStatus.ACCEPTED
-                and output.stdout.strip() != tc.expected_output.strip()
+                and clean_actual != clean_expected
             ):
                 tc_status = CodeSubmission.SubmissionStatus.WRONG_ANSWER
 
@@ -212,16 +229,23 @@ class CodeExecutionService:
                     "actual_output": output.stdout,
                     "status": tc_status,
                     "stderr": output.stderr,
+                    "compilation_output": output.compilation_output,
                     "execution_time_ms": int(output.execution_time_seconds * 1000),
                     "memory_kb": output.memory_kb,
                 }
             )
+
+            # If compilation failed, halt sample runs immediately as subsequent test cases will also fail to compile
+            if tc_status == CodeSubmission.SubmissionStatus.COMPILATION_ERROR:
+                overall_status = CodeSubmission.SubmissionStatus.COMPILATION_ERROR
+                break
 
         return {
             "mode": "SAMPLE_TEST_CASES",
             "overall_status": overall_status,
             "test_results": test_results,
         }
+
 
     @classmethod
     @transaction.atomic
@@ -271,24 +295,36 @@ class CodeExecutionService:
         sanitized_results = []
         execution_results_to_create = []
 
+        compilation_failed = False
+        compilation_error_output = None
+
         for idx, tc in enumerate(all_testcases):
-            output = provider.execute(
-                language=norm_lang,
-                source_code=source_code,
-                stdin=tc.input_data,
-                time_limit_seconds=time_limit,
-                memory_limit_mb=memory_limit,
-                expected_output=tc.expected_output,
-            )
+            if compilation_failed and compilation_error_output:
+                output = compilation_error_output
+            else:
+                output = provider.execute(
+                    language=norm_lang,
+                    source_code=source_code,
+                    stdin=tc.input_data,
+                    time_limit_seconds=time_limit,
+                    memory_limit_mb=memory_limit,
+                    expected_output=tc.expected_output,
+                )
+                if output.status == CodeSubmission.SubmissionStatus.COMPILATION_ERROR:
+                    compilation_failed = True
+                    compilation_error_output = output
 
             tc_exec_time_ms = int(output.execution_time_seconds * 1000)
             total_time_ms += tc_exec_time_ms
             peak_memory_kb = max(peak_memory_kb, output.memory_kb)
 
+            clean_actual = (output.stdout or "").replace("\r\n", "\n").strip()
+            clean_expected = (tc.expected_output or "").replace("\r\n", "\n").strip()
+
             # Determine test case result status
             if output.status != CodeSubmission.SubmissionStatus.ACCEPTED:
                 result_status = output.status
-            elif output.stdout.strip() == tc.expected_output.strip():
+            elif clean_actual == clean_expected:
                 result_status = ExecutionResult.ResultStatus.PASSED
                 passed_count += 1
             else:
@@ -302,6 +338,7 @@ class CodeExecutionService:
                     overall_status = CodeSubmission.SubmissionStatus.WRONG_ANSWER
                 else:
                     overall_status = result_status
+
 
             # Map to ExecutionResult model status
             er_status = (

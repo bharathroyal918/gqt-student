@@ -145,14 +145,21 @@ export const StudentAssignmentsPage: React.FC = () => {
       {/* Top Banner & Refresh */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Interactive Code Sandbox • Automated Evaluation</span>
+            <span className="text-slate-400 dark:text-slate-500">•</span>
+            <span className="font-mono text-[11px]">Python • Java • C • C++ • JavaScript</span>
+          </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
             <Code2 className="h-7 w-7 text-brand-400" />
             Coding Practice Platform
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Solve algorithmic challenges module-by-module. Complete all problems in each module to unlock the next level.
+            Solve algorithmic challenges module-by-module. Write solutions in your preferred language and get instant automated execution feedback with real-time test case verification.
           </p>
         </div>
+
 
         <Button
           variant="outline"

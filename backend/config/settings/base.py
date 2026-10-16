@@ -432,3 +432,12 @@ SUPABASE_SERVICE_ROLE_KEY = env(
     default=env("SUPABASE_SERVICE_KEY", default=""),
 )
 SUPABASE_STORAGE_BUCKET = env("SUPABASE_STORAGE_BUCKET", default="media")
+
+# ------------------------------------------------------------------------------
+# JUDGE0 SANDBOXED CODE EXECUTION CONFIGURATION
+# ------------------------------------------------------------------------------
+JUDGE0_ENDPOINT = env("JUDGE0_ENDPOINT", default="https://ce.judge0.com")
+JUDGE0_API_KEY = env("JUDGE0_API_KEY", default="")
+JUDGE0_API_HOST = env("JUDGE0_API_HOST", default="")
+JUDGE0_USE_SDK = env.bool("JUDGE0_USE_SDK", default=False)
+CODE_EXECUTION_PROVIDER = env("CODE_EXECUTION_PROVIDER", default="judge0")

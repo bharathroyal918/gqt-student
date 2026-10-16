@@ -292,6 +292,7 @@ export interface TestRunResultItem {
   actual_output: string;
   status: string;
   stderr: string;
+  compilation_output?: string;
   execution_time_ms: number;
   memory_kb: number;
 }
@@ -302,11 +303,14 @@ export interface CodeRunResponse {
   status?: string;
   stdout?: string;
   stderr?: string;
+  compilation_output?: string;
   execution_time_ms?: number;
   peak_memory_kb?: number;
   exit_code?: number;
+  engine?: string;
   test_results?: TestRunResultItem[];
 }
+
 
 export interface SubmissionTestResultItem {
   order: number;

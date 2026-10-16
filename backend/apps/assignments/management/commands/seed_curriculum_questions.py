@@ -11,6 +11,11 @@ from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 
 from apps.assignments.models import CodingQuestion, TestCase
+from apps.assignments.leetcode_builder import (
+    build_starter_code,
+    build_leetcode_problem_statement,
+    generate_testcases_for_question,
+)
 from apps.courses.models import Course
 from apps.modules.models import Module
 
@@ -2380,11 +2385,26 @@ class Command(BaseCommand):
                         else CodingQuestion.DifficultyChoices.HARD
                     )
 
-                    python_code = f'import sys\n\ndef solution(input_text: str) -> str:\n    # Write your optimal algorithmic solution here\n    return "{out_sample}"\n\nif __name__ == \'__main__\':\n    input_data = sys.stdin.read().strip()\n    # Process input\n    print("{out_sample}")\n'
-                    js_code = f"const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim();\nconsole.log(\"{out_sample}\");\n"
-                    java_code = f'import java.util.*;\npublic class Solution {{\n    public static void main(String[] args) {{\n        Scanner sc = new Scanner(System.in);\n        System.out.println("{out_sample}");\n    }}\n}}\n'
-                    cpp_code = f'#include <iostream>\nusing namespace std;\nint main() {{\n    cout << "{out_sample}" << endl;\n    return 0;\n}}\n'
-                    c_code = f'#include <stdio.h>\nint main() {{\n    printf("%s\\n", "{out_sample}");\n    return 0;\n}}\n'
+                    testcases_data = generate_testcases_for_question(
+                        title, desc, inp_sample, out_sample
+                    )
+                    tc1_in = testcases_data[0][0]
+                    tc1_out = testcases_data[0][1]
+                    tc2_in = testcases_data[1][0] if len(testcases_data) > 1 else ""
+                    tc2_out = testcases_data[1][1] if len(testcases_data) > 1 else ""
+
+                    starter_codes = build_starter_code(title, tc1_in, tc1_out)
+                    problem_statement = build_leetcode_problem_statement(
+                        title=title,
+                        desc=desc,
+                        diff=diff,
+                        pts=pts,
+                        tc1_in=tc1_in,
+                        tc1_out=tc1_out,
+                        tc2_in=tc2_in,
+                        tc2_out=tc2_out,
+                    )
+                    allowed_languages = ["python", "java", "c", "cpp", "javascript"]
 
                     existing = existing_qs.get((module.id, q_slug))
                     if existing:
@@ -2392,8 +2412,10 @@ class Command(BaseCommand):
                         existing.difficulty = diff_choice
                         existing.order = q_order
                         existing.is_active = True
+                        existing.problem_statement = problem_statement
+                        existing.starter_code = starter_codes
+                        existing.allowed_languages = allowed_languages
                         questions_to_update.append(existing)
-                        testcase_specs.append((existing, inp_sample, out_sample))
                     else:
                         new_q = CodingQuestion(
                             module=module,
@@ -2403,27 +2425,13 @@ class Command(BaseCommand):
                             points=Decimal(str(pts)),
                             time_limit_seconds=Decimal("2.00"),
                             memory_limit_mb=128,
-                            problem_statement=f"### Problem Statement\n{desc}\n\n### Input Format\n- Standard input payload as specified in problem description.\n\n### Output Format\n- Standard output matching expected results.\n\n### Examples\n**Example 1:**\n- Input:\n```\n{inp_sample}\n```\n- Expected Output:\n```\n{out_sample}\n```\n\n### Constraints\n- Time Limit: 2.0s\n- Memory Limit: 128MB\n- Evaluated across testcases.\n",
-                            allowed_languages=[
-                                "python",
-                                "java",
-                                "c",
-                                "cpp",
-                                "javascript",
-                            ],
-                            starter_code={
-                                "python": python_code,
-                                "javascript": js_code,
-                                "java": java_code,
-                                "cpp": cpp_code,
-                                "c": c_code,
-                                "sql": "-- Write your SQL query here\n",
-                            },
+                            problem_statement=problem_statement,
+                            allowed_languages=allowed_languages,
+                            starter_code=starter_codes,
                             order=q_order,
                             is_active=True,
                         )
                         questions_to_create.append(new_q)
-                        testcase_specs.append((new_q, inp_sample, out_sample))
 
                     q_order += 1
 
@@ -2440,11 +2448,19 @@ class Command(BaseCommand):
             if questions_to_update:
                 CodingQuestion.objects.bulk_update(
                     questions_to_update,
-                    fields=["points", "difficulty", "order", "is_active"],
+                    fields=[
+                        "points",
+                        "difficulty",
+                        "order",
+                        "is_active",
+                        "problem_statement",
+                        "starter_code",
+                        "allowed_languages",
+                    ],
                     batch_size=100,
                 )
                 self.stdout.write(
-                    f"  [OK] Updated {len(questions_to_update)} existing questions"
+                    f"  [OK] Updated {len(questions_to_update)} existing questions with LeetCode format & stubs"
                 )
 
             # 5. Refresh questions from DB for test case foreign keys
@@ -2453,15 +2469,11 @@ class Command(BaseCommand):
                 for q in CodingQuestion.objects.filter(module__in=module_map.values())
             }
 
-            # 6. Pre-fetch existing testcases
-            existing_tcs = {
-                (tc.question_id, tc.order): tc
-                for tc in TestCase.objects.filter(question__in=all_module_qs.values())
-            }
+            # 6. Delete old duplicate test cases to re-seed distinct multi-case suites
+            q_ids = [q.id for q in all_module_qs.values()]
+            TestCase.objects.filter(question_id__in=q_ids).delete()
 
             testcases_to_create = []
-            testcases_to_update = []
-
             for mod_data in ALL_MODULES_DATA:
                 order_idx = mod_data["order"]
                 module = module_map[order_idx]
@@ -2473,64 +2485,29 @@ class Command(BaseCommand):
                     if not q_obj:
                         continue
 
-                    # Sample visible test case (order 1)
-                    tc1 = existing_tcs.get((q_obj.id, 1))
-                    if tc1:
-                        tc1.input_data = inp_sample
-                        tc1.expected_output = out_sample
-                        tc1.is_visible = True
-                        testcases_to_update.append(tc1)
-                    else:
+                    tc_list = generate_testcases_for_question(
+                        title, desc, inp_sample, out_sample
+                    )
+                    for tc_item in tc_list:
                         testcases_to_create.append(
                             TestCase(
                                 question=q_obj,
-                                order=1,
-                                input_data=inp_sample,
-                                expected_output=out_sample,
-                                is_visible=True,
-                                weight=Decimal("1.00"),
-                            )
-                        )
-
-                    # Hidden test case (order 2)
-                    tc2 = existing_tcs.get((q_obj.id, 2))
-                    if tc2:
-                        tc2.input_data = inp_sample
-                        tc2.expected_output = out_sample
-                        tc2.is_visible = False
-                        testcases_to_update.append(tc2)
-                    else:
-                        testcases_to_create.append(
-                            TestCase(
-                                question=q_obj,
-                                order=2,
-                                input_data=inp_sample,
-                                expected_output=out_sample,
-                                is_visible=False,
+                                order=tc_item[3],
+                                input_data=tc_item[0],
+                                expected_output=tc_item[1],
+                                is_visible=tc_item[2],
                                 weight=Decimal("1.00"),
                             )
                         )
 
             if testcases_to_create:
-                TestCase.objects.bulk_create(testcases_to_create, batch_size=200)
+                TestCase.objects.bulk_create(testcases_to_create, batch_size=500)
                 self.stdout.write(
-                    f"  [OK] Created {len(testcases_to_create)} new testcases in bulk"
-                )
-
-            if testcases_to_update:
-                TestCase.objects.bulk_update(
-                    testcases_to_update,
-                    fields=["input_data", "expected_output", "is_visible"],
-                    batch_size=200,
-                )
-                self.stdout.write(
-                    f"  [OK] Updated {len(testcases_to_update)} existing testcases"
+                    f"  [OK] Created {len(testcases_to_create)} distinct testcases in bulk"
                 )
 
             total_questions_seeded += len(all_module_qs)
-            total_testcases_seeded += len(testcases_to_create) + len(
-                testcases_to_update
-            )
+            total_testcases_seeded += len(testcases_to_create)
 
         self.stdout.write(
             self.style.SUCCESS(

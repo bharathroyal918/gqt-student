@@ -30,6 +30,7 @@ import {
   Code2,
   LayoutGrid,
   Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import {
@@ -47,15 +48,15 @@ import { MarkdownView } from "../../components/common/MarkdownView";
 import { useToast } from "../../context/ToastContext";
 
 const LANGUAGE_OPTIONS = [
-  { value: "python", label: "Python 3.11", monacoLang: "python" },
-  { value: "javascript", label: "JavaScript (Node 20)", monacoLang: "javascript" },
+  { value: "python", label: "Python 3.13", monacoLang: "python" },
+  { value: "javascript", label: "JavaScript (Node.js 22)", monacoLang: "javascript" },
   { value: "java", label: "Java 17 (OpenJDK)", monacoLang: "java" },
   { value: "cpp", label: "C++ 20 (GCC)", monacoLang: "cpp" },
   { value: "c", label: "C 11 (GCC)", monacoLang: "c" },
 ];
 
+
 type LayoutMode = "split" | "editor" | "description" | "stacked";
-type SplitRatio = 35 | 40 | 50 | 60 | 65;
 type ConsoleHeight = "collapsed" | "normal" | "expanded";
 
 export const StudentAssignmentDetailPage: React.FC = () => {
@@ -76,10 +77,16 @@ export const StudentAssignmentDetailPage: React.FC = () => {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
     return (localStorage.getItem("gqt_editor_layout") as LayoutMode) || "split";
   });
-  const [splitRatio, setSplitRatio] = useState<SplitRatio>(() => {
-    const saved = localStorage.getItem("gqt_editor_split");
-    return saved ? (parseInt(saved) as SplitRatio) : 50;
+  const [splitPercent, setSplitPercent] = useState<number>(() => {
+    const saved = localStorage.getItem("gqt_editor_split_pct");
+    if (saved) {
+      const val = parseFloat(saved);
+      if (!isNaN(val) && val >= 20 && val <= 80) return val;
+    }
+    return 50;
   });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
   const [consoleHeight, setConsoleHeight] = useState<ConsoleHeight>("normal");
   const [fontSize, setFontSize] = useState<number>(() => {
     const saved = localStorage.getItem("gqt_editor_font_size");
@@ -159,10 +166,46 @@ export const StudentAssignmentDetailPage: React.FC = () => {
     localStorage.setItem("gqt_editor_layout", mode);
   };
 
-  const handleSplitRatioChange = (ratio: SplitRatio) => {
-    setSplitRatio(ratio);
-    localStorage.setItem("gqt_editor_split", ratio.toString());
+  const handleSplitPercentChange = (pct: number) => {
+    const clamped = Math.min(Math.max(pct, 20), 80);
+    setSplitPercent(clamped);
+    localStorage.setItem("gqt_editor_split_pct", clamped.toFixed(1));
   };
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const newLeftWidth = e.clientX - rect.left;
+      const totalWidth = rect.width;
+      if (totalWidth <= 0) return;
+      const pct = (newLeftWidth / totalWidth) * 100;
+      const clamped = Math.min(Math.max(pct, 20), 80);
+      setSplitPercent(clamped);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setSplitPercent((curr) => {
+        localStorage.setItem("gqt_editor_split_pct", curr.toFixed(1));
+        return curr;
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   const handleFontSizeChange = (delta: number) => {
     setFontSize((prev) => {
@@ -338,43 +381,17 @@ export const StudentAssignmentDetailPage: React.FC = () => {
   const currentMonacoLang =
     LANGUAGE_OPTIONS.find((l) => l.value === selectedLanguage)?.monacoLang || "python";
 
-  // Calculate dynamic grid spans according to split ratio and layout mode
+  // Helper classes for responsive layout
   const getLeftSpanClass = () => {
     if (layoutMode === "editor") return "hidden";
-    if (layoutMode === "description") return "w-full";
-    if (layoutMode === "stacked") return "w-full";
-
-    switch (splitRatio) {
-      case 35:
-        return "lg:w-[35%]";
-      case 40:
-        return "lg:w-[40%]";
-      case 60:
-        return "lg:w-[60%]";
-      case 65:
-        return "lg:w-[65%]";
-      default:
-        return "lg:w-[50%]";
-    }
+    if (layoutMode === "description" || layoutMode === "stacked") return "w-full";
+    return "w-full lg:min-w-[20%] lg:max-w-[80%]";
   };
 
   const getRightSpanClass = () => {
     if (layoutMode === "description") return "hidden";
-    if (layoutMode === "editor") return "w-full";
-    if (layoutMode === "stacked") return "w-full";
-
-    switch (splitRatio) {
-      case 35:
-        return "lg:w-[65%]";
-      case 40:
-        return "lg:w-[60%]";
-      case 60:
-        return "lg:w-[40%]";
-      case 65:
-        return "lg:w-[35%]";
-      default:
-        return "lg:w-[50%]";
-    }
+    if (layoutMode === "editor" || layoutMode === "stacked") return "w-full";
+    return "w-full lg:min-w-[20%] lg:max-w-[80%]";
   };
 
   // Dynamic console height
@@ -434,7 +451,18 @@ export const StudentAssignmentDetailPage: React.FC = () => {
               Solved (+{question.best_score} pts)
             </Badge>
           )}
+
+          {/* Automated Sandboxed Engine Badge */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-emerald-500/10 via-brand-500/10 to-indigo-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-semibold">Code Sandbox</span>
+            <span className="hidden md:inline text-slate-400 dark:text-slate-500">• Live Execution</span>
+          </div>
         </div>
+
 
         {/* Right: Workspace & Layout Customization Controls */}
         <div className="flex items-center gap-1.5 flex-wrap self-end sm:self-auto">
@@ -489,26 +517,30 @@ export const StudentAssignmentDetailPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Split Ratio Dropdown (Visible in split mode) */}
+          {/* Split Ratio Controller (Visible in split mode) */}
           {layoutMode === "split" && (
             <div className="hidden lg:flex items-center rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-100 dark:bg-surface-950 p-0.5">
               {[
-                { ratio: 35, label: "35:65" },
-                { ratio: 50, label: "50:50" },
-                { ratio: 65, label: "65:35" },
+                { pct: 35, label: "35:65" },
+                { pct: 50, label: "50:50" },
+                { pct: 65, label: "65:35" },
               ].map((item) => (
                 <button
-                  key={item.ratio}
-                  onClick={() => handleSplitRatioChange(item.ratio as SplitRatio)}
-                  className={`rounded-lg px-2 py-1 text-[10px] font-bold transition-all ${splitRatio === item.ratio
+                  key={item.pct}
+                  onClick={() => handleSplitPercentChange(item.pct)}
+                  className={`rounded-lg px-2 py-1 text-[10px] font-bold transition-all ${
+                    Math.round(splitPercent) === item.pct
                       ? "bg-white dark:bg-surface-800 text-brand-600 dark:text-brand-400 shadow-sm"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                    }`}
+                  }`}
                   title={`Adjust Split to ${item.label}`}
                 >
                   {item.label}
                 </button>
               ))}
+              <span className="px-1.5 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300" title="Adjustable dynamic split ratio">
+                {Math.round(splitPercent)}:{100 - Math.round(splitPercent)}
+              </span>
             </div>
           )}
 
@@ -574,16 +606,30 @@ export const StudentAssignmentDetailPage: React.FC = () => {
       )}
 
       {/* =========================================================================
-          MAIN WORKSPACE LAYOUT CONTAINER
+          MAIN WORKSPACE LAYOUT CONTAINER (DYNAMIC SPLIT WITH DRAGGABLE RESIZER)
          ========================================================================= */}
       <div
-        className={`flex ${layoutMode === "stacked" ? "flex-col" : "flex-col lg:flex-row"
-          } gap-3 min-h-[640px] items-stretch`}
+        ref={splitContainerRef}
+        className={`flex ${
+          layoutMode === "stacked" ? "flex-col" : "flex-col lg:flex-row"
+        } gap-2 min-h-[640px] items-stretch relative ${isDragging ? "select-none cursor-col-resize" : ""}`}
       >
+        {/* Full-screen invisible overlay during dragging to prevent Monaco or other elements from capturing pointer */}
+        {isDragging && (
+          <div className="fixed inset-0 z-50 cursor-col-resize select-none bg-transparent" />
+        )}
+
         {/* =======================================================================
             LEFT / TOP PANEL: Problem Description & Submissions History
            ======================================================================= */}
-        <div className={`${getLeftSpanClass()} flex flex-col transition-all duration-200`}>
+        <div
+          style={
+            layoutMode === "split"
+              ? { width: `${splitPercent}%` }
+              : undefined
+          }
+          className={`${getLeftSpanClass()} flex flex-col transition-all duration-75`}
+        >
           <Card className="p-0 overflow-hidden flex flex-col flex-1 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm">
             {/* Header Tabs */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/60 px-4 pt-2">
@@ -665,10 +711,27 @@ export const StudentAssignmentDetailPage: React.FC = () => {
                         {question.memory_limit_mb} MB RAM
                       </span>
                     </div>
+
+                    {/* Automated Sandboxed Evaluation Notice */}
+                    <div className="mt-3 rounded-xl border border-indigo-100 dark:border-indigo-950/60 bg-indigo-50/50 dark:bg-indigo-950/20 p-2.5 text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5 text-[11px]">
+                          <Cpu className="h-3.5 w-3.5 text-indigo-500" />
+                          Automated Sandboxed Evaluation
+                        </span>
+                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-semibold">
+                          Live Sandbox
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Student code is executed inside secure, isolated sandboxes. Your solution is judged against automated test suites in real-time.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Problem Statement Markdown with Rich Renderer */}
                   <div className="border-t border-slate-200 dark:border-surface-800 pt-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+
                     <MarkdownView content={question.problem_statement} />
                   </div>
 
@@ -756,9 +819,42 @@ export const StudentAssignmentDetailPage: React.FC = () => {
         </div>
 
         {/* =======================================================================
+            DRAGGABLE SPLITTER DIVIDER (Visible in Split Mode on Desktop)
+           ======================================================================= */}
+        {layoutMode === "split" && (
+          <div
+            onMouseDown={handleMouseDown}
+            onDoubleClick={() => handleSplitPercentChange(50)}
+            role="separator"
+            aria-orientation="vertical"
+            title="Drag to resize panels • Double-click to reset (50:50)"
+            className={`hidden lg:flex w-2.5 cursor-col-resize select-none relative items-center justify-center group transition-colors rounded-full my-1 shrink-0 ${
+              isDragging
+                ? "bg-brand-500 shadow-sm ring-2 ring-brand-400/40"
+                : "bg-slate-200 dark:bg-surface-800 hover:bg-brand-500"
+            }`}
+          >
+            <div
+              className={`w-1 rounded-full transition-all ${
+                isDragging
+                  ? "h-14 bg-white"
+                  : "h-8 bg-slate-400 dark:bg-surface-600 group-hover:bg-white group-hover:h-12"
+              }`}
+            />
+          </div>
+        )}
+
+        {/* =======================================================================
             RIGHT / BOTTOM PANEL: Code Editor & Execution Sandbox
            ======================================================================= */}
-        <div className={`${getRightSpanClass()} flex flex-col transition-all duration-200`}>
+        <div
+          style={
+            layoutMode === "split"
+              ? { width: `${100 - splitPercent}%` }
+              : undefined
+          }
+          className={`${getRightSpanClass()} flex flex-col transition-all duration-75`}
+        >
           <Card className="p-0 overflow-hidden flex flex-col flex-1 border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 shadow-sm">
             {/* Editor Toolbar */}
             <div className="flex items-center justify-between gap-2.5 border-b border-slate-200 dark:border-surface-800 bg-slate-50 dark:bg-surface-900/80 px-4 py-2 flex-wrap">
@@ -838,6 +934,7 @@ export const StudentAssignmentDetailPage: React.FC = () => {
               style={{ height: getEditorHeight() }}
               className="w-full bg-[#1e1e1e] transition-all duration-200 relative"
             >
+              {isDragging && <div className="absolute inset-0 z-30 cursor-col-resize select-none" />}
               <Editor
                 height="100%"
                 language={currentMonacoLang}
@@ -993,64 +1090,128 @@ export const StudentAssignmentDetailPage: React.FC = () => {
                     ) : runResult ? (
                       /* Run Code Output */
                       <div className="space-y-3 font-sans">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Run Status:</span>
-                          <Badge
-                            variant={
-                              runResult.overall_status === "ACCEPTED" || runResult.status === "ACCEPTED"
-                                ? "success"
-                                : "rose"
-                            }
-                            size="sm"
-                          >
-                            {(runResult.overall_status || runResult.status || "RUN_COMPLETE").replace(/_/g, " ")}
-                          </Badge>
-                          {runResult.execution_time_ms !== undefined && (
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                              {runResult.execution_time_ms} ms
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Run Status:</span>
+                            <Badge
+                              variant={
+                                runResult.overall_status === "ACCEPTED" || runResult.status === "ACCEPTED"
+                                  ? "success"
+                                  : "rose"
+                              }
+                              size="sm"
+                            >
+                              {(runResult.overall_status || runResult.status || "RUN_COMPLETE").replace(/_/g, " ")}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="inline-flex items-center gap-1 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              {runResult.engine || "Code Sandbox"}
                             </span>
-                          )}
+                            {runResult.execution_time_ms !== undefined && (
+                              <span>• {runResult.execution_time_ms} ms</span>
+                            )}
+                            {runResult.peak_memory_kb ? (
+                              <span>• {Math.round((runResult.peak_memory_kb / 1024) * 10) / 10} MB RAM</span>
+                            ) : null}
+                          </div>
                         </div>
 
-                        {runResult.test_results?.map((res, i) => (
-                          <div
-                            key={i}
-                            className="rounded-xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-3 font-mono text-xs space-y-1.5"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold text-slate-800 dark:text-slate-300">
-                                Sample Case #{res.order}
-                              </span>
-                              <Badge
-                                variant={res.status === "ACCEPTED" ? "success" : "rose"}
-                                size="sm"
-                              >
-                                {res.status}
-                              </Badge>
-                            </div>
-                            {res.stderr ? (
-                              <pre className="text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 p-2 rounded-lg whitespace-pre-wrap border border-rose-200 dark:border-rose-900/40">
-                                {res.stderr}
-                              </pre>
-                            ) : (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                                <div>
-                                  <span className="text-slate-500">Your Output:</span>
-                                  <pre className="mt-0.5 text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-surface-950 p-1.5 rounded border border-slate-200 dark:border-surface-800 overflow-x-auto">
-                                    {res.actual_output}
-                                  </pre>
+                        {/* Mode A: Custom Input Execution Output */}
+                        {runResult.mode === "CUSTOM_INPUT" ? (
+                          <div className="space-y-2.5 font-mono text-xs">
+                            {(runResult.stderr || runResult.compilation_output) && (
+                              <div className="rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/30 p-3 space-y-1.5 font-sans">
+                                <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-400 font-bold text-xs">
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                  <span>Compiler / Runtime Diagnostics:</span>
                                 </div>
-                                <div>
-                                  <span className="text-slate-500">Expected:</span>
-                                  <pre className="mt-0.5 text-emerald-600 dark:text-emerald-400 bg-slate-50 dark:bg-surface-950 p-1.5 rounded border border-slate-200 dark:border-surface-800 font-semibold overflow-x-auto">
-                                    {res.expected_output}
-                                  </pre>
-                                </div>
+                                <pre className="font-mono text-xs text-rose-600 dark:text-rose-300 bg-white dark:bg-surface-950 p-2.5 rounded-lg border border-rose-200 dark:border-rose-900/40 whitespace-pre-wrap overflow-x-auto">
+                                  {runResult.compilation_output || runResult.stderr}
+                                </pre>
                               </div>
                             )}
+
+                            <div className="rounded-xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-3 space-y-1.5">
+                              <div className="flex items-center justify-between font-sans text-slate-700 dark:text-slate-300">
+                                <span className="font-semibold text-xs">Standard Output (stdout):</span>
+                                {runResult.exit_code !== undefined && (
+                                  <span className="text-[10px] font-mono text-slate-500">
+                                    Exit Code: {runResult.exit_code ?? 0}
+                                  </span>
+                                )}
+                              </div>
+                              <pre className="text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-surface-950 p-2.5 rounded-lg border border-slate-200 dark:border-surface-800 overflow-x-auto whitespace-pre-wrap">
+                                {runResult.stdout || (
+                                  <span className="text-slate-400 italic">No output produced.</span>
+                                )}
+                              </pre>
+                            </div>
                           </div>
-                        ))}
+                        ) : (
+                          /* Mode B: Visible Sample Cases Execution Output */
+                          <div className="space-y-3">
+                            {/* Compilation Error Notice if any */}
+                            {runResult.overall_status === "COMPILATION_ERROR" && (
+                              <div className="rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/30 p-3 space-y-1.5">
+                                <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-400 font-bold text-xs">
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                  <span>Compilation Error:</span>
+                                </div>
+                                <pre className="font-mono text-xs text-rose-600 dark:text-rose-300 bg-white dark:bg-surface-950 p-2.5 rounded-lg border border-rose-200 dark:border-rose-900/40 whitespace-pre-wrap overflow-x-auto">
+                                  {runResult.test_results?.[0]?.compilation_output ||
+                                    runResult.test_results?.[0]?.stderr ||
+                                    runResult.compilation_output ||
+                                    runResult.stderr ||
+                                    "Source code compilation failed."}
+                                </pre>
+                              </div>
+                            )}
+
+                            {runResult.test_results?.map((res, i) => (
+                              <div
+                                key={i}
+                                className="rounded-xl border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-3 font-mono text-xs space-y-1.5"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-semibold text-slate-800 dark:text-slate-300">
+                                    Sample Case #{res.order}
+                                  </span>
+                                  <Badge
+                                    variant={res.status === "ACCEPTED" ? "success" : "rose"}
+                                    size="sm"
+                                  >
+                                    {res.status}
+                                  </Badge>
+                                </div>
+                                {res.stderr ? (
+                                  <pre className="text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 p-2 rounded-lg whitespace-pre-wrap border border-rose-200 dark:border-rose-900/40">
+                                    {res.stderr}
+                                  </pre>
+                                ) : (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                                    <div>
+                                      <span className="text-slate-500">Your Output:</span>
+                                      <pre className="mt-0.5 text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-surface-950 p-1.5 rounded border border-slate-200 dark:border-surface-800 overflow-x-auto">
+                                        {res.actual_output}
+                                      </pre>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500">Expected:</span>
+                                      <pre className="mt-0.5 text-emerald-600 dark:text-emerald-400 bg-slate-50 dark:bg-surface-950 p-1.5 rounded border border-slate-200 dark:border-surface-800 font-semibold overflow-x-auto">
+                                        {res.expected_output}
+                                      </pre>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
                     ) : submitResult ? (
                       /* Official Submit Code Output */
                       <div className="space-y-3 font-sans">
